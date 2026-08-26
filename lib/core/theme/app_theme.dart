@@ -12,13 +12,18 @@ class AppTheme {
   static const Color border = Color(0xFF27272A);
   static const Color borderSubtle = Color(0xFF1E1E24);
 
-  // Vivid Accents
-  static const Color neonMagenta = Color(0xFFFF00D4);
-  static const Color neonMagentaLight = Color(0xFFFF45E1);
-  static const Color neonMagentaDark = Color(0xFFC700A5);
-  static const Color neonLime = Color(0xFF22C55E);
+  // Vivid Accents (Green Theme)
+  static const Color neonGreen = Color(0xFF10B981);
+  static const Color neonGreenLight = Color(0xFF34D399);
+  static const Color neonGreenDark = Color(0xFF059669);
+  static const Color neonLime = Color(0xFF84CC16);
   static const Color neonYellow = Color(0xFFFACC15);
   static const Color errorRed = Color(0xFFEF4444);
+
+  // Aliases for backwards compatibility
+  static const Color neonMagenta = neonGreen;
+  static const Color neonMagentaLight = neonGreenLight;
+  static const Color neonMagentaDark = neonGreenDark;
 
   // Text Colors
   static const Color textPrimary = Color(0xFFFFFFFF);
@@ -45,19 +50,21 @@ class AppTheme {
     ],
   );
 
-  static const LinearGradient neonMagentaGradient = LinearGradient(
+  static const LinearGradient neonGreenGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFFFF00D4),
-      Color(0xFFFF1493),
+      Color(0xFF10B981),
+      Color(0xFF059669),
     ],
   );
+
+  static const LinearGradient neonMagentaGradient = neonGreenGradient;
 
   // Shadows
   static List<BoxShadow> neonGlow = [
     BoxShadow(
-      color: neonMagenta.withOpacity(0.45),
+      color: neonGreen.withOpacity(0.45),
       blurRadius: 20,
       spreadRadius: 0,
       offset: const Offset(0, 4),
@@ -78,9 +85,9 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: background,
-      primaryColor: neonMagenta,
+      primaryColor: neonGreen,
       colorScheme: const ColorScheme.dark(
-        primary: neonMagenta,
+        primary: neonGreen,
         onPrimary: Colors.white,
         secondary: neonLime,
         onSecondary: Colors.black,
@@ -155,7 +162,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: neonMagenta, width: 1.5),
+          borderSide: const BorderSide(color: neonGreen, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -176,7 +183,7 @@ class AppTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Color(0xFF0B0B0E),
-        selectedItemColor: neonMagenta,
+        selectedItemColor: neonGreen,
         unselectedItemColor: textMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 0,

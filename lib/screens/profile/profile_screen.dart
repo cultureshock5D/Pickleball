@@ -228,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.neonMagenta),
+          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.neonGreen),
         ),
       );
     }
@@ -258,7 +258,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceHighlight,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.neonMagenta, width: 2),
+                    border: Border.all(color: AppTheme.neonGreen, width: 2),
                     boxShadow: AppTheme.neonGlow,
                   ),
                   child: Center(
@@ -319,7 +319,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
                 IconButton(
                   onPressed: _showEditProfileDialog,
-                  icon: const Icon(Icons.edit_outlined, color: AppTheme.neonMagenta, size: 22),
+                  icon: const Icon(Icons.edit_outlined, color: AppTheme.neonGreen, size: 22),
                   tooltip: 'Edit Profile',
                 ),
               ],
@@ -407,7 +407,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppTheme.neonMagenta, size: 22),
+          Icon(icon, color: AppTheme.neonGreen, size: 22),
           const SizedBox(height: 10),
           Text(
             value,

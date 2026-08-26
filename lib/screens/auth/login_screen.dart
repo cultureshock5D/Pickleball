@@ -348,7 +348,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Text(
                                 'Sign Up',
                                 style: GoogleFonts.inter(
-                                  color: AppTheme.neonMagenta,
+                                  color: AppTheme.neonGreen,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),

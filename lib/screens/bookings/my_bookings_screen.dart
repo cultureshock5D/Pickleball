@@ -171,10 +171,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                       child: TabBar(
                         controller: _tabController,
                         indicator: BoxDecoration(
-                          color: AppTheme.neonMagenta.withOpacity(0.18),
+                          color: AppTheme.neonGreen.withOpacity(0.18),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppTheme.neonMagenta.withOpacity(0.5),
+                            color: AppTheme.neonGreen.withOpacity(0.5),
                             width: 1,
                           ),
                         ),
@@ -217,14 +217,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.neonMagenta),
+          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.neonGreen),
         ),
       );
     }
 
     if (bookings.isEmpty) {
       return RefreshIndicator(
-        color: AppTheme.neonMagenta,
+        color: AppTheme.neonGreen,
         backgroundColor: AppTheme.surfaceElevated,
         onRefresh: _loadBookings,
         child: SingleChildScrollView(
@@ -282,7 +282,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     }
 
     return RefreshIndicator(
-      color: AppTheme.neonMagenta,
+      color: AppTheme.neonGreen,
       backgroundColor: AppTheme.surfaceElevated,
       onRefresh: _loadBookings,
       child: ListView.separated(
@@ -407,7 +407,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                   Text(
                     '-\$${booking.totalAmount.toStringAsFixed(2)}',
                     style: GoogleFonts.inter(
-                      color: isCompleted ? Colors.white70 : AppTheme.neonMagenta,
+                      color: isCompleted ? Colors.white70 : AppTheme.neonGreen,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.2,

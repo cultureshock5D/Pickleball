@@ -35,7 +35,7 @@ class _NeonButtonState extends State<NeonButton> {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveGradient = widget.gradient ?? AppTheme.neonMagentaGradient;
+    final effectiveGradient = widget.gradient ?? AppTheme.neonGreenGradient;
     final isEnabled = widget.onPressed != null && !widget.isLoading;
 
     return Semantics(

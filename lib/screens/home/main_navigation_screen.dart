@@ -4,6 +4,7 @@ import '../../models/user_profile.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../widgets/custom_top_app_bar.dart';
+import '../analytics/analytics_screen.dart';
 import '../booking/booking_screen.dart';
 import '../bookings/my_bookings_screen.dart';
 import '../profile/profile_screen.dart';
@@ -41,10 +42,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   String get _currentTabTitle {
     switch (_currentIndex) {
       case 0:
-        return 'Account Overview';
+        return 'Court Reservation';
       case 1:
-        return 'My Reservations';
+        return 'Performance Hub';
       case 2:
+        return 'My Reservations';
+      case 3:
         return 'Account & Profile';
       default:
         return 'SmashCourt';
@@ -54,10 +57,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   String get _currentTabSubtitle {
     switch (_currentIndex) {
       case 0:
-        return 'Insights';
-      case 1:
         return 'Court Schedule';
+      case 1:
+        return 'Analytics & Insights';
       case 2:
+        return 'Active Bookings';
+      case 3:
         return 'Preferences';
       default:
         return 'Finance';
@@ -89,7 +94,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         },
         onProfilePressed: () {
           // Switch to Profile Tab
-          setState(() => _currentIndex = 2);
+          setState(() => _currentIndex = 3);
         },
       ),
       // Preserves full widget and scroll state across tab switches
@@ -97,6 +102,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         index: _currentIndex,
         children: const [
           BookingScreen(),
+          AnalyticsScreen(),
           MyBookingsScreen(),
           ProfileScreen(),
         ],
@@ -112,17 +118,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           CustomBottomNavItem(
             icon: Icons.sports_tennis_outlined,
             activeIcon: Icons.sports_tennis_rounded,
-            label: 'Court Booking',
+            label: 'Booking',
+          ),
+          CustomBottomNavItem(
+            icon: Icons.insights_outlined,
+            activeIcon: Icons.insights_rounded,
+            label: 'Insights',
           ),
           CustomBottomNavItem(
             icon: Icons.calendar_today_outlined,
             activeIcon: Icons.calendar_month_rounded,
-            label: 'My Reservations',
+            label: 'Schedule',
           ),
           CustomBottomNavItem(
             icon: Icons.person_outline_rounded,
             activeIcon: Icons.person_rounded,
-            label: 'Profile & Account',
+            label: 'Profile',
           ),
         ],
       ),

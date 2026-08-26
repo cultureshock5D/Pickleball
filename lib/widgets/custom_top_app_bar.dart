@@ -146,7 +146,7 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: AppTheme.neonMagenta,
+                            color: AppTheme.neonGreen,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -166,12 +166,12 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
                       color: AppTheme.surfaceHighlight,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppTheme.neonMagenta,
+                        color: AppTheme.neonGreen,
                         width: 1.8,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.neonMagenta.withOpacity(0.3),
+                          color: AppTheme.neonGreen.withOpacity(0.3),
                           blurRadius: 8,
                           spreadRadius: 0,
                         ),

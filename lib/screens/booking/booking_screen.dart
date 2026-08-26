@@ -521,17 +521,17 @@ class _BookingScreenState extends State<BookingScreen>
                     margin: const EdgeInsets.only(right: 10),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppTheme.neonMagenta.withOpacity(0.18)
+                          ? AppTheme.neonGreen.withOpacity(0.18)
                           : AppTheme.surfaceElevated,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: isSelected ? AppTheme.neonMagenta : AppTheme.borderSubtle,
+                        color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
                         width: isSelected ? 1.5 : 1.0,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: AppTheme.neonMagenta.withOpacity(0.25),
+                                color: AppTheme.neonGreen.withOpacity(0.25),
                                 blurRadius: 10,
                               ),
                             ]
@@ -543,7 +543,7 @@ class _BookingScreenState extends State<BookingScreen>
                         Text(
                           weekDayStr,
                           style: GoogleFonts.inter(
-                            color: isSelected ? AppTheme.neonMagenta : AppTheme.textMuted,
+                            color: isSelected ? AppTheme.neonGreen : AppTheme.textMuted,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -584,7 +584,7 @@ class _BookingScreenState extends State<BookingScreen>
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.neonMagenta),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.neonGreen),
                   ),
                 ),
             ],
@@ -608,7 +608,7 @@ class _BookingScreenState extends State<BookingScreen>
                     color: isSelected ? AppTheme.surfaceHighlight : AppTheme.surfaceElevated,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? AppTheme.neonMagenta : AppTheme.borderSubtle,
+                      color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
                       width: isSelected ? 1.6 : 1.0,
                     ),
                   ),
@@ -619,13 +619,13 @@ class _BookingScreenState extends State<BookingScreen>
                         height: 42,
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppTheme.neonMagenta.withOpacity(0.2)
+                              ? AppTheme.neonGreen.withOpacity(0.2)
                               : const Color(0xFF26262E),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.sports_tennis_rounded,
-                          color: isSelected ? AppTheme.neonMagenta : Colors.white70,
+                          color: isSelected ? AppTheme.neonGreen : Colors.white70,
                           size: 20,
                         ),
                       ),
@@ -712,16 +712,16 @@ class _BookingScreenState extends State<BookingScreen>
                 selected: isSelected,
                 onSelected: (_) => setState(() => _selectedTimeSlotIndex = index),
                 backgroundColor: AppTheme.surfaceElevated,
-                selectedColor: AppTheme.neonMagenta.withOpacity(0.2),
+                selectedColor: AppTheme.neonGreen.withOpacity(0.2),
                 labelStyle: GoogleFonts.inter(
-                  color: isSelected ? AppTheme.neonMagenta : AppTheme.textSecondary,
+                  color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary,
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                   side: BorderSide(
-                    color: isSelected ? AppTheme.neonMagenta : AppTheme.borderSubtle,
+                    color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
                   ),
                 ),
               );
@@ -751,11 +751,11 @@ class _BookingScreenState extends State<BookingScreen>
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppTheme.neonMagenta.withOpacity(0.18)
+                            ? AppTheme.neonGreen.withOpacity(0.18)
                             : AppTheme.surfaceElevated,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isSelected ? AppTheme.neonMagenta : AppTheme.borderSubtle,
+                          color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
                           width: isSelected ? 1.5 : 1,
                         ),
                       ),

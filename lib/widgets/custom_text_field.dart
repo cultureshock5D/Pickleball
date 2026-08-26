@@ -74,7 +74,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             boxShadow: _isFocused
                 ? [
                     BoxShadow(
-                      color: AppTheme.neonMagenta.withOpacity(0.15),
+                      color: AppTheme.neonGreen.withOpacity(0.15),
                       blurRadius: 12,
                       offset: const Offset(0, 2),
                     ),
@@ -94,14 +94,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
-            cursorColor: AppTheme.neonMagenta,
+            cursorColor: AppTheme.neonGreen,
             decoration: InputDecoration(
               hintText: widget.hintText,
               prefixIcon: widget.prefixIcon != null
                   ? Icon(
                       widget.prefixIcon,
                       size: 20,
-                      color: _isFocused ? AppTheme.neonMagenta : AppTheme.textMuted,
+                      color: _isFocused ? AppTheme.neonGreen : AppTheme.textMuted,
                     )
                   : null,
               suffixIcon: widget.isPassword

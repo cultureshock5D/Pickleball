@@ -164,7 +164,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             width: 8,
                             height: 8,
                             decoration: const BoxDecoration(
-                              color: AppTheme.neonMagenta,
+                              color: AppTheme.neonGreen,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -307,7 +307,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: Text(
                         'Sign In',
                         style: GoogleFonts.inter(
-                          color: AppTheme.neonMagenta,
+                          color: AppTheme.neonGreen,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
