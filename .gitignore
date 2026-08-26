@@ -12,6 +12,15 @@
 .swiftpm/
 migrate_working_dir/
 
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Flutter / Dart generated files
+*.env.json
+*.env.dart
+
 # IntelliJ related
 *.iml
 *.ipr
