@@ -20,6 +20,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   late TabController _tabController;
 
   List<BookingModel> _allBookings = [];
+  List<BookingModel> _upcomingBookings = [];
+  List<BookingModel> _pastBookings = [];
   bool _isLoading = true;
 
   @override
@@ -38,28 +40,24 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   Future<void> _loadBookings() async {
     setState(() => _isLoading = true);
     final bookings = await _bookingService.fetchCustomerBookings();
-    if (mounted) {
-      setState(() {
-        _allBookings = bookings;
-        _isLoading = false;
-      });
-    }
-  }
-
-  List<BookingModel> get _upcomingBookings {
     final now = DateTime.now();
-    return _allBookings.where((b) {
+    final upcoming = bookings.where((b) {
       return b.endTime.isAfter(now) && b.status.toLowerCase() != 'cancelled';
-    }).toList();
-  }
-
-  List<BookingModel> get _pastBookings {
-    final now = DateTime.now();
-    return _allBookings.where((b) {
+    }).toList(growable: false);
+    final past = bookings.where((b) {
       return b.endTime.isBefore(now) ||
           b.status.toLowerCase() == 'completed' ||
           b.status.toLowerCase() == 'cancelled';
-    }).toList();
+    }).toList(growable: false);
+
+    if (mounted) {
+      setState(() {
+        _allBookings = bookings;
+        _upcomingBookings = upcoming;
+        _pastBookings = past;
+        _isLoading = false;
+      });
+    }
   }
 
   String _formatDateHeader(DateTime dt) {

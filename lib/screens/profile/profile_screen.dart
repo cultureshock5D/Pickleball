@@ -51,120 +51,124 @@ class _ProfileScreenState extends State<ProfileScreen>
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
 
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) {
-          return Container(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-              top: 24,
-              left: 24,
-              right: 24,
-            ),
-            decoration: const BoxDecoration(
-              color: AppTheme.surfaceElevated,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border(top: BorderSide(color: AppTheme.borderSubtle, width: 1)),
-            ),
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 44,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppTheme.borderSubtle,
-                        borderRadius: BorderRadius.circular(2),
+    try {
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                top: 24,
+                left: 24,
+                right: 24,
+              ),
+              decoration: const BoxDecoration(
+                color: AppTheme.surfaceElevated,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border(top: BorderSide(color: AppTheme.borderSubtle, width: 1)),
+              ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppTheme.borderSubtle,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Edit Profile Details',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                    const SizedBox(height: 18),
+                    Text(
+                      'Edit Profile Details',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Update your full name across public.profiles',
-                    style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 13),
-                  ),
-                  const SizedBox(height: 20),
-                  CustomTextField(
-                    controller: nameController,
-                    label: 'Full Name',
-                    hintText: 'Enter your full name',
-                    prefixIcon: Icons.person_outline_rounded,
-                    validator: Validators.validateFullName,
-                  ),
-                  const SizedBox(height: 24),
-                  NeonButton(
-                    text: 'Save Changes',
-                    isLoading: isSaving,
-                    icon: Icons.save_rounded,
-                    onPressed: () async {
-                      if (!formKey.currentState!.validate()) return;
-                      setModalState(() => isSaving = true);
-                      try {
-                        final updated = await _authService.updateUserProfile(
-                          fullName: nameController.text,
-                        );
-                        if (mounted) {
-                          setState(() {
-                            _userProfile = updated;
-                          });
-                          Navigator.of(ctx).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: AppTheme.surfaceElevated,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                side: const BorderSide(color: AppTheme.neonLime),
-                              ),
-                              content: Row(
-                                children: [
-                                  const Icon(Icons.check_circle_rounded, color: AppTheme.neonLime, size: 20),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    'Profile updated successfully in Supabase!',
-                                    style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-                                  ),
-                                ],
-                              ),
-                            ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Update your full name across public.profiles',
+                      style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 13),
+                    ),
+                    const SizedBox(height: 20),
+                    CustomTextField(
+                      controller: nameController,
+                      label: 'Full Name',
+                      hintText: 'Enter your full name',
+                      prefixIcon: Icons.person_outline_rounded,
+                      validator: Validators.validateFullName,
+                    ),
+                    const SizedBox(height: 24),
+                    NeonButton(
+                      text: 'Save Changes',
+                      isLoading: isSaving,
+                      icon: Icons.save_rounded,
+                      onPressed: () async {
+                        if (!formKey.currentState!.validate()) return;
+                        setModalState(() => isSaving = true);
+                        try {
+                          final updated = await _authService.updateUserProfile(
+                            fullName: nameController.text,
                           );
+                          if (mounted) {
+                            setState(() {
+                              _userProfile = updated;
+                            });
+                            Navigator.of(ctx).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: AppTheme.surfaceElevated,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: const BorderSide(color: AppTheme.neonLime),
+                                ),
+                                content: Row(
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded, color: AppTheme.neonLime, size: 20),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'Profile updated successfully in Supabase!',
+                                      style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          setModalState(() => isSaving = false);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: AppTheme.surfaceElevated,
+                                content: Text(e.toString()),
+                              ),
+                            );
+                          }
                         }
-                      } catch (e) {
-                        setModalState(() => isSaving = false);
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: AppTheme.surfaceElevated,
-                              content: Text(e.toString()),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                  ),
-                ],
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
-      ),
-    );
+            );
+          },
+        ),
+      );
+    } finally {
+      nameController.dispose();
+    }
   }
 
   Future<void> _handleSignOut() async {

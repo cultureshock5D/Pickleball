@@ -100,11 +100,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       // Preserves full widget and scroll state across tab switches
       body: IndexedStack(
         index: _currentIndex,
-        children: const [
-          BookingScreen(),
-          AnalyticsScreen(),
-          MyBookingsScreen(),
-          ProfileScreen(),
+        children: [
+          const BookingScreen(),
+          AnalyticsScreen(
+            onBookCourtPressed: () {
+              setState(() => _currentIndex = 0);
+            },
+          ),
+          const MyBookingsScreen(),
+          const ProfileScreen(),
         ],
       ),
       bottomNavigationBar: CustomBottomNavBar(
