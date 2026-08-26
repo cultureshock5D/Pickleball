@@ -160,13 +160,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 28),
 
-                      // Title & Subtitle styled after the reference header
+                      // App Header & Title
                       Text(
-                        'Insights',
+                        'Welcome to SmashCourt',
                         style: GoogleFonts.inter(
-                          color: AppTheme.textSecondary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
+                          color: AppTheme.neonGreen,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -174,14 +175,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Account Access',
                         style: GoogleFonts.inter(
                           color: AppTheme.textPrimary,
-                          fontSize: 32,
+                          fontSize: 30,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.8,
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
-                      // Decorative visual card echoing the reference design
+                      // About Application Card
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
@@ -194,62 +195,58 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Total Amount',
-                              style: GoogleFonts.inter(
-                                color: AppTheme.textMuted,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
                             Row(
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
                               children: [
-                                Text(
-                                  r'$425,001',
-                                  style: GoogleFonts.inter(
-                                    color: AppTheme.textPrimary,
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                Text(
-                                  '.10',
-                                  style: GoogleFonts.inter(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const Spacer(),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.neonLime.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(8),
+                                    color: AppTheme.neonGreen.withOpacity(0.15),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
                                   ),
-                                  child: Text(
-                                    '+40.1%',
-                                    style: GoogleFonts.inter(
-                                      color: AppTheme.neonLime,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                  child: const Icon(
+                                    Icons.sports_tennis_rounded,
+                                    color: AppTheme.neonGreen,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'SmashCourt Pickleball',
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Court Booking & Performance Hub',
+                                        style: GoogleFonts.inter(
+                                          color: AppTheme.textMuted,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              r'$80.20',
-                              style: GoogleFonts.inter(
-                                color: AppTheme.textMuted,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            const SizedBox(height: 16),
+                            const Divider(color: AppTheme.borderSubtle, height: 1),
+                            const SizedBox(height: 14),
+                            Row(
+                              children: [
+                                _buildAppFeaturePill(Icons.calendar_month_rounded, 'Easy Booking'),
+                                const SizedBox(width: 8),
+                                _buildAppFeaturePill(Icons.insights_rounded, 'Analytics'),
+                                const SizedBox(width: 8),
+                                _buildAppFeaturePill(Icons.verified_user_rounded, 'VIP Pass'),
+                              ],
                             ),
                           ],
                         ),
@@ -385,6 +382,38 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppFeaturePill(IconData icon, String label) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceElevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.borderSubtle),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppTheme.neonGreen, size: 14),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: AppTheme.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );
