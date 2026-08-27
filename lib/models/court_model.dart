@@ -10,7 +10,7 @@ class CourtModel {
     required this.id,
     required this.name,
     this.status = 'active',
-    this.hourlyRate = 45.0,
+    this.hourlyRate = 120.0,
     this.surfaceType = 'Pro-Cushion Hardcourt',
     this.courtType = 'Championship Indoor',
   });
@@ -18,16 +18,16 @@ class CourtModel {
   factory CourtModel.fromJson(Map<String, dynamic> json) {
     // Determine custom visual metadata based on court name if not present in DB schema
     final name = json['name'] as String? ?? 'Court';
-    double rate = 45.0;
+    double rate = 120.0;
     String surface = 'Pro-Cushion Hardcourt';
     String type = 'Championship Indoor';
 
     if (name.toLowerCase().contains('arena') || name.toLowerCase().contains('2')) {
-      rate = 55.0;
+      rate = 150.0;
       surface = 'Ultra-Fast Acrylic';
       type = 'LED Glow Indoor';
     } else if (name.toLowerCase().contains('skyline') || name.toLowerCase().contains('3')) {
-      rate = 40.0;
+      rate = 100.0;
       surface = 'All-Weather Surface';
       type = 'Rooftop Covered';
     }
