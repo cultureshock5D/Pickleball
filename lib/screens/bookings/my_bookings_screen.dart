@@ -19,7 +19,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   final BookingService _bookingService = BookingService.instance;
   late TabController _tabController;
 
-  List<BookingModel> _allBookings = [];
   List<BookingModel> _upcomingBookings = [];
   List<BookingModel> _pastBookings = [];
   bool _isLoading = true;
@@ -52,7 +51,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
 
     if (mounted) {
       setState(() {
-        _allBookings = bookings;
         _upcomingBookings = upcoming;
         _pastBookings = past;
         _isLoading = false;
@@ -299,7 +297,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   Widget _buildBookingCard(BookingModel booking, {required bool isUpcoming}) {
     final status = booking.status.toLowerCase();
     final isPending = status == 'pending';
-    final isConfirmed = status == 'confirmed';
     final isCompleted = status == 'completed';
 
     Color statusColor = AppTheme.neonLime;

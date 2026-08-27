@@ -19,7 +19,8 @@ class AuthService {
 
   bool get isSupabaseReady {
     try {
-      return Supabase.instance.client != null;
+      Supabase.instance.client;
+      return true;
     } catch (_) {
       return false;
     }
@@ -119,19 +120,21 @@ class AuthService {
         );
 
         final user = response.user;
-        if (user != null) {
-          await _supabase!.from('profiles').upsert({
-            'id': user.id,
-            'full_name': fullName.trim(),
-            'role': 'customer',
-          });
+        if (user != null && response.session != null) {
+          try {
+            await _supabase!.from('profiles').upsert({
+              'id': user.id,
+              'full_name': fullName.trim(),
+              'role': 'customer',
+            });
+          } catch (pe) {
+            debugPrint('Notice: Initial profile upsert: $pe');
+          }
         }
 
         return response;
       } on AuthException {
         rethrow;
-      } on PostgrestException catch (pe) {
-        throw AuthException('Profile setup failed: ${pe.message}');
       } catch (e) {
         throw AuthException('Sign up failed: $e');
       }
@@ -190,7 +193,7 @@ class AuthService {
     } else {
       _isDemoLoggedIn = false;
       _mockAuthStreamController.add(
-        AuthState(AuthChangeEvent.signedOut, null),
+        const AuthState(AuthChangeEvent.signedOut, null),
       );
     }
   }

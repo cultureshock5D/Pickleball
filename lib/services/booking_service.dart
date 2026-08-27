@@ -45,7 +45,8 @@ class BookingService {
 
   bool get isSupabaseReady {
     try {
-      return Supabase.instance.client != null;
+      Supabase.instance.client;
+      return true;
     } catch (_) {
       return false;
     }

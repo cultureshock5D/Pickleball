@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants/supabase_config.dart';
 import 'core/theme/app_theme.dart';
@@ -7,6 +9,14 @@ import 'widgets/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load .env file safely
+  try {
+    await dotenv.load(fileName: ".env");
+    debugPrint('.env file loaded successfully.');
+  } catch (e) {
+    debugPrint('.env load notice: $e (using environment/default config fallback)');
+  }
 
   // Set preferred orientations and system overlay style for luxury dark theme
   await SystemChrome.setPreferredOrientations([
@@ -25,17 +35,16 @@ Future<void> main() async {
 
   // Initialize Supabase safely
   try {
-    if (SupabaseConfig.url.isNotEmpty &&
-        !SupabaseConfig.url.contains('your-project') &&
-        Uri.tryParse(SupabaseConfig.url)?.hasAbsolutePath == true) {
+    if (SupabaseConfig.isConfigured) {
       await Supabase.initialize(
         url: SupabaseConfig.url,
         anonKey: SupabaseConfig.anonKey,
-        debug: false,
+        debug: kDebugMode,
       );
+      debugPrint('Supabase successfully initialized with URL: ${SupabaseConfig.url}');
     } else {
       debugPrint(
-        'Supabase is using placeholder credentials. Running with mock/offline fallback.',
+        'Supabase is not configured with valid credentials. Running with mock/offline fallback.',
       );
     }
   } catch (e) {

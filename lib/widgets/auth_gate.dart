@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/theme/app_theme.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/home/main_navigation_screen.dart';
 import '../services/auth_service.dart';
