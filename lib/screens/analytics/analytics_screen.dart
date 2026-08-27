@@ -101,6 +101,44 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     return DateFormat('h:mm a').format(dt);
   }
 
+  String get _preferredCourtName {
+    if (_filteredBookings.isEmpty) return 'No Court History';
+    final courtCounts = <String, int>{};
+    for (final b in _filteredBookings) {
+      final name = b.courtName ?? 'Court 1 - Center Championship';
+      courtCounts[name] = (courtCounts[name] ?? 0) + 1;
+    }
+    String topCourt = _filteredBookings.first.courtName ?? 'Court 1 - Center Championship';
+    int maxCount = 0;
+    courtCounts.forEach((court, count) {
+      if (count > maxCount) {
+        maxCount = count;
+        topCourt = court;
+      }
+    });
+    return topCourt;
+  }
+
+  String get _preferredCourtSubtitle {
+    if (_filteredBookings.isEmpty) return 'Reserve your first court to view venue analytics';
+    final count = _filteredBookings.where((b) => (b.courtName ?? 'Court 1 - Center Championship') == _preferredCourtName).length;
+    final percentage = ((count / _filteredBookings.length) * 100).toStringAsFixed(0);
+    return '$percentage% of Playtime ($count Sessions)';
+  }
+
+  String get _peakSlotName {
+    if (_filteredBookings.isEmpty) return 'No Peak Data';
+    final hour = _filteredBookings.first.startTime.hour;
+    if (hour < 12) return 'Morning Sessions';
+    if (hour < 17) return 'Afternoon Sessions';
+    return 'Evening Sessions';
+  }
+
+  String get _peakSlotTime {
+    if (_filteredBookings.isEmpty) return 'Flexible';
+    return '${_formatTime(_filteredBookings.first.startTime)} - ${_formatTime(_filteredBookings.first.endTime)}';
+  }
+
   double _calculateDurationHours(BookingModel b) {
     final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
     return (diffMinutes / 60.0).clamp(0.5, 8.0);
@@ -366,10 +404,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
             const SizedBox(height: 12),
             _buildCourtDistributionTile(
-              'SmashCourt - Court 1',
-              'Championship Indoor • Pro-Cushion Hardcourt',
-              hasData ? '100% of Playtime (${_bookings.length} Sessions)' : 'Primary Arena Court • Available',
-              hasData ? 1.0 : 0.1,
+              _preferredCourtName,
+              hasData ? 'Preferred Court • Pro-Cushion Surface' : 'Championship Indoor • Pro-Cushion Hardcourt',
+              _preferredCourtSubtitle,
+              hasData ? 1.0 : 0.0,
               AppTheme.neonGreen,
             ),
             const SizedBox(height: 24),
@@ -380,8 +418,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 Expanded(
                   child: _buildMetricTile(
                     'Peak Play Slot',
-                    hasData ? '6:00 - 8:30 PM' : 'Flexible',
-                    'Evening Sessions',
+                    _peakSlotTime,
+                    _peakSlotName,
                     Icons.nights_stay_rounded,
                     AppTheme.neonGreen,
                   ),
@@ -390,8 +428,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 Expanded(
                   child: _buildMetricTile(
                     'Attendance Rate',
-                    hasData ? '100%' : '100%',
-                    '0 Cancellations',
+                    hasData ? '100%' : '0%',
+                    hasData ? '0 Cancellations' : 'No Bookings Yet',
                     Icons.check_circle_outline_rounded,
                     AppTheme.neonLime,
                   ),

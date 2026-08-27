@@ -356,10 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 8),
                         TextButton.icon(
                           onPressed: () async {
-                            await _authService.signIn(
-                              email: 'customer@pickleball.com',
-                              password: 'demoPassword123',
-                            );
+                            await _authService.signInWithDemoAccess();
                           },
                           icon: const Icon(
                             Icons.bolt_rounded,

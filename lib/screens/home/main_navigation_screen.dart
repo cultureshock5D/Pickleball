@@ -6,7 +6,7 @@ import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../widgets/custom_top_app_bar.dart';
 import '../analytics/analytics_screen.dart';
 import '../booking/booking_screen.dart';
-import '../bookings/my_bookings_screen.dart';
+import '../booking/my_bookings_screen.dart';
 import '../profile/profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
