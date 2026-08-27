@@ -4,7 +4,12 @@ This document provides the operational protocols, architectural rules, and conte
 
 The files "layout.tsx" and "Project.sql" are reference only.
 ---
+## Safety & File Modification Constraints
 
+### Directory Protection & Non-Destructive Edits (MANDATORY)
+- **Zero Whole-Folder Operations:** NEVER execute destructive shell commands (`rm -rf`, `rmdir`, `del /s /q`) on workspace root folders or core directories (e.g., `lib/`, `android/`, `ios/`, `test/`).
+- **Targeted File Updates Only:** Never replace entire directories or broad modules to make single-feature additions. Modify or create target files explicitly one at a time.
+- **Incremental Merging:** When integrating features into existing screens (e.g., adding calendar deep links into `MyBookingsScreen` or `BookingConfirmationDialog`), append or refactor only the relevant widget sub-tree. Preserve all existing business logic, styles, and imports.
 ## 3-Layer Architecture Protocol
 
 All agent operations must strictly adhere to this execution hierarchy:
