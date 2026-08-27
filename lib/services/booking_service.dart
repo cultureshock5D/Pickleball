@@ -11,6 +11,29 @@ class BookingService {
 
   final AuthService _authService = AuthService.instance;
 
+  // In-memory availability cache: key is "courtId_YYYY-MM-DD"
+  final Map<String, List<BookingModel>> _courtAvailabilityCache = {};
+
+  String _formatCacheKey(String courtId, DateTime date) {
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '${courtId}_${date.year}-$m-$d';
+  }
+
+  /// Instant synchronous cache lookup for zero-latency UI updates
+  List<BookingModel>? getCachedAvailability(String courtId, DateTime date) {
+    return _courtAvailabilityCache[_formatCacheKey(courtId, date)];
+  }
+
+  /// Invalidate cache for a specific date or clear all
+  void invalidateAvailabilityCache({String? courtId, DateTime? date}) {
+    if (courtId != null && date != null) {
+      _courtAvailabilityCache.remove(_formatCacheKey(courtId, date));
+    } else {
+      _courtAvailabilityCache.clear();
+    }
+  }
+
   bool get isSupabaseReady => _authService.isSupabaseReady;
 
   SupabaseClient? get _supabase {
@@ -75,7 +98,9 @@ class BookingService {
             .select('*, courts(name)')
             .single();
 
-        return BookingModel.fromJson(response);
+        final created = BookingModel.fromJson(response);
+        invalidateAvailabilityCache(courtId: courtId, date: startTime);
+        return created;
       } on PostgrestException catch (pe) {
         throw Exception(pe.message);
       } catch (e) {
@@ -103,6 +128,7 @@ class BookingService {
       );
 
       DemoData.addDemoBooking(newBooking);
+      invalidateAvailabilityCache(courtId: courtId, date: startTime);
       return newBooking;
     }
   }
@@ -139,5 +165,83 @@ class BookingService {
     }
 
     return [];
+  }
+
+  /// Cancel a booking by ID
+  Future<bool> cancelBooking(String bookingId) async {
+    final isLive = _authService.isLiveUser;
+
+    if (isLive && _supabase != null) {
+      final user = _supabase!.auth.currentUser;
+      if (user == null) return false;
+
+      try {
+        await _supabase!
+            .from('bookings')
+            .update({'status': 'cancelled'})
+            .eq('id', bookingId)
+            .eq('customer_id', user.id);
+        invalidateAvailabilityCache();
+        return true;
+      } catch (e) {
+        debugPrint('Error cancelling booking in Supabase: $e');
+        return false;
+      }
+    }
+
+    // Demo/offline mode cancellation
+    DemoData.cancelDemoBooking(bookingId);
+    invalidateAvailabilityCache();
+    return true;
+  }
+
+  /// Fetch bookings for a court on a given date to accurately determine booked vs available slots
+  /// with in-memory caching for sub-millisecond tab/date transitions.
+  Future<List<BookingModel>> fetchCourtBookingsForDate(
+    String courtId,
+    DateTime date, {
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = _formatCacheKey(courtId, date);
+
+    if (!forceRefresh && _courtAvailabilityCache.containsKey(cacheKey)) {
+      return _courtAvailabilityCache[cacheKey]!;
+    }
+
+    final isLive = _authService.isLiveUser;
+    final startOfDay = DateTime(date.year, date.month, date.day).toUtc().toIso8601String();
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59).toUtc().toIso8601String();
+
+    List<BookingModel> result = [];
+
+    if (isLive && _supabase != null) {
+      try {
+        final response = await _supabase!
+            .from('bookings')
+            .select('*, courts(name)')
+            .eq('court_id', courtId)
+            .neq('status', 'cancelled')
+            .gte('start_time', startOfDay)
+            .lte('start_time', endOfDay);
+
+        result = (response as List<dynamic>)
+            .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+      } catch (e) {
+        debugPrint('Notice: Error fetching court bookings for date from Supabase: $e');
+      }
+    } else {
+      // Demo/fallback mode: Check demo bookings for this court and date
+      result = DemoData.demoBookings.where((b) {
+        if (b.courtId != courtId || b.status.toLowerCase() == 'cancelled') return false;
+        final localDate = b.startTime.toLocal();
+        return localDate.year == date.year &&
+            localDate.month == date.month &&
+            localDate.day == date.day;
+      }).toList();
+    }
+
+    _courtAvailabilityCache[cacheKey] = result;
+    return result;
   }
 }

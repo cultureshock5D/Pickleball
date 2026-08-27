@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_theme.dart';
 import '../models/user_profile.dart';
@@ -48,7 +49,10 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             // Left Action Icon (+) matching reference
             GestureDetector(
-              onTap: onQuickAddPressed,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onQuickAddPressed?.call();
+              },
               child: Container(
                 width: 40,
                 height: 40,
@@ -75,23 +79,13 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
                   if (subtitle != null)
                     Text(
                       subtitle!,
-                      style: GoogleFonts.inter(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0.2,
-                      ),
+                      style: AppTheme.fontMuted,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   Text(
                     title,
-                    style: GoogleFonts.inter(
-                      color: AppTheme.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.4,
-                    ),
+                    style: AppTheme.fontHeaderLarge,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -122,7 +116,10 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
 
                 // Notifications Bell with neon badge
                 GestureDetector(
-                  onTap: onNotificationPressed,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    onNotificationPressed?.call();
+                  },
                   child: Stack(
                     children: [
                       Container(
@@ -158,7 +155,10 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
 
                 // User Avatar / Initials Badge with neon ring
                 GestureDetector(
-                  onTap: onProfilePressed,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onProfilePressed?.call();
+                  },
                   child: Container(
                     width: 40,
                     height: 40,
@@ -169,9 +169,9 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
                         color: AppTheme.neonGreen,
                         width: 1.8,
                       ),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
-                          color: AppTheme.neonGreen.withOpacity(0.3),
+                          color: AppTheme.neonGreenAlpha30,
                           blurRadius: 8,
                           spreadRadius: 0,
                         ),

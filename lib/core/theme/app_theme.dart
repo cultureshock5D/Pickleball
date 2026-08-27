@@ -20,6 +20,22 @@ class AppTheme {
   static const Color neonYellow = Color(0xFFFACC15);
   static const Color errorRed = Color(0xFFEF4444);
 
+  // Precomputed Alpha Colors (eliminates runtime .withOpacity / shader allocations)
+  static const Color neonGreenAlpha10 = Color(0x1A10B981);
+  static const Color neonGreenAlpha12 = Color(0x1F10B981);
+  static const Color neonGreenAlpha15 = Color(0x2610B981);
+  static const Color neonGreenAlpha18 = Color(0x2E10B981);
+  static const Color neonGreenAlpha20 = Color(0x3310B981);
+  static const Color neonGreenAlpha30 = Color(0x4D10B981);
+  static const Color neonGreenAlpha40 = Color(0x6610B981);
+  static const Color neonGreenAlpha50 = Color(0x8010B981);
+  static const Color neonLimeAlpha14 = Color(0x2484CC16);
+  static const Color neonLimeAlpha15 = Color(0x2684CC16);
+  static const Color neonLimeAlpha20 = Color(0x3384CC16);
+  static const Color neonLimeAlpha35 = Color(0x5984CC16);
+  static const Color borderSubtleAlpha30 = Color(0x4D1E1E24);
+  static const Color borderSubtleAlpha50 = Color(0x801E1E24);
+
   // Aliases for backwards compatibility
   static const Color neonMagenta = neonGreen;
   static const Color neonMagentaLight = neonGreenLight;
@@ -30,6 +46,51 @@ class AppTheme {
   static const Color textSecondary = Color(0xFFA1A1AA);
   static const Color textMuted = Color(0xFF71717A);
   static const Color textDark = Color(0xFF09090B);
+
+  // Pre-instantiated Text Styles (eliminates repeated GoogleFonts.inter() build allocations)
+  static final TextStyle fontHeaderLarge = GoogleFonts.inter(
+    color: textPrimary,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.4,
+  );
+
+  static final TextStyle fontSectionTitle = GoogleFonts.inter(
+    color: textPrimary,
+    fontSize: 14.5,
+    fontWeight: FontWeight.w700,
+  );
+
+  static final TextStyle fontCardTitle = GoogleFonts.inter(
+    color: textPrimary,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+  );
+
+  static final TextStyle fontBody = GoogleFonts.inter(
+    color: textSecondary,
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+  );
+
+  static final TextStyle fontMuted = GoogleFonts.inter(
+    color: textMuted,
+    fontSize: 11.5,
+    fontWeight: FontWeight.w500,
+  );
+
+  static final TextStyle fontPriceHero = GoogleFonts.inter(
+    color: neonLime,
+    fontSize: 19,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.3,
+  );
+
+  static final TextStyle fontBadge = GoogleFonts.inter(
+    fontSize: 10,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 0.3,
+  );
 
   // Gradients
   static const LinearGradient cardGradient = LinearGradient(

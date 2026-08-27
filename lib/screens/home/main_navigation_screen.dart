@@ -4,9 +4,8 @@ import '../../models/user_profile.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../widgets/custom_top_app_bar.dart';
-import '../analytics/analytics_screen.dart';
-import '../booking/booking_screen.dart';
-import '../booking/my_bookings_screen.dart';
+import '../booking/court_reservation.dart';
+import '../insights/insights.dart';
 import '../profile/profile_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -46,8 +45,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 1:
         return 'Performance Hub';
       case 2:
-        return 'My Reservations';
-      case 3:
         return 'Account & Profile';
       default:
         return 'SmashCourt';
@@ -57,15 +54,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   String get _currentTabSubtitle {
     switch (_currentIndex) {
       case 0:
-        return 'Court Schedule';
+        return 'Booking & Schedule';
       case 1:
         return 'Analytics & Insights';
       case 2:
-        return 'Active Bookings';
-      case 3:
-        return 'Preferences';
+        return 'Preferences & Membership';
       default:
-        return 'Finance';
+        return 'Luxury Club';
     }
   }
 
@@ -81,7 +76,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         userProfile: _userProfile,
         userEmail: user?.email,
         onQuickAddPressed: () {
-          // Switch to Court Booking tab
+          // Switch to Court Reservation tab
           setState(() => _currentIndex = 0);
         },
         onNotificationPressed: () {
@@ -94,24 +89,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         },
         onProfilePressed: () {
           // Switch to Profile Tab
-          setState(() => _currentIndex = 3);
+          setState(() => _currentIndex = 2);
         },
       ),
       // Preserves full widget and scroll state across tab switches
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          BookingScreen(
-            onViewBookings: () {
-              setState(() => _currentIndex = 2);
-            },
-          ),
-          AnalyticsScreen(
-            onBookCourtPressed: () {
-              setState(() => _currentIndex = 0);
-            },
-          ),
-          MyBookingsScreen(
+          const CourtReservationScreen(),
+          InsightsScreen(
             onBookCourtPressed: () {
               setState(() => _currentIndex = 0);
             },
@@ -130,17 +116,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           CustomBottomNavItem(
             icon: Icons.sports_tennis_outlined,
             activeIcon: Icons.sports_tennis_rounded,
-            label: 'Booking',
+            label: 'Reservation',
           ),
           CustomBottomNavItem(
             icon: Icons.insights_outlined,
             activeIcon: Icons.insights_rounded,
             label: 'Insights',
-          ),
-          CustomBottomNavItem(
-            icon: Icons.calendar_today_outlined,
-            activeIcon: Icons.calendar_month_rounded,
-            label: 'Schedule',
           ),
           CustomBottomNavItem(
             icon: Icons.person_outline_rounded,
@@ -152,3 +133,4 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
+

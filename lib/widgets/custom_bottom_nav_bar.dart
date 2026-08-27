@@ -62,7 +62,7 @@ class CustomBottomNavBar extends StatelessWidget {
                       }
                     },
                     borderRadius: BorderRadius.circular(16),
-                    splashColor: AppTheme.neonGreen.withOpacity(0.1),
+                    splashColor: AppTheme.neonGreenAlpha10,
                     highlightColor: Colors.transparent,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
@@ -81,12 +81,12 @@ class CustomBottomNavBar extends StatelessWidget {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppTheme.neonGreen.withOpacity(0.14)
+                                  ? AppTheme.neonGreenAlpha15
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(20),
                               border: isSelected
                                   ? Border.all(
-                                      color: AppTheme.neonGreen.withOpacity(0.4),
+                                      color: AppTheme.neonGreenAlpha40,
                                       width: 1,
                                     )
                                   : Border.all(color: Colors.transparent),
