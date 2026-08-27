@@ -101,13 +101,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          const BookingScreen(),
+          BookingScreen(
+            onViewBookings: () {
+              setState(() => _currentIndex = 2);
+            },
+          ),
           AnalyticsScreen(
             onBookCourtPressed: () {
               setState(() => _currentIndex = 0);
             },
           ),
-          const MyBookingsScreen(),
+          MyBookingsScreen(
+            onBookCourtPressed: () {
+              setState(() => _currentIndex = 0);
+            },
+          ),
           const ProfileScreen(),
         ],
       ),

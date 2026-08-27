@@ -78,6 +78,15 @@ class AuthService {
   /// Whether a valid session exists
   bool get isAuthenticated => currentSession != null;
 
+  /// Whether the active user is a live Supabase authenticated user
+  bool get isLiveUser {
+    if (isSupabaseReady && _supabase != null) {
+      final user = _supabase!.auth.currentUser;
+      return user != null && user.id != _demoProfile.id;
+    }
+    return false;
+  }
+
   /// Sign in with email and password
   Future<AuthResponse> signIn({
     required String email,

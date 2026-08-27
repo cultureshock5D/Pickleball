@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
 import '../../models/user_profile.dart';
 import '../../services/auth_service.dart';
+import '../../services/booking_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
 
@@ -20,7 +21,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   bool get wantKeepAlive => true;
 
   final AuthService _authService = AuthService.instance;
+  final BookingService _bookingService = BookingService.instance;
   UserProfile? _userProfile;
+  int _matchCount = 0;
   bool _isLoading = true;
 
   @override
@@ -33,9 +36,11 @@ class _ProfileScreenState extends State<ProfileScreen>
     final user = _authService.currentUser;
     if (user != null) {
       final profile = await _authService.fetchUserProfile(user.id);
+      final bookings = await _bookingService.fetchCustomerBookings();
       if (mounted) {
         setState(() {
           _userProfile = profile;
+          _matchCount = bookings.length;
           _isLoading = false;
         });
       }
@@ -116,6 +121,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                       onPressed: () async {
                         if (!formKey.currentState!.validate()) return;
                         setModalState(() => isSaving = true);
+                        final messenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(ctx);
+
                         try {
                           final updated = await _authService.updateUserProfile(
                             fullName: nameController.text,
@@ -124,8 +132,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                             setState(() {
                               _userProfile = updated;
                             });
-                            Navigator.of(ctx).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            navigator.pop();
+                            messenger.showSnackBar(
                               SnackBar(
                                 backgroundColor: AppTheme.surfaceElevated,
                                 behavior: SnackBarBehavior.floating,
@@ -149,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         } catch (e) {
                           setModalState(() => isSaving = false);
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               SnackBar(
                                 backgroundColor: AppTheme.surfaceElevated,
                                 content: Text(e.toString()),
@@ -335,11 +343,19 @@ class _ProfileScreenState extends State<ProfileScreen>
           Row(
             children: [
               Expanded(
-                child: _buildStatItem('Total Matches', '42', Icons.sports_tennis_rounded),
+                child: _buildStatItem(
+                  'Total Matches',
+                  '$_matchCount',
+                  Icons.sports_tennis_rounded,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatItem('Loyalty Points', '1,840', Icons.stars_rounded),
+                child: _buildStatItem(
+                  'Loyalty Points',
+                  '${_matchCount * 120}',
+                  Icons.stars_rounded,
+                ),
               ),
             ],
           ),

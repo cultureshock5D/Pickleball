@@ -116,8 +116,8 @@ void main() {
       final bookingService = BookingService.instance;
       final courts = await bookingService.fetchActiveCourts();
       expect(courts, isNotEmpty);
-      expect(courts.length, greaterThanOrEqualTo(3));
-      expect(courts.first.name, contains('Court'));
+      expect(courts.length, equals(1));
+      expect(courts.first.name, equals('SmashCourt - Court 1'));
     });
   });
 }

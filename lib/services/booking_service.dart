@@ -73,7 +73,7 @@ class BookingService {
             .map((json) => CourtModel.fromJson(json as Map<String, dynamic>))
             .toList();
 
-        if (list.isNotEmpty) return list;
+        if (list.isNotEmpty) return [list.first];
         return _defaultCourts;
       } catch (e) {
         debugPrint('Error fetching active courts: $e');
@@ -161,8 +161,8 @@ class BookingService {
             .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        debugPrint('Error fetching user bookings: $e');
-        return _localBookings;
+        debugPrint('Notice: live user bookings query result: $e');
+        return [];
       }
     }
     return List.unmodifiable(_localBookings);
@@ -171,27 +171,11 @@ class BookingService {
   static const List<CourtModel> _defaultCourts = [
     CourtModel(
       id: 'a1111111-1111-1111-1111-111111111111',
-      name: 'Court 1 - Center Championship',
+      name: 'SmashCourt - Court 1',
       status: 'active',
       hourlyRate: 45.0,
       surfaceType: 'Pro-Cushion Hardcourt',
       courtType: 'Championship Indoor',
-    ),
-    CourtModel(
-      id: 'b2222222-2222-2222-2222-222222222222',
-      name: 'Court 2 - Neon Arena (LED)',
-      status: 'active',
-      hourlyRate: 55.0,
-      surfaceType: 'Ultra-Fast Acrylic',
-      courtType: 'LED Glow Indoor',
-    ),
-    CourtModel(
-      id: 'c3333333-3333-3333-3333-333333333333',
-      name: 'Court 3 - Skyline Rooftop',
-      status: 'active',
-      hourlyRate: 40.0,
-      surfaceType: 'All-Weather Surface',
-      courtType: 'Rooftop Covered',
     ),
   ];
 }

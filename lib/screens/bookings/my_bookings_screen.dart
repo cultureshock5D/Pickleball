@@ -3,9 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/booking_model.dart';
 import '../../services/booking_service.dart';
+import '../../widgets/neon_button.dart';
+import '../../widgets/reservation_card.dart';
 
 class MyBookingsScreen extends StatefulWidget {
-  const MyBookingsScreen({super.key});
+  final VoidCallback? onBookCourtPressed;
+
+  const MyBookingsScreen({super.key, this.onBookCourtPressed});
 
   @override
   State<MyBookingsScreen> createState() => _MyBookingsScreenState();
@@ -40,9 +44,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     setState(() => _isLoading = true);
     final bookings = await _bookingService.fetchCustomerBookings();
     final now = DateTime.now();
+
     final upcoming = bookings.where((b) {
       return b.endTime.isAfter(now) && b.status.toLowerCase() != 'cancelled';
     }).toList(growable: false);
+
     final past = bookings.where((b) {
       return b.endTime.isBefore(now) ||
           b.status.toLowerCase() == 'completed' ||
@@ -56,29 +62,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         _isLoading = false;
       });
     }
-  }
-
-  String _formatDateHeader(DateTime dt) {
-    final now = DateTime.now();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
-      return 'Today, ${dt.day} ${months[dt.month - 1]}';
-    } else if (dt.year == now.year && dt.month == now.month && dt.day == now.day + 1) {
-      return 'Tomorrow, ${dt.day} ${months[dt.month - 1]}';
-    }
-    return '${days[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]} ${dt.year}';
-  }
-
-  String _formatTimeRange(DateTime start, DateTime end) {
-    String format(DateTime d) {
-      final hour = d.hour > 12 ? d.hour - 12 : (d.hour == 0 ? 12 : d.hour);
-      final min = d.minute.toString().padLeft(2, '0');
-      final period = d.hour >= 12 ? 'PM' : 'AM';
-      return '$hour:$min $period';
-    }
-    return '${format(start)} - ${format(end)}';
   }
 
   @override
@@ -96,32 +79,52 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1. Target Progress Card from reference design
+                    // 1. Status / Target Banner Card
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceElevated,
+                        gradient: AppTheme.cardGradient,
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(color: AppTheme.borderSubtle),
+                        boxShadow: AppTheme.cardShadow,
                       ),
                       child: Row(
                         children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppTheme.neonGreen.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.neonGreen.withOpacity(0.4),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.calendar_month_rounded,
+                              color: AppTheme.neonGreen,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  r'92% Left of $7,170 Target',
+                                  'Court Schedule & Pass',
                                   style: GoogleFonts.inter(
                                     color: AppTheme.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Text(
-                                  r'5 Days Left ($200/Day)',
+                                  _upcomingBookings.isNotEmpty
+                                      ? '${_upcomingBookings.length} active reservation${_upcomingBookings.length > 1 ? 's' : ''} scheduled'
+                                      : 'No active reservations currently scheduled',
                                   style: GoogleFonts.inter(
                                     color: AppTheme.textMuted,
                                     fontSize: 12,
@@ -130,26 +133,23 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                               ],
                             ),
                           ),
-                          // Pill Progress Bar
-                          Container(
-                            width: 80,
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF141418),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Stack(
-                              children: [
-                                Container(
-                                  width: 34,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.neonLime,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
+                          if (_upcomingBookings.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.neonLime.withOpacity(0.14),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppTheme.neonLime.withOpacity(0.35)),
+                              ),
+                              child: Text(
+                                'ACTIVE',
+                                style: GoogleFonts.inter(
+                                  color: AppTheme.neonLime,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -226,8 +226,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-            padding: const EdgeInsets.all(32),
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+            padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
               color: AppTheme.surfaceElevated,
               borderRadius: BorderRadius.circular(24),
@@ -237,39 +237,48 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 64,
-                  height: 64,
+                  width: 68,
+                  height: 68,
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceHighlight,
                     shape: BoxShape.circle,
+                    border: Border.all(color: AppTheme.borderSubtle),
                   ),
                   child: Icon(
                     isUpcoming ? Icons.calendar_today_outlined : Icons.history_rounded,
-                    color: AppTheme.textMuted,
-                    size: 28,
+                    color: isUpcoming ? AppTheme.neonGreen : AppTheme.textMuted,
+                    size: 30,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 Text(
                   isUpcoming ? 'No Upcoming Reservations' : 'No Past Reservations',
                   style: GoogleFonts.inter(
                     color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   isUpcoming
-                      ? 'Reserve a court from the booking tab to see your active schedule.'
-                      : 'Completed matches and reservations will appear here.',
+                      ? 'Reserve a court from the booking screen to see your scheduled sessions with calendar sync.'
+                      : 'Completed matches and historic reservations will automatically appear here.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     color: AppTheme.textMuted,
                     fontSize: 13,
-                    height: 1.4,
+                    height: 1.45,
                   ),
                 ),
+                if (isUpcoming && widget.onBookCourtPressed != null) ...[
+                  const SizedBox(height: 22),
+                  NeonButton(
+                    text: 'Book a Court Now',
+                    icon: Icons.flash_on_rounded,
+                    onPressed: widget.onBookCourtPressed,
+                  ),
+                ],
               ],
             ),
           ),
@@ -285,142 +294,15 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         itemCount: bookings.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, __) => const SizedBox(height: 14),
         itemBuilder: (context, index) {
           final booking = bookings[index];
-          return _buildBookingCard(booking, isUpcoming: isUpcoming);
+          return ReservationCard(
+            booking: booking,
+            isUpcoming: isUpcoming,
+            onRefresh: _loadBookings,
+          );
         },
-      ),
-    );
-  }
-
-  Widget _buildBookingCard(BookingModel booking, {required bool isUpcoming}) {
-    final status = booking.status.toLowerCase();
-    final isPending = status == 'pending';
-    final isCompleted = status == 'completed';
-
-    Color statusColor = AppTheme.neonLime;
-    if (isPending) {
-      statusColor = AppTheme.neonYellow;
-    } else if (isCompleted) {
-      statusColor = AppTheme.textMuted;
-    } else if (status == 'cancelled') {
-      statusColor = AppTheme.errorRed;
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.borderSubtle),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Date & Status Badge Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _formatDateHeader(booking.startTime),
-                style: GoogleFonts.inter(
-                  color: AppTheme.textMuted,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: statusColor.withOpacity(0.3)),
-                ),
-                child: Text(
-                  booking.status.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    color: statusColor,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // Court Info & Price Row matching Reference
-          Row(
-            children: [
-              // Silhouette Avatar / Court Badge
-              Container(
-                width: 46,
-                height: 46,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF26262E),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.sports_tennis_rounded,
-                  color: Colors.white70,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      booking.courtName ?? 'Court 1 - Center Championship',
-                      style: GoogleFonts.inter(
-                        color: AppTheme.textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _formatTimeRange(booking.startTime, booking.endTime),
-                      style: GoogleFonts.inter(
-                        color: AppTheme.textMuted,
-                        fontSize: 12.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '-\$${booking.totalAmount.toStringAsFixed(2)}',
-                    style: GoogleFonts.inter(
-                      color: isCompleted ? Colors.white70 : AppTheme.neonGreen,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    booking.id.length > 8 ? '${booking.id.substring(0, 8)}...' : booking.id,
-                    style: GoogleFonts.robotoMono(
-                      color: AppTheme.textMuted,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

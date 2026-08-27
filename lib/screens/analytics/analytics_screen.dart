@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/booking_model.dart';
 import '../../services/booking_service.dart';
+import '../../widgets/booking_success_modal.dart';
 import '../../widgets/neon_button.dart';
 
 class AnalyticsScreen extends StatefulWidget {
@@ -24,7 +26,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   bool _isLoading = true;
 
   int _selectedPeriodIndex = 1;
-  final List<String> _periods = ['This Week', 'This Month', 'All-Time 2026'];
+  final List<String> _periods = ['This Week', 'This Month', 'All-Time'];
 
   @override
   void initState() {
@@ -43,35 +45,60 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     }
   }
 
-  // Calculated Metrics
-  double get _totalPlaytimeHours {
-    if (_selectedPeriodIndex == 0) return 6.5; // This week
-    if (_selectedPeriodIndex == 1) return 24.5; // This month
-    return 68.0; // All time
+  List<BookingModel> get _filteredBookings {
+    if (_bookings.isEmpty) return [];
+    final now = DateTime.now();
+
+    if (_selectedPeriodIndex == 0) {
+      // Last 7 days
+      final sevenDaysAgo = now.subtract(const Duration(days: 7));
+      return _bookings.where((b) => b.startTime.isAfter(sevenDaysAgo)).toList();
+    } else if (_selectedPeriodIndex == 1) {
+      // This Month (last 30 days)
+      final thirtyDaysAgo = now.subtract(const Duration(days: 30));
+      return _bookings.where((b) => b.startTime.isAfter(thirtyDaysAgo)).toList();
+    }
+    return _bookings;
   }
 
-  int get _totalBookingsCount {
-    if (_selectedPeriodIndex == 0) return 4;
-    if (_selectedPeriodIndex == 1) return 14;
-    return 38;
+  // Calculated Real Metrics
+  double get _totalPlaytimeHours {
+    if (_filteredBookings.isEmpty) return 0.0;
+    double totalMinutes = 0;
+    for (final b in _filteredBookings) {
+      totalMinutes += b.endTime.difference(b.startTime).inMinutes;
+    }
+    return totalMinutes / 60.0;
   }
+
+  int get _totalBookingsCount => _filteredBookings.length;
 
   double get _totalSpend {
-    if (_selectedPeriodIndex == 0) return 240.0;
-    if (_selectedPeriodIndex == 1) return 890.0;
-    return 2480.0;
+    if (_filteredBookings.isEmpty) return 0.0;
+    return _filteredBookings.fold<double>(0.0, (sum, b) => sum + b.totalAmount);
+  }
+
+  double get _avgSessionHours {
+    if (_totalBookingsCount == 0) return 0.0;
+    return _totalPlaytimeHours / _totalBookingsCount;
+  }
+
+  Map<int, double> get _weeklyHoursMap {
+    final map = {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 0.0};
+    for (final b in _filteredBookings) {
+      final weekday = b.startTime.weekday; // 1 = Mon, 7 = Sun
+      final hours = b.endTime.difference(b.startTime).inMinutes / 60.0;
+      map[weekday] = (map[weekday] ?? 0.0) + hours;
+    }
+    return map;
   }
 
   String _formatDate(DateTime dt) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+    return DateFormat('d MMM y').format(dt);
   }
 
   String _formatTime(DateTime dt) {
-    final hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
-    final min = dt.minute.toString().padLeft(2, '0');
-    final period = dt.hour >= 12 ? 'PM' : 'AM';
-    return '$hour:$min $period';
+    return DateFormat('h:mm a').format(dt);
   }
 
   double _calculateDurationHours(BookingModel b) {
@@ -90,6 +117,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         ),
       );
     }
+
+    final hasData = _bookings.isNotEmpty;
+    final weeklyMap = _weeklyHoursMap;
+    final maxDayHours = weeklyMap.values.fold<double>(0.0, (m, val) => val > m ? val : m);
+    final chartMax = maxDayHours > 0 ? maxDayHours : 3.0;
 
     return RefreshIndicator(
       color: AppTheme.neonGreen,
@@ -176,7 +208,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                           border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
                         ),
                         child: Text(
-                          'ACTIVE PLAYER',
+                          hasData ? 'ACTIVE PLAYER' : 'PRO READY',
                           style: GoogleFonts.inter(
                             color: AppTheme.neonGreen,
                             fontSize: 11,
@@ -210,27 +242,28 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         ),
                       ),
                       const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.neonLime.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.arrow_upward_rounded, color: AppTheme.neonLime, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              '+14.2%',
-                              style: GoogleFonts.inter(
-                                color: AppTheme.neonLime,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                      if (hasData)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.neonLime.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.arrow_upward_rounded, color: AppTheme.neonLime, size: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                'LIVE',
+                                style: GoogleFonts.inter(
+                                  color: AppTheme.neonLime,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 18),
@@ -238,11 +271,23 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   // Hero Stat Counters
                   Row(
                     children: [
-                      _buildHeroStatPill('Reservations', '$_totalBookingsCount Bookings', Icons.calendar_month_rounded),
+                      _buildHeroStatPill(
+                        'Reservations',
+                        '$_totalBookingsCount Bookings',
+                        Icons.calendar_month_rounded,
+                      ),
                       const SizedBox(width: 10),
-                      _buildHeroStatPill('Total Spend', '\$${_totalSpend.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined),
+                      _buildHeroStatPill(
+                        'Total Spend',
+                        '\$${_totalSpend.toStringAsFixed(0)}',
+                        Icons.account_balance_wallet_outlined,
+                      ),
                       const SizedBox(width: 10),
-                      _buildHeroStatPill('Avg Session', '1.8 hrs', Icons.timer_outlined),
+                      _buildHeroStatPill(
+                        'Avg Session',
+                        '${_avgSessionHours.toStringAsFixed(1)} hrs',
+                        Icons.timer_outlined,
+                      ),
                     ],
                   ),
                 ],
@@ -282,7 +327,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         ),
                       ),
                       Text(
-                        'Target: 8.0 hrs/wk',
+                        hasData ? 'Target: 8.0 hrs/wk' : 'Schedule your match',
                         style: GoogleFonts.inter(
                           color: AppTheme.neonGreen,
                           fontSize: 12,
@@ -296,13 +341,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      _buildDayBar('Mon', 1.5, 3.0),
-                      _buildDayBar('Tue', 0.0, 3.0),
-                      _buildDayBar('Wed', 2.0, 3.0),
-                      _buildDayBar('Thu', 1.0, 3.0),
-                      _buildDayBar('Fri', 2.5, 3.0),
-                      _buildDayBar('Sat', 3.0, 3.0, isPeak: true),
-                      _buildDayBar('Sun', 2.0, 3.0),
+                      _buildDayBar('Mon', weeklyMap[1] ?? 0.0, chartMax),
+                      _buildDayBar('Tue', weeklyMap[2] ?? 0.0, chartMax),
+                      _buildDayBar('Wed', weeklyMap[3] ?? 0.0, chartMax),
+                      _buildDayBar('Thu', weeklyMap[4] ?? 0.0, chartMax),
+                      _buildDayBar('Fri', weeklyMap[5] ?? 0.0, chartMax),
+                      _buildDayBar('Sat', weeklyMap[6] ?? 0.0, chartMax, isPeak: (weeklyMap[6] ?? 0) > 0),
+                      _buildDayBar('Sun', weeklyMap[7] ?? 0.0, chartMax),
                     ],
                   ),
                 ],
@@ -312,7 +357,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
             // 4. Booking Habits & Court Preferences
             Text(
-              'Court & Venue Preferences',
+              'Court & Venue Specifications',
               style: GoogleFonts.inter(
                 color: AppTheme.textPrimary,
                 fontSize: 16,
@@ -321,27 +366,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
             const SizedBox(height: 12),
             _buildCourtDistributionTile(
-              'Court 1 - Center Championship',
-              'Championship Indoor • Hardcourt',
-              '54% of Playtime (18 Sessions)',
-              0.54,
+              'SmashCourt - Court 1',
+              'Championship Indoor • Pro-Cushion Hardcourt',
+              hasData ? '100% of Playtime (${_bookings.length} Sessions)' : 'Primary Arena Court • Available',
+              hasData ? 1.0 : 0.1,
               AppTheme.neonGreen,
-            ),
-            const SizedBox(height: 10),
-            _buildCourtDistributionTile(
-              'Court 2 - Neon Arena (LED)',
-              'LED Glow Indoor • Acrylic',
-              '32% of Playtime (11 Sessions)',
-              0.32,
-              AppTheme.neonLime,
-            ),
-            const SizedBox(height: 10),
-            _buildCourtDistributionTile(
-              'Court 3 - Skyline Rooftop',
-              'Rooftop Covered • All-Weather',
-              '14% of Playtime (5 Sessions)',
-              0.14,
-              AppTheme.neonYellow,
             ),
             const SizedBox(height: 24),
 
@@ -351,7 +380,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 Expanded(
                   child: _buildMetricTile(
                     'Peak Play Slot',
-                    '6:00 - 8:30 PM',
+                    hasData ? '6:00 - 8:30 PM' : 'Flexible',
                     'Evening Sessions',
                     Icons.nights_stay_rounded,
                     AppTheme.neonGreen,
@@ -361,7 +390,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 Expanded(
                   child: _buildMetricTile(
                     'Attendance Rate',
-                    '100%',
+                    hasData ? '100%' : '100%',
                     '0 Cancellations',
                     Icons.check_circle_outline_rounded,
                     AppTheme.neonLime,
@@ -397,17 +426,36 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             if (_bookings.isEmpty)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceElevated,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: AppTheme.borderSubtle),
                 ),
-                child: Center(
-                  child: Text(
-                    'No reservation history records found.',
-                    style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 13),
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.history_toggle_off_rounded,
+                      color: AppTheme.textMuted,
+                      size: 36,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No reservation history records yet.',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Once you reserve courts, live play history and Google Calendar sync actions will show here.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 12.5),
+                    ),
+                  ],
                 ),
               )
             else
@@ -426,99 +474,122 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       ? AppTheme.neonGreen
                       : (isCompleted ? AppTheme.neonLime : AppTheme.neonYellow);
 
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceElevated,
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppTheme.borderSubtle),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: badgeColor.withOpacity(0.14),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.sports_tennis_rounded,
-                            color: badgeColor,
-                            size: 22,
-                          ),
+                      onTap: () {
+                        BookingSuccessModal.show(
+                          context,
+                          booking: booking,
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceElevated,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppTheme.borderSubtle),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                booking.courtName ?? 'Court 1 - Center Championship',
-                                style: GoogleFonts.inter(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: badgeColor.withOpacity(0.14),
+                                shape: BoxShape.circle,
                               ),
-                              const SizedBox(height: 3),
-                              Text(
-                                '${_formatDate(booking.startTime)} • ${_formatTime(booking.startTime)}',
-                                style: GoogleFonts.inter(
-                                  color: AppTheme.textMuted,
-                                  fontSize: 12,
-                                ),
+                              child: Icon(
+                                Icons.sports_tennis_rounded,
+                                color: badgeColor,
+                                size: 22,
                               ),
-                              const SizedBox(height: 6),
-                              Row(
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppTheme.surfaceHighlight,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      '${durationHours.toStringAsFixed(1)}h Session',
-                                      style: GoogleFonts.inter(
-                                        color: Colors.white70,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                  Text(
+                                    booking.courtName ?? 'Court 1 - Center Championship',
+                                    style: GoogleFonts.inter(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(height: 3),
                                   Text(
-                                    '\$${booking.totalAmount.toStringAsFixed(2)}',
+                                    '${_formatDate(booking.startTime)} • ${_formatTime(booking.startTime)}',
                                     style: GoogleFonts.inter(
-                                      color: AppTheme.neonGreen,
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w700,
+                                      color: AppTheme.textMuted,
+                                      fontSize: 12,
                                     ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.surfaceHighlight,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          '${durationHours.toStringAsFixed(1)}h Session',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white70,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '\$${booking.totalAmount.toStringAsFixed(2)}',
+                                        style: GoogleFonts.inter(
+                                          color: AppTheme.neonGreen,
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: badgeColor.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: badgeColor.withOpacity(0.3)),
-                          ),
-                          child: Text(
-                            booking.status.toUpperCase(),
-                            style: GoogleFonts.inter(
-                              color: badgeColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.3,
                             ),
-                          ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: badgeColor.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: badgeColor.withOpacity(0.3)),
+                                  ),
+                                  child: Text(
+                                    booking.status.toUpperCase(),
+                                    style: GoogleFonts.inter(
+                                      color: badgeColor,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: AppTheme.textMuted,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   );
                 },
