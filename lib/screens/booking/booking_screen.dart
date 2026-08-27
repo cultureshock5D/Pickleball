@@ -30,35 +30,28 @@ class _BookingScreenState extends State<BookingScreen>
   CourtModel? _selectedCourt;
 
   DateTime _selectedDate = DateTime.now();
-  int _selectedTimeSlotIndex = 1;
+  int _selectedTimeSlotIndex = 3; // Default 1:00 PM slot
   double _selectedDurationHours = 1.5;
   bool _isSubmitting = false;
+  bool _autoLaunchCalendar = true;
 
   final List<TimeOfDay> _availableStartTimes = [
     const TimeOfDay(hour: 8, minute: 0),
     const TimeOfDay(hour: 9, minute: 30),
     const TimeOfDay(hour: 11, minute: 0),
-    const TimeOfDay(hour: 14, minute: 0),
-    const TimeOfDay(hour: 15, minute: 30),
-    const TimeOfDay(hour: 17, minute: 0),
-    const TimeOfDay(hour: 18, minute: 30),
-    const TimeOfDay(hour: 20, minute: 0),
-    const TimeOfDay(hour: 21, minute: 30),
+    const TimeOfDay(hour: 13, minute: 0),
+    const TimeOfDay(hour: 14, minute: 30),
+    const TimeOfDay(hour: 16, minute: 0),
+    const TimeOfDay(hour: 17, minute: 30),
+    const TimeOfDay(hour: 19, minute: 0),
+    const TimeOfDay(hour: 20, minute: 30),
   ];
 
-  final List<double> _durations = [1.0, 1.5, 2.0];
+  final List<double> _durations = [1.0, 1.5, 2.0, 3.0];
 
   @override
   void initState() {
     super.initState();
-    final now = DateTime.now();
-    _selectedDate = DateTime(now.year, now.month, now.day);
-
-    // Default start time: next upcoming full hour
-    int startHour = (now.hour + 1) % 24;
-    _startTime = TimeOfDay(hour: startHour == 0 ? 9 : startHour, minute: 0);
-    _endTime = TimeOfDay(hour: (_startTime.hour + 1) % 24, minute: 0);
-
     _loadCourts();
   }
 
@@ -76,8 +69,7 @@ class _BookingScreenState extends State<BookingScreen>
     }
   }
 
-  // Calculate dynamic pricing
-  double get _baseRate => _selectedCourt?.hourlyRate ?? 45.0;
+  double get _baseRate => _selectedCourt?.hourlyRate ?? 120.0;
   double get _subtotal => _baseRate * _selectedDurationHours;
   double get _serviceFee => 0.00; // Free VIP booking fee
   double get _totalAmount => _subtotal + _serviceFee;
@@ -88,122 +80,15 @@ class _BookingScreenState extends State<BookingScreen>
       _selectedDate.year,
       _selectedDate.month,
       _selectedDate.day,
-      _startTime.hour,
-      _startTime.minute,
+      time.hour,
+      time.minute,
     );
   }
 
-  DateTime get _endDateTime {
-    DateTime end = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _endTime.hour,
-      _endTime.minute,
-    );
-    if (end.isBefore(_startDateTime) || end.isAtSameMomentAs(_startDateTime)) {
-      end = end.add(const Duration(days: 1));
-    }
-    return end;
-  }
-
-  double get _durationHours {
-    final diff = _endDateTime.difference(_startDateTime);
-    final hours = diff.inMinutes / 60.0;
-    return hours > 0 ? hours : 1.0;
-  }
-
-  double get _baseRate => _selectedCourt?.hourlyRate ?? 120.0;
-  double get _totalAmount => _baseRate * _durationHours;
-
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate.isBefore(now) ? now : _selectedDate,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: now.add(const Duration(days: 60)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppTheme.neonLime,
-              onPrimary: Colors.black,
-              surface: AppTheme.surfaceElevated,
-              onSurface: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null && mounted) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
-  Future<void> _pickStartTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _startTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppTheme.neonLime,
-              onPrimary: Colors.black,
-              surface: AppTheme.surfaceElevated,
-              onSurface: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null && mounted) {
-      setState(() {
-        _startTime = picked;
-        // Auto adjust end time if it becomes before or same as start time
-        final newStartMinutes = picked.hour * 60 + picked.minute;
-        final currentEndMinutes = _endTime.hour * 60 + _endTime.minute;
-        if (currentEndMinutes <= newStartMinutes) {
-          _endTime = TimeOfDay(
-            hour: (picked.hour + 1) % 24,
-            minute: picked.minute,
-          );
-        }
-      });
-    }
-  }
-
-  Future<void> _pickEndTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _endTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppTheme.neonLime,
-              onPrimary: Colors.black,
-              surface: AppTheme.surfaceElevated,
-              onSurface: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null && mounted) {
-      setState(() {
-        _endTime = picked;
-      });
-    }
+  DateTime get _calculatedEndDateTime {
+    final start = _calculatedStartDateTime;
+    final totalMinutes = (_selectedDurationHours * 60).round();
+    return start.add(Duration(minutes: totalMinutes));
   }
 
   String _formatTimeOfDay(TimeOfDay time) {
@@ -213,15 +98,8 @@ class _BookingScreenState extends State<BookingScreen>
     return '$hour:$minute $period';
   }
 
-  String _formatDateFull(DateTime date) {
-    const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    return '${weekDays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}, ${date.year}';
-  }
-
-  String _formatDateShort(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${date.day} ${months[date.month - 1]}';
+  String _formatDateLong(DateTime date) {
+    return DateFormat('EEEE, MMMM d, y').format(date);
   }
 
   Future<void> _handleCreateBooking() async {
@@ -235,8 +113,8 @@ class _BookingScreenState extends State<BookingScreen>
     try {
       final booking = await _bookingService.createBooking(
         courtId: _selectedCourt!.id,
-        startTime: _startDateTime,
-        endTime: _endDateTime,
+        startTime: _calculatedStartDateTime,
+        endTime: _calculatedEndDateTime,
         totalAmount: _totalAmount,
       );
 
@@ -291,6 +169,10 @@ class _BookingScreenState extends State<BookingScreen>
   }
 
   Future<bool?> _showConfirmationDialog() {
+    final courtName = _selectedCourt?.name ?? 'SmashCourt - Court 1';
+    final startTimeStr = _formatTimeOfDay(_availableStartTimes[_selectedTimeSlotIndex]);
+    final endTimeStr = _formatTimeOfDay(TimeOfDay.fromDateTime(_calculatedEndDateTime));
+
     return showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -319,7 +201,7 @@ class _BookingScreenState extends State<BookingScreen>
               ),
               const SizedBox(height: 18),
               Text(
-                'Confirm Court Booking',
+                'Confirm Court Reservation',
                 style: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 20,
@@ -328,7 +210,7 @@ class _BookingScreenState extends State<BookingScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                'Review details before submitting to Supabase',
+                'Review booking details & Google Calendar sync',
                 style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 13),
               ),
               const SizedBox(height: 20),
@@ -352,15 +234,15 @@ class _BookingScreenState extends State<BookingScreen>
                     _buildSummaryRow('Time Slot', '$startTimeStr - $endTimeStr ($_selectedDurationHours hrs)'),
                     const Divider(color: AppTheme.borderSubtle, height: 16),
                     _buildSummaryRow(
-                      'Time Slot',
-                      '${_formatTimeOfDay(_availableStartTimes[_selectedTimeSlotIndex])} - ${_formatTimeOfDay(TimeOfDay.fromDateTime(_calculatedEndDateTime))}',
+                      'Calendar Sync',
+                      'Google Calendar (Zero-Auth)',
+                      valueColor: AppTheme.neonGreen,
+                      isBold: true,
                     ),
-                    const Divider(color: AppTheme.borderSubtle, height: 16),
-                    _buildSummaryRow('Duration', '$_selectedDurationHours Hours'),
                     const Divider(color: AppTheme.borderSubtle, height: 16),
                     _buildSummaryRow(
                       'Total Price',
-                      '₱${_totalAmount.toStringAsFixed(2)}',
+                      '\$${_totalAmount.toStringAsFixed(2)}',
                       valueColor: AppTheme.neonLime,
                       isBold: true,
                     ),
@@ -386,8 +268,8 @@ class _BookingScreenState extends State<BookingScreen>
                   Expanded(
                     flex: 2,
                     child: NeonButton(
-                      text: 'Confirm & Pay',
-                      icon: Icons.check_circle_outline_rounded,
+                      text: 'Confirm & Reserve',
+                      icon: Icons.event_available_rounded,
                       onPressed: () => Navigator.of(ctx).pop(true),
                     ),
                   ),
@@ -395,75 +277,6 @@ class _BookingScreenState extends State<BookingScreen>
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  void _showSuccessDialog(String bookingId) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surfaceElevated,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: AppTheme.borderSubtle),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: AppTheme.neonLime.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_circle_rounded,
-                color: AppTheme.neonLime,
-                size: 36,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Court Reserved!',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Your reservation is registered in Supabase with status "pending".',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppTheme.background,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.borderSubtle),
-              ),
-              child: Text(
-                'ID: $bookingId',
-                style: GoogleFonts.robotoMono(
-                  color: AppTheme.textMuted,
-                  fontSize: 11,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(height: 20),
-            NeonButton(
-              text: 'Done',
-              onPressed: () => Navigator.of(ctx).pop(),
-            ),
-          ],
         ),
       ),
     );
@@ -496,162 +309,168 @@ class _BookingScreenState extends State<BookingScreen>
     final startTimeStr = _formatTimeOfDay(_availableStartTimes[_selectedTimeSlotIndex]);
     final endTimeStr = _formatTimeOfDay(TimeOfDay.fromDateTime(_calculatedEndDateTime));
 
-    final durationStr = _durationHours == _durationHours.roundToDouble()
-        ? '${_durationHours.toInt()} hr${_durationHours > 1 ? 's' : ''}'
-        : '${_durationHours.toStringAsFixed(1)} hrs';
-
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Hero Finance Overview Card (Replicating reference image)
+          // 1. Clean Court Hero Card (Single Active Court)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: AppTheme.cardGradient,
               borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: AppTheme.borderSubtle),
-              boxShadow: AppTheme.cardShadow,
+              border: Border.all(color: AppTheme.neonGreen.withOpacity(0.5), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.neonGreen.withOpacity(0.18),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Total Amount',
-                  style: GoogleFonts.inter(
-                    color: AppTheme.textMuted,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 10),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      r'$923,440',
-                      style: GoogleFonts.inter(
-                        color: AppTheme.textPrimary,
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.8,
-                      ),
-                    ),
-                    Text(
-                      '.50',
-                      style: GoogleFonts.inter(
-                        color: AppTheme.textSecondary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
-                        color: AppTheme.neonLime.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.neonLime.withOpacity(0.3)),
+                        color: AppTheme.neonGreen.withOpacity(0.18),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.neonGreen, width: 1.8),
                       ),
-                      child: Text(
-                        '+40.1%',
-                        style: GoogleFonts.inter(
-                          color: AppTheme.neonLime,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                      child: const Center(
+                        child: Icon(
+                          Icons.sports_tennis_rounded,
+                          color: AppTheme.neonGreen,
+                          size: 26,
                         ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                courtName,
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.neonLime.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: AppTheme.neonLime.withOpacity(0.4)),
+                                ),
+                                child: Text(
+                                  'ACTIVE',
+                                  style: GoogleFonts.inter(
+                                    color: AppTheme.neonLime,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'SmashCourt Arena • Championship Indoor Hardcourt',
+                            style: GoogleFonts.inter(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '\$${_baseRate.toStringAsFixed(0)} / hour',
+                            style: GoogleFonts.inter(
+                              color: AppTheme.neonLime,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  r'$180.20',
-                  style: GoogleFonts.inter(
-                    color: AppTheme.textMuted,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
+                const SizedBox(height: 16),
+                const Divider(color: AppTheme.borderSubtle, height: 1),
+                const SizedBox(height: 14),
 
-          // 2. Collective Account Selector Pill
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceElevated,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppTheme.borderSubtle),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.neonLime,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.sports_tennis_rounded,
-                    color: Colors.black,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Collective Account',
+                // Google Calendar Badge Feature
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.event_available_rounded,
+                      color: AppTheme.neonGreen,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '1-Tap Google Calendar Deep Link Included',
                         style: GoogleFonts.inter(
-                          color: AppTheme.textPrimary,
-                          fontSize: 15,
+                          color: Colors.white,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'ARN - *90468^',
-                        style: GoogleFonts.inter(
-                          color: AppTheme.textMuted,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.arrow_drop_down_rounded,
-                  color: AppTheme.textMuted,
-                  size: 24,
+                    ),
+                    Switch.adaptive(
+                      value: _autoLaunchCalendar,
+                      activeColor: AppTheme.neonGreen,
+                      onChanged: (val) => setState(() => _autoLaunchCalendar = val),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 22),
 
-          // 3. Date Selector Strip (Today + next 14 days)
-          Text(
-            'Select Booking Date',
-            style: GoogleFonts.inter(
-              color: AppTheme.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+          // 2. Date Picker Strip
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '1. Select Booking Date',
+                style: GoogleFonts.inter(
+                  color: AppTheme.textPrimary,
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                DateFormat('MMMM y').format(_selectedDate),
+                style: GoogleFonts.inter(
+                  color: AppTheme.neonGreen,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 76,
+            height: 78,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
@@ -662,14 +481,14 @@ class _BookingScreenState extends State<BookingScreen>
                     date.month == _selectedDate.month &&
                     date.day == _selectedDate.day;
 
-                const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                final weekDayStr = weekDays[date.weekday - 1];
+                final dayName = DateFormat('E').format(date);
+                final monthName = DateFormat('MMM').format(date);
 
                 return GestureDetector(
                   onTap: () => setState(() => _selectedDate = date),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    width: 58,
+                    width: 62,
                     margin: const EdgeInsets.only(right: 10),
                     decoration: BoxDecoration(
                       color: isSelected
@@ -678,7 +497,7 @@ class _BookingScreenState extends State<BookingScreen>
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
-                        width: isSelected ? 1.5 : 1.0,
+                        width: isSelected ? 1.8 : 1.0,
                       ),
                       boxShadow: isSelected
                           ? [
@@ -693,20 +512,27 @@ class _BookingScreenState extends State<BookingScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          weekDayStr,
+                          dayName,
                           style: GoogleFonts.inter(
                             color: isSelected ? AppTheme.neonGreen : AppTheme.textMuted,
-                            fontSize: 12,
+                            fontSize: 11.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           '${date.day}',
                           style: GoogleFonts.inter(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 16.5,
                             fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          monthName,
+                          style: GoogleFonts.inter(
+                            color: isSelected ? AppTheme.neonGreenLight : AppTheme.textMuted,
+                            fontSize: 10,
                           ),
                         ),
                       ],
@@ -718,133 +544,9 @@ class _BookingScreenState extends State<BookingScreen>
           ),
           const SizedBox(height: 24),
 
-          // 4. Supabase Active Courts Query & Selector
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Available Courts',
-                style: GoogleFonts.inter(
-                  color: AppTheme.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (_isLoadingCourts)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppTheme.neonGreen),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _courts.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final court = _courts[index];
-              final isSelected = _selectedCourt?.id == court.id;
-
-              return GestureDetector(
-                onTap: () => setState(() => _selectedCourt = court),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppTheme.surfaceHighlight : AppTheme.surfaceElevated,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
-                      width: isSelected ? 1.6 : 1.0,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppTheme.neonGreen.withOpacity(0.2)
-                              : const Color(0xFF26262E),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.sports_tennis_rounded,
-                          color: isSelected ? AppTheme.neonGreen : Colors.white70,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              court.name,
-                              style: GoogleFonts.inter(
-                                color: AppTheme.textPrimary,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${court.courtType} • ${court.surfaceType}',
-                              style: GoogleFonts.inter(
-                                color: AppTheme.textMuted,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '\$${court.hourlyRate.toStringAsFixed(0)}/hr',
-                            style: GoogleFonts.inter(
-                              color: isSelected ? AppTheme.neonLime : Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.neonLime.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'ACTIVE',
-                              style: GoogleFonts.inter(
-                                color: AppTheme.neonLime,
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-
-          // 5. Time Slot Picker & Duration Selector
+          // 3. Start Time Slot Picker
           Text(
-            'Start Time Slot',
+            '2. Choose Start Time Slot',
             style: GoogleFonts.inter(
               color: AppTheme.textPrimary,
               fontSize: 15.5,
@@ -864,33 +566,34 @@ class _BookingScreenState extends State<BookingScreen>
                 selected: isSelected,
                 onSelected: (_) => setState(() => _selectedTimeSlotIndex = index),
                 backgroundColor: AppTheme.surfaceElevated,
-                selectedColor: AppTheme.neonGreen.withOpacity(0.2),
+                selectedColor: AppTheme.neonGreen.withOpacity(0.22),
                 labelStyle: GoogleFonts.inter(
-                  color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? Colors.white : AppTheme.textSecondary,
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                   side: BorderSide(
                     color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
+                    width: isSelected ? 1.5 : 1.0,
                   ),
                 ),
               );
             }),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 22),
 
-          // Duration Selector
+          // 4. Duration Selector
           Text(
-            'Duration',
+            '3. Match Duration',
             style: GoogleFonts.inter(
-              color: AppTheme.textSecondary,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+              color: AppTheme.textPrimary,
+              fontSize: 15.5,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: _durations.map((duration) {
               final isSelected = _selectedDurationHours == duration;
@@ -900,24 +603,24 @@ class _BookingScreenState extends State<BookingScreen>
                   child: GestureDetector(
                     onTap: () => setState(() => _selectedDurationHours = duration),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppTheme.neonGreen.withOpacity(0.18)
                             : AppTheme.surfaceElevated,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
-                          width: isSelected ? 1.5 : 1,
+                          width: isSelected ? 1.6 : 1.0,
                         ),
                       ),
                       child: Center(
                         child: Text(
-                          '$duration Hours',
+                          '${duration.toStringAsFixed(duration % 1 == 0 ? 0 : 1)}h',
                           style: GoogleFonts.inter(
                             color: isSelected ? Colors.white : AppTheme.textMuted,
-                            fontSize: 13,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                           ),
                         ),
                       ),
@@ -929,7 +632,7 @@ class _BookingScreenState extends State<BookingScreen>
           ),
           const SizedBox(height: 24),
 
-          // 6. Dynamic Price Calculation Summary Card
+          // 5. Reservation & Google Calendar Summary Card
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -942,26 +645,45 @@ class _BookingScreenState extends State<BookingScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Price Breakdown',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Reservation Summary',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppTheme.neonGreen.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '1 COURT RESERVED',
+                        style: GoogleFonts.inter(
+                          color: AppTheme.neonGreen,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 14),
-                _buildSummaryRow(
-                  'Court Rate (${_selectedDurationHours}h)',
-                  '\$${_subtotal.toStringAsFixed(2)}',
-                ),
+                _buildSummaryRow('Date', DateFormat('EEE, MMM d, y').format(_selectedDate)),
                 const SizedBox(height: 8),
-                _buildSummaryRow(
-                  'VIP Booking Fee',
-                  'FREE',
-                  valueColor: AppTheme.neonLime,
-                ),
-                const Divider(color: AppTheme.borderSubtle, height: 20),
+                _buildSummaryRow('Time Slot', '$startTimeStr - $endTimeStr'),
+                const SizedBox(height: 8),
+                _buildSummaryRow('Duration', '$_selectedDurationHours Hours'),
+                const SizedBox(height: 8),
+                _buildSummaryRow('Rate', '\$${_baseRate.toStringAsFixed(0)}/hr × $_selectedDurationHours = \$${_subtotal.toStringAsFixed(2)}'),
+                const SizedBox(height: 8),
+                _buildSummaryRow('VIP Booking Fee', 'FREE', valueColor: AppTheme.neonLime),
+                const Divider(color: AppTheme.borderSubtle, height: 22),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -974,7 +696,7 @@ class _BookingScreenState extends State<BookingScreen>
                       ),
                     ),
                     Text(
-                      '₱${_totalAmount.toStringAsFixed(2)}',
+                      '\$${_totalAmount.toStringAsFixed(2)}',
                       style: GoogleFonts.inter(
                         color: AppTheme.neonLime,
                         fontSize: 22,
@@ -1027,9 +749,9 @@ class _BookingScreenState extends State<BookingScreen>
           ),
           const SizedBox(height: 16),
 
-          // 5. Primary Neon CTA Button
+          // 7. Primary Neon CTA Submit Button
           NeonButton(
-            text: 'Reserve Court • \$${_totalAmount.toStringAsFixed(2)}',
+            text: 'Reserve Court & Sync Calendar • \$${_totalAmount.toStringAsFixed(2)}',
             isLoading: _isSubmitting,
             icon: Icons.flash_on_rounded,
             onPressed: _handleCreateBooking,

@@ -177,8 +177,6 @@ class BookingService {
       surfaceType: 'Pro-Cushion Hardcourt',
       courtType: 'Championship Indoor',
     ),
-<<<<<<< HEAD
-=======
     CourtModel(
       id: 'b2222222-2222-2222-2222-222222222222',
       name: 'Court 2 - Neon Arena (LED)',
@@ -195,6 +193,5 @@ class BookingService {
       surfaceType: 'All-Weather Surface',
       courtType: 'Rooftop Covered',
     ),
->>>>>>> 51588db295a0f83af8381fce8814afdea72d4c3e
   ];
 }
