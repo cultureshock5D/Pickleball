@@ -3,9 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class SupabaseConfig {
   SupabaseConfig._();
 
-  static const String _defaultUrl = 'https://zqvpydrrmololjkvlzan.supabase.co';
-  static const String _defaultAnonKey =
-      'sb_publishable_iSXHHAyFAJJ6Vjsz3fAlZA_0asyUj5H';
+  static const String _defaultUrl = '';
+  static const String _defaultAnonKey = '';
 
   /// Supabase project URL loaded from .env, --dart-define, or fallback constant.
   static String get url {
