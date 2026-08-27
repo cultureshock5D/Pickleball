@@ -1,0 +1,2831 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "015f10f0a35f2efa325fb46671f4e0c8fbe3f70d",
+  "generatedAt": "2026-08-27T12:10:17.419Z",
+  "files": {
+    ".agents/skills/AGENTS.md": {
+      "filePath": ".agents/skills/AGENTS.md",
+      "contentHash": "b9fe9999b0b21feb286f4c0d7a3c7e84d84efb674b440d1d3e562f0979f03969",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/Flutterexpert.md": {
+      "filePath": ".agents/skills/Flutterexpert.md",
+      "contentHash": "937518a6f7df74c9bb0200045d602f255057339ad83708ed68d6fba8e064165b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 199,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/antigravity-skills-manager/asm.md": {
+      "filePath": ".agents/skills/antigravity-skills-manager/asm.md",
+      "contentHash": "a73587147be634f5ab0ad1635ec64650638e3bc7cf1fe008a178c735563f02c7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 100,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/optimize/optimize.md": {
+      "filePath": ".agents/skills/optimize/optimize.md",
+      "contentHash": "9dffe8553df9a49faacfa0ff7d82725ef25d98b202aaedbce891da6a10db6d7e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 154,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/ui-ux/ui-ux.md": {
+      "filePath": ".agents/skills/ui-ux/ui-ux.md",
+      "contentHash": "cbde40ec516b1b638434b5156a985a99178c2f28bbcc4cf406dc4f4efb6ecfb7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 208,
+      "hasStructuralAnalysis": true
+    },
+    ".agents/skills/ui-ux/ui-visual-validator.md": {
+      "filePath": ".agents/skills/ui-ux/ui-visual-validator.md",
+      "contentHash": "22cb7353c807b9e5b92953bb38cc59854554f53488520791667ef2a17c295382",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 213,
+      "hasStructuralAnalysis": true
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "cf1f6b75e77a9e8ac7381b8adb84b7639582be0fa530aa87cebf3b744fc8b84b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 18,
+      "hasStructuralAnalysis": true
+    },
+    "analysis_options.yaml": {
+      "filePath": "analysis_options.yaml",
+      "contentHash": "b63207cf529949ec4727b68c23dbb38ce255b6f6f4ae1effcb5c1dcf2852d238",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 29,
+      "hasStructuralAnalysis": true
+    },
+    "lib/core/constants/supabase_config.dart": {
+      "filePath": "lib/core/constants/supabase_config.dart",
+      "contentHash": "5ff6e57f00de3effd7c6dc38c02f0fcf1ca50a4b4ef8be35d01cfbe5f8b06230",
+      "functions": [
+        {
+          "name": "SupabaseConfig._",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "url",
+          "params": [],
+          "returnType": "String",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "anonKey",
+          "params": [],
+          "returnType": "String",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "isConfigured",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "SupabaseConfig",
+          "methods": [
+            "SupabaseConfig._",
+            "url",
+            "anonKey",
+            "isConfigured"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 66
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter_dotenv/flutter_dotenv.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "SupabaseConfig._",
+        "url",
+        "anonKey",
+        "isConfigured",
+        "SupabaseConfig"
+      ],
+      "totalLines": 69,
+      "hasStructuralAnalysis": true
+    },
+    "lib/core/theme/app_theme.dart": {
+      "filePath": "lib/core/theme/app_theme.dart",
+      "contentHash": "f51b6cfdd5c13bd7e5a98598c04d411cd7100565b05e44a444c3ffe259cc16df",
+      "functions": [
+        {
+          "name": "AppTheme._",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "darkTheme",
+          "params": [],
+          "returnType": "ThemeData",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "AppTheme",
+          "methods": [
+            "AppTheme._",
+            "darkTheme"
+          ],
+          "properties": [
+            "neonGlow",
+            "cardShadow"
+          ],
+          "exported": true,
+          "lineCount": 190
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "AppTheme._",
+        "darkTheme",
+        "AppTheme"
+      ],
+      "totalLines": 194,
+      "hasStructuralAnalysis": true
+    },
+    "lib/core/utils/validators.dart": {
+      "filePath": "lib/core/utils/validators.dart",
+      "contentHash": "efc8f7bf5e00b98d955fc224c80e0d692076064924ec6a7dedfe3f738cfb5386",
+      "functions": [
+        {
+          "name": "Validators._",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "validateFullName",
+          "params": [
+            "value"
+          ],
+          "returnType": "String",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "validateEmail",
+          "params": [
+            "value"
+          ],
+          "returnType": "String",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "validatePassword",
+          "params": [
+            "value"
+          ],
+          "returnType": "String",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "validateConfirmPassword",
+          "params": [
+            "value",
+            "originalPassword"
+          ],
+          "returnType": "String",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "Validators",
+          "methods": [
+            "Validators._",
+            "validateFullName",
+            "validateEmail",
+            "validatePassword",
+            "validateConfirmPassword"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 46
+        }
+      ],
+      "imports": [],
+      "exports": [
+        "Validators._",
+        "validateFullName",
+        "validateEmail",
+        "validatePassword",
+        "validateConfirmPassword",
+        "Validators"
+      ],
+      "totalLines": 47,
+      "hasStructuralAnalysis": true
+    },
+    "lib/main.dart": {
+      "filePath": "lib/main.dart",
+      "contentHash": "26a473ad4c54167822d201d456f09e420588ab55797d34afc6f45a916be48a88",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "MyApp",
+          "methods": [
+            "build"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 13
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/foundation.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:flutter/services.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:flutter_dotenv/flutter_dotenv.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:supabase_flutter/supabase_flutter.dart",
+          "specifiers": []
+        },
+        {
+          "source": "core/constants/supabase_config.dart",
+          "specifiers": []
+        },
+        {
+          "source": "core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "widgets/auth_gate.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "main",
+        "build",
+        "MyApp"
+      ],
+      "totalLines": 70,
+      "hasStructuralAnalysis": true
+    },
+    "lib/models/booking_model.dart": {
+      "filePath": "lib/models/booking_model.dart",
+      "contentHash": "3f5c5be1aef4dcaece95d93f651922aa17de6f0d58802b6f21c9a63d7de34245",
+      "functions": [
+        {
+          "name": "BookingModel.fromJson",
+          "params": [
+            "json"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "toJson",
+          "params": [],
+          "returnType": "Map<String, dynamic>",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "BookingModel",
+          "methods": [
+            "BookingModel.fromJson",
+            "toJson"
+          ],
+          "properties": [
+            "id",
+            "customerId",
+            "courtId",
+            "startTime",
+            "endTime",
+            "status",
+            "totalAmount",
+            "createdAt",
+            "courtName"
+          ],
+          "exported": true,
+          "lineCount": 55
+        }
+      ],
+      "imports": [],
+      "exports": [
+        "BookingModel.fromJson",
+        "toJson",
+        "BookingModel"
+      ],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    "lib/models/court_model.dart": {
+      "filePath": "lib/models/court_model.dart",
+      "contentHash": "d5572bf8d3a37f95f2c3c2357759edeed8e62093bd7ca2c592815b43b151a341",
+      "functions": [
+        {
+          "name": "CourtModel.fromJson",
+          "params": [
+            "json"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "toJson",
+          "params": [],
+          "returnType": "Map<String, dynamic>",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "CourtModel",
+          "methods": [
+            "CourtModel.fromJson",
+            "toJson"
+          ],
+          "properties": [
+            "id",
+            "name",
+            "status",
+            "hourlyRate",
+            "surfaceType",
+            "courtType"
+          ],
+          "exported": true,
+          "lineCount": 54
+        }
+      ],
+      "imports": [],
+      "exports": [
+        "CourtModel.fromJson",
+        "toJson",
+        "CourtModel"
+      ],
+      "totalLines": 55,
+      "hasStructuralAnalysis": true
+    },
+    "lib/models/user_profile.dart": {
+      "filePath": "lib/models/user_profile.dart",
+      "contentHash": "1e97befcc92429847e760efc53a50efd297ae173a5f68589c6ac63ed22c31e0d",
+      "functions": [
+        {
+          "name": "UserProfile.fromJson",
+          "params": [
+            "json"
+          ],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "toJson",
+          "params": [],
+          "returnType": "Map<String, dynamic>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "copyWith",
+          "params": [
+            "id",
+            "fullName",
+            "role",
+            "createdAt"
+          ],
+          "returnType": "UserProfile",
+          "exported": true,
+          "lineCount": 6
+        }
+      ],
+      "classes": [
+        {
+          "name": "UserProfile",
+          "methods": [
+            "UserProfile.fromJson",
+            "toJson",
+            "copyWith"
+          ],
+          "properties": [
+            "id",
+            "fullName",
+            "role",
+            "createdAt"
+          ],
+          "exported": true,
+          "lineCount": 47
+        }
+      ],
+      "imports": [],
+      "exports": [
+        "UserProfile.fromJson",
+        "toJson",
+        "copyWith",
+        "UserProfile"
+      ],
+      "totalLines": 48,
+      "hasStructuralAnalysis": true
+    },
+    "lib/screens/analytics/analytics_screen.dart": {
+      "filePath": "lib/screens/analytics/analytics_screen.dart",
+      "contentHash": "2d4da84a66bdcd6d710f23a47ea47167b00b962b4de09455516fe14041bb266d",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<AnalyticsScreen>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "wantKeepAlive",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "initState",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_loadData",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_filteredBookings",
+          "params": [],
+          "returnType": "List<BookingModel>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_totalPlaytimeHours",
+          "params": [],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_totalBookingsCount",
+          "params": [],
+          "returnType": "int",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_totalSpend",
+          "params": [],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_avgSessionHours",
+          "params": [],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_weeklyHoursMap",
+          "params": [],
+          "returnType": "Map<int, double>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_formatDate",
+          "params": [
+            "dt"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_formatTime",
+          "params": [
+            "dt"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_calculateDurationHours",
+          "params": [
+            "b"
+          ],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_buildHeroStatPill",
+          "params": [
+            "label",
+            "value",
+            "icon"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_buildDayBar",
+          "params": [
+            "day",
+            "hours",
+            "maxHours",
+            "isPeak"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_buildCourtDistributionTile",
+          "params": [
+            "title",
+            "subtitle",
+            "statText",
+            "ratio",
+            "color"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 7
+        },
+        {
+          "name": "_buildMetricTile",
+          "params": [
+            "title",
+            "value",
+            "subtitle",
+            "icon",
+            "accentColor"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 7
+        }
+      ],
+      "classes": [
+        {
+          "name": "AnalyticsScreen",
+          "methods": [
+            "createState"
+          ],
+          "properties": [
+            "onBookCourtPressed"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "_AnalyticsScreenState",
+          "methods": [
+            "wantKeepAlive",
+            "initState",
+            "_loadData",
+            "_filteredBookings",
+            "_totalPlaytimeHours",
+            "_totalBookingsCount",
+            "_totalSpend",
+            "_avgSessionHours",
+            "_weeklyHoursMap",
+            "_formatDate",
+            "_formatTime",
+            "_calculateDurationHours",
+            "build",
+            "_buildHeroStatPill",
+            "_buildDayBar",
+            "_buildCourtDistributionTile",
+            "_buildMetricTile"
+          ],
+          "properties": [
+            "_bookingService",
+            "_bookings",
+            "_isLoading",
+            "_selectedPeriodIndex",
+            "_periods"
+          ],
+          "exported": false,
+          "lineCount": 796
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:intl/intl.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../models/booking_model.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../services/booking_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/booking_success_modal.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/neon_button.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "AnalyticsScreen",
+        "wantKeepAlive",
+        "initState",
+        "build"
+      ],
+      "totalLines": 815,
+      "hasStructuralAnalysis": true
+    },
+    "lib/screens/auth/login_screen.dart": {
+      "filePath": "lib/screens/auth/login_screen.dart",
+      "contentHash": "c46abca525f30ac2c0e277bc8554412b65a1e6c6ffef6c598e8853971134907e",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<LoginScreen>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "dispose",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_handleSignIn",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_buildAppFeaturePill",
+          "params": [
+            "icon",
+            "label"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "LoginScreen",
+          "methods": [
+            "createState"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_LoginScreenState",
+          "methods": [
+            "dispose",
+            "_handleSignIn",
+            "build",
+            "_buildAppFeaturePill"
+          ],
+          "properties": [
+            "_formKey",
+            "_emailController",
+            "_passwordController",
+            "_authService",
+            "_isLoading",
+            "_errorMessage"
+          ],
+          "exported": false,
+          "lineCount": 404
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:supabase_flutter/supabase_flutter.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/utils/validators.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../services/auth_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/custom_text_field.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/neon_button.dart",
+          "specifiers": []
+        },
+        {
+          "source": "signup_screen.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "LoginScreen",
+        "dispose",
+        "build"
+      ],
+      "totalLines": 422,
+      "hasStructuralAnalysis": true
+    },
+    "lib/screens/auth/signup_screen.dart": {
+      "filePath": "lib/screens/auth/signup_screen.dart",
+      "contentHash": "40405f275e755eb7c610b27abe3d90fe76d5a08a36be8fdf54ccea5ce4d56b38",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<SignUpScreen>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "dispose",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_handleSignUp",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "SignUpScreen",
+          "methods": [
+            "createState"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_SignUpScreenState",
+          "methods": [
+            "dispose",
+            "_handleSignUp",
+            "build"
+          ],
+          "properties": [
+            "_formKey",
+            "_nameController",
+            "_emailController",
+            "_passwordController",
+            "_confirmPasswordController",
+            "_authService",
+            "_isLoading",
+            "_errorMessage"
+          ],
+          "exported": false,
+          "lineCount": 310
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:supabase_flutter/supabase_flutter.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/utils/validators.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../services/auth_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/custom_text_field.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/neon_button.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "SignUpScreen",
+        "dispose",
+        "build"
+      ],
+      "totalLines": 327,
+      "hasStructuralAnalysis": true
+    },
+    "lib/screens/booking/booking_screen.dart": {
+      "filePath": "lib/screens/booking/booking_screen.dart",
+      "contentHash": "63eefcc6aedcd46d69e4bf09aef5b839b40dc2d6845128862a5ba539557285d5",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<BookingScreen>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "wantKeepAlive",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "initState",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_loadCourts",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_baseRate",
+          "params": [],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_subtotal",
+          "params": [],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_serviceFee",
+          "params": [],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_totalAmount",
+          "params": [],
+          "returnType": "double",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_calculatedStartDateTime",
+          "params": [],
+          "returnType": "DateTime",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_calculatedEndDateTime",
+          "params": [],
+          "returnType": "DateTime",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_formatTimeOfDay",
+          "params": [
+            "time"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_formatDateLong",
+          "params": [
+            "date"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_handleCreateBooking",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_showConfirmationDialog",
+          "params": [],
+          "returnType": "Future<bool?>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_buildSummaryRow",
+          "params": [
+            "label",
+            "value",
+            "valueColor",
+            "isBold"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "BookingScreen",
+          "methods": [
+            "createState"
+          ],
+          "properties": [
+            "onViewBookings"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "_BookingScreenState",
+          "methods": [
+            "wantKeepAlive",
+            "initState",
+            "_loadCourts",
+            "_baseRate",
+            "_subtotal",
+            "_serviceFee",
+            "_totalAmount",
+            "_calculatedStartDateTime",
+            "_calculatedEndDateTime",
+            "_formatTimeOfDay",
+            "_formatDateLong",
+            "_handleCreateBooking",
+            "_showConfirmationDialog",
+            "_buildSummaryRow",
+            "build"
+          ],
+          "properties": [
+            "_bookingService",
+            "_courts",
+            "_isLoadingCourts",
+            "_selectedCourt",
+            "_selectedDate",
+            "_selectedTimeSlotIndex",
+            "_selectedDurationHours",
+            "_isSubmitting",
+            "_autoLaunchCalendar",
+            "_availableStartTimes",
+            "_durations"
+          ],
+          "exported": false,
+          "lineCount": 745
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:intl/intl.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../models/court_model.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../services/booking_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../services/calendar_link_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/booking_success_modal.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/neon_button.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "BookingScreen",
+        "wantKeepAlive",
+        "initState",
+        "build"
+      ],
+      "totalLines": 765,
+      "hasStructuralAnalysis": true
+    },
+    "lib/screens/bookings/my_bookings_screen.dart": {
+      "filePath": "lib/screens/bookings/my_bookings_screen.dart",
+      "contentHash": "e1d71dad0581e1f542d39e7247b44b1414722b2bd7215703040369127e5a23ef",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<MyBookingsScreen>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "wantKeepAlive",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "initState",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "dispose",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_loadBookings",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_buildBookingsList",
+          "params": [
+            "bookings",
+            "isUpcoming"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "MyBookingsScreen",
+          "methods": [
+            "createState"
+          ],
+          "properties": [
+            "onBookCourtPressed"
+          ],
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "_MyBookingsScreenState",
+          "methods": [
+            "wantKeepAlive",
+            "initState",
+            "dispose",
+            "_loadBookings",
+            "build",
+            "_buildBookingsList"
+          ],
+          "properties": [
+            "_bookingService",
+            "_tabController",
+            "_upcomingBookings",
+            "_pastBookings",
+            "_isLoading"
+          ],
+          "exported": false,
+          "lineCount": 292
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../models/booking_model.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../services/booking_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/neon_button.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/reservation_card.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "MyBookingsScreen",
+        "wantKeepAlive",
+        "initState",
+        "dispose",
+        "build"
+      ],
+      "totalLines": 310,
+      "hasStructuralAnalysis": true
+    },
+    "lib/screens/home/main_navigation_screen.dart": {
+      "filePath": "lib/screens/home/main_navigation_screen.dart",
+      "contentHash": "88ba2844d7f90683d0f161022834742fd02b1778cef8a01748c45fdb76d28e5f",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<MainNavigationScreen>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "initState",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_loadUserProfile",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_currentTabTitle",
+          "params": [],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_currentTabSubtitle",
+          "params": [],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "MainNavigationScreen",
+          "methods": [
+            "createState"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_MainNavigationScreenState",
+          "methods": [
+            "initState",
+            "_loadUserProfile",
+            "_currentTabTitle",
+            "_currentTabSubtitle",
+            "build"
+          ],
+          "properties": [
+            "_currentIndex",
+            "_authService",
+            "_userProfile"
+          ],
+          "exported": false,
+          "lineCount": 136
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../models/user_profile.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../services/auth_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/custom_bottom_nav_bar.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/custom_top_app_bar.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../analytics/analytics_screen.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../booking/booking_screen.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../bookings/my_bookings_screen.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../profile/profile_screen.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "MainNavigationScreen",
+        "initState",
+        "build"
+      ],
+      "totalLines": 155,
+      "hasStructuralAnalysis": true
+    },
+    "lib/screens/profile/profile_screen.dart": {
+      "filePath": "lib/screens/profile/profile_screen.dart",
+      "contentHash": "31ab0a400c2ae2525370dffa090974182b97513d82d733a3c1f4e94b51da4433",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<ProfileScreen>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "wantKeepAlive",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "initState",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_loadProfile",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_showEditProfileDialog",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_handleSignOut",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_buildStatItem",
+          "params": [
+            "label",
+            "value",
+            "icon"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_buildSettingsTile",
+          "params": [
+            "title",
+            "subtitle",
+            "icon",
+            "iconColor",
+            "onTap"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 7
+        }
+      ],
+      "classes": [
+        {
+          "name": "ProfileScreen",
+          "methods": [
+            "createState"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "_ProfileScreenState",
+          "methods": [
+            "wantKeepAlive",
+            "initState",
+            "_loadProfile",
+            "_showEditProfileDialog",
+            "_handleSignOut",
+            "build",
+            "_buildStatItem",
+            "_buildSettingsTile"
+          ],
+          "properties": [
+            "_authService",
+            "_bookingService",
+            "_userProfile",
+            "_matchCount",
+            "_isLoading"
+          ],
+          "exported": false,
+          "lineCount": 500
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../core/utils/validators.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../models/user_profile.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../services/auth_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../services/booking_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/custom_text_field.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../../widgets/neon_button.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "ProfileScreen",
+        "wantKeepAlive",
+        "initState",
+        "build"
+      ],
+      "totalLines": 518,
+      "hasStructuralAnalysis": true
+    },
+    "lib/services/auth_service.dart": {
+      "filePath": "lib/services/auth_service.dart",
+      "contentHash": "e7b9b9f5ef74081cb0f56e5490cc0fd3c5b6d85b963609ce712cc6550a853a36",
+      "functions": [
+        {
+          "name": "AuthService._internal",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "isSupabaseReady",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_supabase",
+          "params": [],
+          "returnType": "SupabaseClient",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "authStateChanges",
+          "params": [],
+          "returnType": "Stream<AuthState>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "currentUser",
+          "params": [],
+          "returnType": "User",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "currentSession",
+          "params": [],
+          "returnType": "Session",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "isAuthenticated",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "isLiveUser",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "signIn",
+          "params": [
+            "email",
+            "password"
+          ],
+          "returnType": "Future<AuthResponse>",
+          "exported": true,
+          "lineCount": 4
+        },
+        {
+          "name": "signUp",
+          "params": [
+            "email",
+            "password",
+            "fullName"
+          ],
+          "returnType": "Future<AuthResponse>",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "updateUserProfile",
+          "params": [
+            "fullName"
+          ],
+          "returnType": "Future<UserProfile>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "signOut",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "fetchUserProfile",
+          "params": [
+            "userId"
+          ],
+          "returnType": "Future<UserProfile?>",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "AuthService",
+          "methods": [
+            "AuthService._internal",
+            "isSupabaseReady",
+            "_supabase",
+            "authStateChanges",
+            "currentUser",
+            "currentSession",
+            "isAuthenticated",
+            "isLiveUser",
+            "signIn",
+            "signUp",
+            "updateUserProfile",
+            "signOut",
+            "fetchUserProfile"
+          ],
+          "properties": [
+            "_mockAuthStreamController",
+            "_isDemoLoggedIn",
+            "_demoProfile"
+          ],
+          "exported": true,
+          "lineCount": 224
+        }
+      ],
+      "imports": [
+        {
+          "source": "dart:async",
+          "specifiers": []
+        },
+        {
+          "source": "package:flutter/foundation.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:supabase_flutter/supabase_flutter.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../models/user_profile.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "AuthService._internal",
+        "isSupabaseReady",
+        "authStateChanges",
+        "currentUser",
+        "currentSession",
+        "isAuthenticated",
+        "isLiveUser",
+        "signIn",
+        "signUp",
+        "updateUserProfile",
+        "signOut",
+        "fetchUserProfile",
+        "AuthService"
+      ],
+      "totalLines": 230,
+      "hasStructuralAnalysis": true
+    },
+    "lib/services/booking_service.dart": {
+      "filePath": "lib/services/booking_service.dart",
+      "contentHash": "4bc2b28a8d262c1d4cc8bb633b950f92ce9d1b5fecb6c90a9af8c25605e159e3",
+      "functions": [
+        {
+          "name": "BookingService._internal",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "isSupabaseReady",
+          "params": [],
+          "returnType": "bool",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_supabase",
+          "params": [],
+          "returnType": "SupabaseClient",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "fetchActiveCourts",
+          "params": [],
+          "returnType": "Future<List<CourtModel>>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "createBooking",
+          "params": [
+            "courtId",
+            "startTime",
+            "endTime",
+            "totalAmount"
+          ],
+          "returnType": "Future<BookingModel>",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "fetchCustomerBookings",
+          "params": [],
+          "returnType": "Future<List<BookingModel>>",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "BookingService",
+          "methods": [
+            "BookingService._internal",
+            "isSupabaseReady",
+            "_supabase",
+            "fetchActiveCourts",
+            "createBooking",
+            "fetchCustomerBookings"
+          ],
+          "properties": [
+            "_localBookings"
+          ],
+          "exported": true,
+          "lineCount": 192
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/foundation.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:supabase_flutter/supabase_flutter.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../models/booking_model.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../models/court_model.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "BookingService._internal",
+        "isSupabaseReady",
+        "fetchActiveCourts",
+        "createBooking",
+        "fetchCustomerBookings",
+        "BookingService"
+      ],
+      "totalLines": 198,
+      "hasStructuralAnalysis": true
+    },
+    "lib/services/calendar_link_service.dart": {
+      "filePath": "lib/services/calendar_link_service.dart",
+      "contentHash": "8ed1d655e8dd7eabe56765b2fe11e5330bd1285ebf7cea4673e5b917e401fc14",
+      "functions": [
+        {
+          "name": "CalendarLinkService._",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "formatUtcDateTime",
+          "params": [
+            "dateTime"
+          ],
+          "returnType": "String",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "buildGoogleCalendarUri",
+          "params": [
+            "title",
+            "startTime",
+            "endTime",
+            "details",
+            "location"
+          ],
+          "returnType": "Uri",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "buildGoogleCalendarUrl",
+          "params": [
+            "title",
+            "startTime",
+            "endTime",
+            "details",
+            "location"
+          ],
+          "returnType": "String",
+          "exported": true,
+          "lineCount": 7
+        },
+        {
+          "name": "openGoogleCalendar",
+          "params": [
+            "title",
+            "startTime",
+            "endTime",
+            "details",
+            "location",
+            "context"
+          ],
+          "returnType": "Future<bool>",
+          "exported": true,
+          "lineCount": 8
+        },
+        {
+          "name": "addBookingToCalendar",
+          "params": [
+            "booking",
+            "context",
+            "venueName"
+          ],
+          "returnType": "Future<bool>",
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "_showFallbackSnackBar",
+          "params": [
+            "context",
+            "message",
+            "isError"
+          ],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 5
+        }
+      ],
+      "classes": [
+        {
+          "name": "CalendarLinkService",
+          "methods": [
+            "CalendarLinkService._",
+            "formatUtcDateTime",
+            "buildGoogleCalendarUri",
+            "buildGoogleCalendarUrl",
+            "openGoogleCalendar",
+            "addBookingToCalendar",
+            "_showFallbackSnackBar"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 216
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:intl/intl.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:url_launcher/url_launcher.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../models/booking_model.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "CalendarLinkService._",
+        "formatUtcDateTime",
+        "buildGoogleCalendarUri",
+        "buildGoogleCalendarUrl",
+        "openGoogleCalendar",
+        "addBookingToCalendar",
+        "CalendarLinkService"
+      ],
+      "totalLines": 228,
+      "hasStructuralAnalysis": true
+    },
+    "lib/widgets/auth_gate.dart": {
+      "filePath": "lib/widgets/auth_gate.dart",
+      "contentHash": "df7c13340839fca71762984998119fb84c634ea56c5586f8e98f0418c8644aa6",
+      "functions": [
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "AuthGate",
+          "methods": [
+            "build"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 21
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:supabase_flutter/supabase_flutter.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../screens/auth/login_screen.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../screens/home/main_navigation_screen.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../services/auth_service.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "build",
+        "AuthGate"
+      ],
+      "totalLines": 30,
+      "hasStructuralAnalysis": true
+    },
+    "lib/widgets/booking_success_modal.dart": {
+      "filePath": "lib/widgets/booking_success_modal.dart",
+      "contentHash": "fa704af6d83d010da02b996390d5617baeb2653c1c27258480ffd2f7886f1325",
+      "functions": [
+        {
+          "name": "show",
+          "params": [
+            "context",
+            "booking",
+            "onViewBookings",
+            "venueName"
+          ],
+          "returnType": "Future<void>",
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<BookingSuccessModal>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "initState",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "dispose",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_formatExactDate",
+          "params": [
+            "dt"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_formatTimeSlot",
+          "params": [
+            "start",
+            "end"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_handleAddCalendar",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_buildInfoRow",
+          "params": [
+            "icon",
+            "label",
+            "value",
+            "valueColor",
+            "isBold"
+          ],
+          "returnType": "Widget",
+          "exported": false,
+          "lineCount": 7
+        }
+      ],
+      "classes": [
+        {
+          "name": "BookingSuccessModal",
+          "methods": [
+            "show",
+            "createState"
+          ],
+          "properties": [
+            "booking",
+            "onViewBookings",
+            "venueName"
+          ],
+          "exported": true,
+          "lineCount": 35
+        },
+        {
+          "name": "_BookingSuccessModalState",
+          "methods": [
+            "initState",
+            "dispose",
+            "_formatExactDate",
+            "_formatTimeSlot",
+            "_handleAddCalendar",
+            "build",
+            "_buildInfoRow"
+          ],
+          "properties": [
+            "_isLaunchingCalendar",
+            "_animController",
+            "_scaleAnimation"
+          ],
+          "exported": false,
+          "lineCount": 401
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:intl/intl.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../models/booking_model.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../services/calendar_link_service.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "show",
+        "createState",
+        "BookingSuccessModal",
+        "initState",
+        "dispose",
+        "build"
+      ],
+      "totalLines": 451,
+      "hasStructuralAnalysis": true
+    },
+    "lib/widgets/custom_bottom_nav_bar.dart": {
+      "filePath": "lib/widgets/custom_bottom_nav_bar.dart",
+      "contentHash": "c458cae1282aa77693b1d6707927bf5c3e31d4dee4a273d6e23fcba2ca34696a",
+      "functions": [
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "CustomBottomNavItem",
+          "methods": [],
+          "properties": [
+            "icon",
+            "activeIcon",
+            "label"
+          ],
+          "exported": true,
+          "lineCount": 11
+        },
+        {
+          "name": "CustomBottomNavBar",
+          "methods": [
+            "build"
+          ],
+          "properties": [
+            "currentIndex",
+            "onTap",
+            "items"
+          ],
+          "exported": true,
+          "lineCount": 113
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:flutter/services.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../core/theme/app_theme.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "CustomBottomNavItem",
+        "build",
+        "CustomBottomNavBar"
+      ],
+      "totalLines": 131,
+      "hasStructuralAnalysis": true
+    },
+    "lib/widgets/custom_text_field.dart": {
+      "filePath": "lib/widgets/custom_text_field.dart",
+      "contentHash": "e7b5abd0cff2b58d57d5eef2f432eef4abf1e1c9784fb31146aac06a8ba1566a",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<CustomTextField>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "initState",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "dispose",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "CustomTextField",
+          "methods": [
+            "createState"
+          ],
+          "properties": [
+            "controller",
+            "label",
+            "hintText",
+            "prefixIcon",
+            "isPassword",
+            "keyboardType",
+            "validator",
+            "textInputAction",
+            "onFieldSubmitted"
+          ],
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "_CustomTextFieldState",
+          "methods": [
+            "initState",
+            "dispose",
+            "build"
+          ],
+          "properties": [
+            "_obscureText",
+            "_focusNode",
+            "_isFocused"
+          ],
+          "exported": false,
+          "lineCount": 97
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../core/theme/app_theme.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "CustomTextField",
+        "initState",
+        "dispose",
+        "build"
+      ],
+      "totalLines": 130,
+      "hasStructuralAnalysis": true
+    },
+    "lib/widgets/custom_top_app_bar.dart": {
+      "filePath": "lib/widgets/custom_top_app_bar.dart",
+      "contentHash": "cdf225c68fe7fdb603e5f63fdab02a1fa227c4cf4c2d66061aa830d579a90f62",
+      "functions": [
+        {
+          "name": "preferredSize",
+          "params": [],
+          "returnType": "Size",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "CustomTopAppBar",
+          "methods": [
+            "preferredSize",
+            "build"
+          ],
+          "properties": [
+            "title",
+            "subtitle",
+            "userProfile",
+            "userEmail",
+            "onQuickAddPressed",
+            "onNotificationPressed",
+            "onProfilePressed"
+          ],
+          "exported": true,
+          "lineCount": 194
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../models/user_profile.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "preferredSize",
+        "build",
+        "CustomTopAppBar"
+      ],
+      "totalLines": 200,
+      "hasStructuralAnalysis": true
+    },
+    "lib/widgets/neon_button.dart": {
+      "filePath": "lib/widgets/neon_button.dart",
+      "contentHash": "06485a5ac272036afc1858e15a105b198e1d255c5a2345b9b99ef52b65a367fa",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<NeonButton>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "NeonButton",
+          "methods": [
+            "createState"
+          ],
+          "properties": [
+            "text",
+            "onPressed",
+            "isLoading",
+            "icon",
+            "trailing",
+            "width",
+            "height",
+            "color",
+            "gradient"
+          ],
+          "exported": true,
+          "lineCount": 27
+        },
+        {
+          "name": "_NeonButtonState",
+          "methods": [
+            "build"
+          ],
+          "properties": [
+            "_isPressed"
+          ],
+          "exported": false,
+          "lineCount": 77
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../core/theme/app_theme.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "NeonButton",
+        "build"
+      ],
+      "totalLines": 110,
+      "hasStructuralAnalysis": true
+    },
+    "lib/widgets/reservation_card.dart": {
+      "filePath": "lib/widgets/reservation_card.dart",
+      "contentHash": "4699fb25ca8d49ae2c618218f9ed09ab12d685d264eb068f7239479cb565b09d",
+      "functions": [
+        {
+          "name": "createState",
+          "params": [],
+          "returnType": "State<ReservationCard>",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "initState",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "dispose",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        },
+        {
+          "name": "_formatDateHeader",
+          "params": [
+            "dt"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_formatTimeSlot",
+          "params": [
+            "start",
+            "end"
+          ],
+          "returnType": "String",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_handleAddToCalendar",
+          "params": [],
+          "returnType": "Future<void>",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "_openDetailsModal",
+          "params": [],
+          "returnType": "void",
+          "exported": false,
+          "lineCount": 1
+        },
+        {
+          "name": "build",
+          "params": [
+            "context"
+          ],
+          "returnType": "Widget",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [
+        {
+          "name": "ReservationCard",
+          "methods": [
+            "createState"
+          ],
+          "properties": [
+            "booking",
+            "isUpcoming",
+            "onRefresh"
+          ],
+          "exported": true,
+          "lineCount": 15
+        },
+        {
+          "name": "_ReservationCardState",
+          "methods": [
+            "initState",
+            "dispose",
+            "_formatDateHeader",
+            "_formatTimeSlot",
+            "_handleAddToCalendar",
+            "_openDetailsModal",
+            "build"
+          ],
+          "properties": [
+            "_isAddingToCalendar",
+            "_pressController",
+            "_scaleAnimation"
+          ],
+          "exported": false,
+          "lineCount": 301
+        }
+      ],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:google_fonts/google_fonts.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:intl/intl.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../core/theme/app_theme.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../models/booking_model.dart",
+          "specifiers": []
+        },
+        {
+          "source": "../services/calendar_link_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "booking_success_modal.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "createState",
+        "ReservationCard",
+        "initState",
+        "dispose",
+        "build"
+      ],
+      "totalLines": 333,
+      "hasStructuralAnalysis": true
+    },
+    "pubspec.yaml": {
+      "filePath": "pubspec.yaml",
+      "contentHash": "f030020a489372b8dfdd275427bbd3288ca93af6884eef96c5a0779946812e5d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 29,
+      "hasStructuralAnalysis": true
+    },
+    "test/calendar_link_service_test.dart": {
+      "filePath": "test/calendar_link_service_test.dart",
+      "contentHash": "41c346468b09b555761d061e01be40eb2ec466ad21a814068f1651b67e5e3cc2",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "package:flutter/material.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:flutter_test/flutter_test.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/models/booking_model.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/services/calendar_link_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/widgets/booking_success_modal.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/widgets/reservation_card.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "main"
+      ],
+      "totalLines": 133,
+      "hasStructuralAnalysis": true
+    },
+    "test/supabase_config_test.dart": {
+      "filePath": "test/supabase_config_test.dart",
+      "contentHash": "8f232b0483e5bbbe1544b88821e900b59fd57b1631760905cf2ffccc17f565bb",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "package:flutter_test/flutter_test.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/core/constants/supabase_config.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/models/booking_model.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/models/court_model.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/models/user_profile.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/services/auth_service.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/services/booking_service.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "main"
+      ],
+      "totalLines": 124,
+      "hasStructuralAnalysis": true
+    },
+    "test/widget_test.dart": {
+      "filePath": "test/widget_test.dart",
+      "contentHash": "0aca73203368a191a27605e4046a8b96b9b903832c6720eb3ea822f4134cc258",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "returnType": "void",
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "package:flutter_test/flutter_test.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/main.dart",
+          "specifiers": []
+        },
+        {
+          "source": "package:pickleball_app/screens/auth/login_screen.dart",
+          "specifiers": []
+        }
+      ],
+      "exports": [
+        "main"
+      ],
+      "totalLines": 16,
+      "hasStructuralAnalysis": true
+    }
+  }
+}
