@@ -16,7 +16,7 @@ class BookingService {
       startTime: DateTime.now().add(const Duration(hours: 3)),
       endTime: DateTime.now().add(const Duration(hours: 4, minutes: 30)),
       status: 'confirmed',
-      totalAmount: 67.50,
+      totalAmount: 180.00,
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
     BookingModel(
@@ -27,7 +27,7 @@ class BookingService {
       startTime: DateTime.now().add(const Duration(days: 1, hours: 2)),
       endTime: DateTime.now().add(const Duration(days: 1, hours: 3, minutes: 30)),
       status: 'pending',
-      totalAmount: 82.50,
+      totalAmount: 225.00,
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
     ),
     BookingModel(
@@ -38,7 +38,7 @@ class BookingService {
       startTime: DateTime.now().subtract(const Duration(days: 3, hours: 4)),
       endTime: DateTime.now().subtract(const Duration(days: 3, hours: 2, minutes: 30)),
       status: 'completed',
-      totalAmount: 60.00,
+      totalAmount: 150.00,
       createdAt: DateTime.now().subtract(const Duration(days: 4)),
     ),
   ];
@@ -173,9 +173,28 @@ class BookingService {
       id: 'a1111111-1111-1111-1111-111111111111',
       name: 'SmashCourt - Court 1',
       status: 'active',
-      hourlyRate: 45.0,
+      hourlyRate: 120.0,
       surfaceType: 'Pro-Cushion Hardcourt',
       courtType: 'Championship Indoor',
     ),
+<<<<<<< HEAD
+=======
+    CourtModel(
+      id: 'b2222222-2222-2222-2222-222222222222',
+      name: 'Court 2 - Neon Arena (LED)',
+      status: 'active',
+      hourlyRate: 150.0,
+      surfaceType: 'Ultra-Fast Acrylic',
+      courtType: 'LED Glow Indoor',
+    ),
+    CourtModel(
+      id: 'c3333333-3333-3333-3333-333333333333',
+      name: 'Court 3 - Skyline Rooftop',
+      status: 'active',
+      hourlyRate: 100.0,
+      surfaceType: 'All-Weather Surface',
+      courtType: 'Rooftop Covered',
+    ),
+>>>>>>> 51588db295a0f83af8381fce8814afdea72d4c3e
   ];
 }
