@@ -12,6 +12,8 @@ class BookingService {
   final AuthService _authService = AuthService.instance;
 
   // In-memory availability cache: key is "courtId_YYYY-MM-DD"
+  // Limited to _maxCacheEntries to prevent unbounded memory growth
+  static const int _maxCacheEntries = 50;
   final Map<String, List<BookingModel>> _courtAvailabilityCache = {};
 
   String _formatCacheKey(String courtId, DateTime date) {
@@ -241,6 +243,10 @@ class BookingService {
       }).toList();
     }
 
+    // Evict oldest entry if cache is at capacity
+    if (_courtAvailabilityCache.length >= _maxCacheEntries) {
+      _courtAvailabilityCache.remove(_courtAvailabilityCache.keys.first);
+    }
     _courtAvailabilityCache[cacheKey] = result;
     return result;
   }

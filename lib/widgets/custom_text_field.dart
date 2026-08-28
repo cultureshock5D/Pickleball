@@ -72,14 +72,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             boxShadow: _isFocused
-                ? [
+                ? const [
                     BoxShadow(
-                      color: AppTheme.neonGreen.withOpacity(0.15),
+                      color: AppTheme.neonGreenAlpha15,
                       blurRadius: 12,
-                      offset: const Offset(0, 2),
+                      offset: Offset(0, 2),
                     ),
                   ]
-                : [],
+                : const [],
           ),
           child: TextFormField(
             controller: widget.controller,

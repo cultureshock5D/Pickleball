@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
+import '../../core/utils/snackbar_helper.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
@@ -50,28 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = e.message;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppTheme.surfaceElevated,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: AppTheme.errorRed, width: 1),
-            ),
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: AppTheme.errorRed, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    e.message,
-                    style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        AppSnackBar.error(context, e.message);
       }
     } catch (e) {
       setState(() {
@@ -200,9 +180,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: AppTheme.neonGreen.withOpacity(0.15),
+                                    color: AppTheme.neonGreenAlpha15,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
+                                    border: Border.all(color: AppTheme.neonGreenAlpha30),
                                   ),
                                   child: const Icon(
                                     Icons.sports_tennis_rounded,
@@ -281,9 +261,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: AppTheme.errorRed.withOpacity(0.12),
+                            color: AppTheme.errorRedAlpha12,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.errorRed.withOpacity(0.3)),
+                            border: Border.all(color: AppTheme.errorRedAlpha30),
                           ),
                           child: Row(
                             children: [

@@ -34,7 +34,7 @@ class BookingSuccessModal extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.75),
+      barrierColor: AppTheme.blackAlpha75,
       builder: (ctx) => BookingSuccessModal(
         booking: booking,
         onViewBookings: onViewBookings,
@@ -146,11 +146,11 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
             height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.neonGreen.withOpacity(0.14),
+              color: AppTheme.neonGreenAlpha14,
               border: Border.all(color: AppTheme.neonGreen, width: 2),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
-                  color: AppTheme.neonGreen.withOpacity(0.35),
+                  color: AppTheme.neonGreenAlpha35,
                   blurRadius: 24,
                   spreadRadius: 2,
                 ),
@@ -240,9 +240,9 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.15),
+                        color: statusColor.withAlpha(38),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: statusColor.withOpacity(0.4)),
+                        border: Border.all(color: statusColor.withAlpha(102)),
                       ),
                       child: Text(
                         statusText,
@@ -328,17 +328,17 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                 width: double.infinity,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: AppTheme.neonGreen.withOpacity(0.12),
+                  color: AppTheme.neonGreenAlpha12,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: AppTheme.neonGreen,
                     width: 1.8,
                   ),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
-                      color: AppTheme.neonGreen.withOpacity(0.22),
+                      color: AppTheme.neonGreenAlpha22,
                       blurRadius: 16,
-                      offset: const Offset(0, 4),
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),

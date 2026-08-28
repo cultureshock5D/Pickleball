@@ -51,4 +51,22 @@ class CourtModel {
       'status': status,
     };
   }
+
+  CourtModel copyWith({
+    String? id,
+    String? name,
+    String? status,
+    double? hourlyRate,
+    String? surfaceType,
+    String? courtType,
+  }) {
+    return CourtModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      status: status ?? this.status,
+      hourlyRate: hourlyRate ?? this.hourlyRate,
+      surfaceType: surfaceType ?? this.surfaceType,
+      courtType: courtType ?? this.courtType,
+    );
+  }
 }

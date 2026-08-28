@@ -61,18 +61,7 @@ class DemoData {
   static void cancelDemoBooking(String bookingId) {
     final index = _demoBookings.indexWhere((b) => b.id == bookingId);
     if (index != -1) {
-      final old = _demoBookings[index];
-      _demoBookings[index] = BookingModel(
-        id: old.id,
-        customerId: old.customerId,
-        courtId: old.courtId,
-        courtName: old.courtName,
-        startTime: old.startTime,
-        endTime: old.endTime,
-        status: 'cancelled',
-        totalAmount: old.totalAmount,
-        createdAt: old.createdAt,
-      );
+      _demoBookings[index] = _demoBookings[index].copyWith(status: 'cancelled');
     }
   }
 

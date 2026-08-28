@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../core/theme/app_theme.dart';
+import '../core/utils/snackbar_helper.dart';
 import '../models/booking_model.dart';
 
 /// Zero-Auth, Zero-API Deep Link Service for Google Calendar integration.
@@ -105,20 +104,19 @@ class CalendarLinkService {
       if (!launched) {
         debugPrint('Warning: url_launcher returned false for: $uri');
         if (context != null && context.mounted) {
-          _showFallbackSnackBar(
+          AppSnackBar.error(
             context,
             'Could not open Google Calendar automatically. Please try again.',
-            isError: true,
           );
         }
         return false;
       }
 
       if (context != null && context.mounted) {
-        _showFallbackSnackBar(
+        AppSnackBar.show(
           context,
-          'Opening Google Calendar to save your booking...',
-          isError: false,
+          message: 'Opening Google Calendar to save your booking...',
+          icon: Icons.event_available_rounded,
         );
       }
 
@@ -126,10 +124,9 @@ class CalendarLinkService {
     } catch (e) {
       debugPrint('Exception opening Google Calendar URL ($uri): $e');
       if (context != null && context.mounted) {
-        _showFallbackSnackBar(
+        AppSnackBar.error(
           context,
           'Unable to launch Google Calendar: ${e.toString().replaceAll('Exception: ', '')}',
-          isError: true,
         );
       }
       return false;
@@ -174,54 +171,4 @@ class CalendarLinkService {
     );
   }
 
-  static void _showFallbackSnackBar(
-    BuildContext context,
-    String message, {
-    required bool isError,
-  }) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: AppTheme.surfaceElevated,
-        behavior: SnackBarBehavior.floating,
-        elevation: 8,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: isError ? AppTheme.errorRed : AppTheme.neonGreen,
-            width: 1.2,
-          ),
-        ),
-        content: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: (isError ? AppTheme.errorRed : AppTheme.neonGreen).withOpacity(0.18),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isError ? Icons.error_outline_rounded : Icons.event_available_rounded,
-                color: isError ? AppTheme.errorRed : AppTheme.neonGreen,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-        duration: Duration(seconds: isError ? 4 : 2),
-      ),
-    );
-  }
 }

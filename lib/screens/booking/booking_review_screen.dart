@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snackbar_helper.dart';
 import '../../models/court_model.dart';
 import '../../services/booking_service.dart';
 import '../../services/calendar_link_service.dart';
@@ -98,28 +99,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppTheme.surfaceElevated,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: const BorderSide(color: AppTheme.errorRed),
-            ),
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline_rounded, color: AppTheme.errorRed, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    e.toString().replaceAll('Exception: ', ''),
-                    style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        AppSnackBar.error(context, e.toString().replaceAll('Exception: ', ''));
       }
     } finally {
       if (mounted) {
@@ -215,9 +195,9 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.neonGreen.withOpacity(0.12),
+                  color: AppTheme.neonGreenAlpha12,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
+                  border: Border.all(color: AppTheme.neonGreenAlpha30),
                 ),
                 child: const Center(
                   child: Icon(
@@ -254,9 +234,9 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.neonLime.withOpacity(0.12),
+                  color: AppTheme.neonLimeAlpha12,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.neonLime.withOpacity(0.3)),
+                  border: Border.all(color: AppTheme.neonLimeAlpha30),
                 ),
                 child: Text(
                   '\$${widget.court.hourlyRate.toStringAsFixed(0)}/hr',
@@ -340,7 +320,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppTheme.neonGreen.withOpacity(0.12),
+                  color: AppTheme.neonGreenAlpha12,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -507,8 +487,8 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppTheme.neonGreen.withOpacity(0.12),
+            decoration: const BoxDecoration(
+              color: AppTheme.neonGreenAlpha12,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.event_available_rounded, color: AppTheme.neonGreen, size: 20),
@@ -535,7 +515,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
           ),
           Switch.adaptive(
             value: _autoLaunchCalendar,
-            activeColor: AppTheme.neonGreen,
+            activeTrackColor: AppTheme.neonGreen,
             onChanged: (val) => setState(() => _autoLaunchCalendar = val),
           ),
         ],
@@ -566,7 +546,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.neonGreen.withOpacity(0.08) : AppTheme.surfaceElevated,
+                color: isSelected ? AppTheme.neonGreenAlpha08 : AppTheme.surfaceElevated,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
@@ -621,10 +601,10 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderSubtle.withOpacity(0.6)),
+      decoration: const BoxDecoration(
+        color: AppTheme.surfaceElevatedAlpha60,
+        borderRadius: BorderRadius.all(Radius.circular(18)),
+        border: Border.fromBorderSide(BorderSide(color: AppTheme.borderSubtleAlpha60)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -663,14 +643,14 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   Widget _buildBottomCheckoutBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.surfaceElevated,
-        border: const Border(top: BorderSide(color: AppTheme.borderSubtle)),
+        border: Border(top: BorderSide(color: AppTheme.borderSubtle)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.35),
+            color: AppTheme.blackAlpha35,
             blurRadius: 16,
-            offset: const Offset(0, -4),
+            offset: Offset(0, -4),
           ),
         ],
       ),
@@ -705,9 +685,9 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.neonGreen.withOpacity(0.12),
+                  color: AppTheme.neonGreenAlpha12,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
+                  border: Border.all(color: AppTheme.neonGreenAlpha30),
                 ),
                 child: Text(
                   '${widget.durationHours}h Session',

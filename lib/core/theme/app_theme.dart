@@ -35,6 +35,34 @@ class AppTheme {
   static const Color neonLimeAlpha35 = Color(0x5984CC16);
   static const Color borderSubtleAlpha30 = Color(0x4D1E1E24);
   static const Color borderSubtleAlpha50 = Color(0x801E1E24);
+  static const Color borderSubtleAlpha60 = Color(0x991E1E24);
+
+  // Error Red Alpha
+  static const Color errorRedAlpha12 = Color(0x1FEF4444);
+  static const Color errorRedAlpha30 = Color(0x4DEF4444);
+
+  // Neon Lime Alpha
+  static const Color neonLimeAlpha12 = Color(0x1F84CC16);
+  static const Color neonLimeAlpha30 = Color(0x4D84CC16);
+
+  // Neon Green Extra Alpha
+  static const Color neonGreenAlpha08 = Color(0x1410B981);
+  static const Color neonGreenAlpha14 = Color(0x2410B981);
+  static const Color neonGreenAlpha22 = Color(0x3810B981);
+  static const Color neonGreenAlpha35 = Color(0x5910B981);
+  static const Color neonGreenAlpha45 = Color(0x7310B981);
+
+  // Neon Yellow Alpha
+  static const Color neonYellowAlpha14 = Color(0x24FACC15);
+  static const Color neonYellowAlpha28 = Color(0x47FACC15);
+
+  // Black Alpha
+  static const Color blackAlpha35 = Color(0x59000000);
+  static const Color blackAlpha50 = Color(0x80000000);
+  static const Color blackAlpha75 = Color(0xBF000000);
+
+  // Surface Elevated Alpha
+  static const Color surfaceElevatedAlpha60 = Color(0x991C1C21);
 
   // Aliases for backwards compatibility
   static const Color neonMagenta = neonGreen;
@@ -123,25 +151,28 @@ class AppTheme {
   static const LinearGradient neonMagentaGradient = neonGreenGradient;
 
   // Shadows
-  static List<BoxShadow> neonGlow = [
+  static const List<BoxShadow> neonGlow = [
     BoxShadow(
-      color: neonGreen.withOpacity(0.45),
+      color: neonGreenAlpha45,
       blurRadius: 20,
       spreadRadius: 0,
-      offset: const Offset(0, 4),
+      offset: Offset(0, 4),
     ),
   ];
 
-  static List<BoxShadow> cardShadow = [
+  static const List<BoxShadow> cardShadow = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.5),
+      color: blackAlpha50,
       blurRadius: 16,
-      offset: const Offset(0, 8),
+      offset: Offset(0, 8),
     ),
   ];
 
   // ThemeData
-  static ThemeData get darkTheme {
+  // Cached ThemeData — built once, reused on every access
+  static final ThemeData darkTheme = _buildDarkTheme();
+
+  static ThemeData _buildDarkTheme() {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,

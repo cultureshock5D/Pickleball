@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
+import '../../core/utils/snackbar_helper.dart';
 import '../../models/user_profile.dart';
 import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
@@ -121,7 +122,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                       onPressed: () async {
                         if (!formKey.currentState!.validate()) return;
                         setModalState(() => isSaving = true);
-                        final messenger = ScaffoldMessenger.of(context);
                         final navigator = Navigator.of(ctx);
 
                         try {
@@ -133,36 +133,18 @@ class _ProfileScreenState extends State<ProfileScreen>
                               _userProfile = updated;
                             });
                             navigator.pop();
-                            messenger.showSnackBar(
-                              SnackBar(
-                                backgroundColor: AppTheme.surfaceElevated,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  side: const BorderSide(color: AppTheme.neonLime),
-                                ),
-                                content: Row(
-                                  children: [
-                                    const Icon(Icons.check_circle_rounded, color: AppTheme.neonLime, size: 20),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      'Profile updated successfully in Supabase!',
-                                      style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
+                            if (mounted) {
+                              AppSnackBar.show(
+                                context,
+                                message: 'Profile updated successfully in Supabase!',
+                                icon: Icons.check_circle_rounded,
+                              );
+                            }
                           }
                         } catch (e) {
                           setModalState(() => isSaving = false);
-                          if (mounted) {
-                            messenger.showSnackBar(
-                              SnackBar(
-                                backgroundColor: AppTheme.surfaceElevated,
-                                content: Text(e.toString()),
-                              ),
-                            );
+                          if (ctx.mounted) {
+                            AppSnackBar.error(ctx, e.toString());
                           }
                         }
                       },
@@ -312,9 +294,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                         decoration: BoxDecoration(
-                          color: AppTheme.neonLime.withOpacity(0.15),
+                          color: AppTheme.neonLimeAlpha15,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.neonLime.withOpacity(0.3)),
+                          border: Border.all(color: AppTheme.neonLimeAlpha30),
                         ),
                         child: Text(
                           'ROLE: ${role.toUpperCase()}',
