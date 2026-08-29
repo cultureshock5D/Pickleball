@@ -322,24 +322,10 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 20),
 
           // 2. Stats Grid
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  'Total Matches',
-                  '$_matchCount',
-                  Icons.sports_tennis_rounded,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatItem(
-                  'Loyalty Points',
-                  '${_matchCount * 120}',
-                  Icons.stars_rounded,
-                ),
-              ),
-            ],
+          _buildStatItem(
+            'Total Matches Played',
+            '$_matchCount',
+            Icons.sports_tennis_rounded,
           ),
           const SizedBox(height: 24),
 
@@ -358,13 +344,6 @@ class _ProfileScreenState extends State<ProfileScreen>
             subtitle: 'Update full name and profile attributes',
             icon: Icons.person_outline_rounded,
             onTap: _showEditProfileDialog,
-          ),
-          const SizedBox(height: 8),
-          _buildSettingsTile(
-            title: 'Payment Methods',
-            subtitle: 'Visa ending in 4567 • Apple Pay',
-            icon: Icons.credit_card_rounded,
-            onTap: () {},
           ),
           const SizedBox(height: 8),
           _buildSettingsTile(

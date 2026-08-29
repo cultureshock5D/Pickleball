@@ -50,7 +50,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
   DateTime _selectedDate = DateTime.now();
   int _selectedTimeSlotIndex = 0;
-  double _selectedDurationHours = 1.5;
+  double _selectedDurationHours = 1.0;
 
   List<BookingModel> _bookedSlotsForCurrentDay = [];
   bool _isLoadingAvailability = false;

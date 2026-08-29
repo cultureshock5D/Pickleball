@@ -4,8 +4,6 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/booking_model.dart';
 import '../../services/booking_service.dart';
-import '../../widgets/booking_success_modal.dart';
-import '../../widgets/neon_button.dart';
 
 class InsightsScreen extends StatefulWidget {
   final VoidCallback? onBookCourtPressed;
@@ -27,7 +25,6 @@ class _InsightsScreenState extends State<InsightsScreen>
   final BookingService _bookingService = BookingService.instance;
 
   // Memoized formatters (zero allocation per frame)
-  static final DateFormat _dateFormat = DateFormat('d MMM y');
   static final DateFormat _timeFormat = DateFormat('h:mm a');
 
   List<BookingModel> _bookings = [];
@@ -146,11 +143,6 @@ class _InsightsScreenState extends State<InsightsScreen>
       _peakSlotName = 'Evening Sessions';
     }
     _peakSlotTime = '${_timeFormat.format(filtered.first.startTime)} - ${_timeFormat.format(filtered.first.endTime)}';
-  }
-
-  double _calculateDurationHours(BookingModel b) {
-    final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
-    return (diffMinutes / 60.0).clamp(0.5, 8.0);
   }
 
   @override
@@ -424,197 +416,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-
-            // 6. Recent Booking & Session History Log
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Recent Booking History', style: AppTheme.fontSectionTitle),
-                Text(
-                  '${_bookings.length} Registered',
-                  style: AppTheme.fontMuted,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            if (_bookings.isEmpty)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceElevated,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.borderSubtle),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.history_toggle_off_rounded,
-                      color: AppTheme.textMuted,
-                      size: 32,
-                    ),
-                    const SizedBox(height: 10),
-                    Text('No reservation history records yet.', style: AppTheme.fontSectionTitle),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Once you reserve courts, live play history and Google Calendar sync actions will show here.',
-                      textAlign: TextAlign.center,
-                      style: AppTheme.fontMuted,
-                    ),
-                  ],
-                ),
-              )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _bookings.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final booking = _bookings[index];
-                  final durationHours = _calculateDurationHours(booking);
-                  final isConfirmed = booking.status.toLowerCase() == 'confirmed';
-                  final isCompleted = booking.status.toLowerCase() == 'completed';
-
-                  Color badgeColor = isConfirmed
-                      ? AppTheme.neonGreen
-                      : (isCompleted ? AppTheme.neonLime : AppTheme.neonYellow);
-
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(18),
-                      onTap: () {
-                        BookingSuccessModal.show(
-                          context,
-                          booking: booking,
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surfaceElevated,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: AppTheme.borderSubtle),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: badgeColor.withAlpha(35),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.sports_tennis_rounded,
-                                color: badgeColor,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    booking.courtName ?? 'Court 1 - Center Championship',
-                                    style: AppTheme.fontCardTitle,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${_dateFormat.format(booking.startTime)} • ${_timeFormat.format(booking.startTime)}',
-                                    style: AppTheme.fontMuted,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.surfaceHighlight,
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          '${durationHours.toStringAsFixed(1)}h Session',
-                                          style: GoogleFonts.inter(
-                                            color: Colors.white70,
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '₱${booking.totalAmount.toStringAsFixed(2)}',
-                                        style: GoogleFonts.inter(
-                                          color: AppTheme.neonGreen,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                  decoration: BoxDecoration(
-                                    color: badgeColor.withAlpha(30),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: badgeColor.withAlpha(70)),
-                                  ),
-                                  child: Text(
-                                    booking.status.toUpperCase(),
-                                    style: GoogleFonts.inter(
-                                      color: badgeColor,
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                const Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: AppTheme.textMuted,
-                                  size: 16,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            const SizedBox(height: 20),
-
-            // 7. Quick Book Session CTA
-            NeonButton(
-              text: 'Reserve Next Court Session',
-              icon: Icons.add_circle_outline_rounded,
-              onPressed: () {
-                if (widget.onBookCourtPressed != null) {
-                  widget.onBookCourtPressed!();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Navigate to Court Reservation tab to schedule your session.'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
-              },
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
           ],
         ),
       ),

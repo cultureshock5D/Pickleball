@@ -39,22 +39,10 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
 
   final List<Map<String, dynamic>> _paymentMethods = [
     {
-      'title': 'Club VIP Pass',
-      'subtitle': 'Zero-Fee Member Billing',
-      'icon': Icons.stars_rounded,
-      'isDefault': true,
-    },
-    {
       'title': 'Apple Pay / Google Pay',
       'subtitle': 'Instant 1-Tap Checkout',
       'icon': Icons.payment_rounded,
-      'isDefault': false,
-    },
-    {
-      'title': 'Credit / Debit Card',
-      'subtitle': '•••• 4242 (Visa)',
-      'icon': Icons.credit_card_rounded,
-      'isDefault': false,
+      'isDefault': true,
     },
   ];
 
