@@ -426,13 +426,13 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildCourtSelector(),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 _buildDateSelector(),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 _buildTimeSlotsGrid(),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 _buildDurationSelector(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -549,7 +549,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              '\$${court.hourlyRate.toStringAsFixed(0)}/hr',
+                              '₱${court.hourlyRate.toStringAsFixed(0)}/hr',
                               style: GoogleFonts.inter(
                                 color: AppTheme.neonLime,
                                 fontSize: 11.5,
@@ -706,16 +706,16 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           ),
           const SizedBox(height: 10),
 
-          // Direct Responsive Grid
+          // Direct Responsive Grid - Ultra-compact 4-column pills
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _allStartTimes.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              childAspectRatio: 2.2,
+              crossAxisCount: 4,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
+              childAspectRatio: 2.65,
             ),
             itemBuilder: (context, index) {
               final time = _allStartTimes[index];
@@ -731,17 +731,17 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                           HapticFeedback.lightImpact();
                           setState(() => _selectedTimeSlotIndex = index);
                         },
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppTheme.neonGreenAlpha20
                           : isBooked
-                              ? AppTheme.surfaceElevated.withAlpha(100)
+                              ? AppTheme.surfaceElevated.withAlpha(80)
                               : AppTheme.surfaceElevated,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
                             ? AppTheme.neonGreen
@@ -752,36 +752,39 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                       ),
                       boxShadow: isSelected ? AppTheme.cardShadow : null,
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _formatTimeOfDay(time),
-                          style: GoogleFonts.inter(
-                            color: isSelected
-                                ? Colors.white
-                                : isBooked
-                                    ? AppTheme.textMuted.withAlpha(120)
-                                    : AppTheme.textPrimary,
-                            fontSize: 12.5,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                            decoration: isBooked ? TextDecoration.lineThrough : null,
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 5,
+                            height: 5,
+                            margin: const EdgeInsets.only(right: 5),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppTheme.neonGreen
+                                  : isBooked
+                                      ? AppTheme.errorRed.withAlpha(180)
+                                      : AppTheme.neonLime.withAlpha(160),
+                              shape: BoxShape.circle,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isBooked ? 'Booked' : (isSelected ? 'Selected' : 'Available'),
-                          style: GoogleFonts.inter(
-                            color: isSelected
-                                ? AppTheme.neonGreen
-                                : isBooked
-                                    ? AppTheme.errorRed.withAlpha(180)
-                                    : AppTheme.neonLime.withAlpha(200),
-                            fontSize: 9.5,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          Text(
+                            _formatTimeOfDay(time),
+                            style: GoogleFonts.inter(
+                              color: isSelected
+                                  ? Colors.white
+                                  : isBooked
+                                      ? AppTheme.textMuted.withAlpha(120)
+                                      : AppTheme.textPrimary,
+                              fontSize: 11.5,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                              decoration: isBooked ? TextDecoration.lineThrough : null,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -851,7 +854,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '\$${subtotalForDuration.toStringAsFixed(0)}',
+                          '₱${subtotalForDuration.toStringAsFixed(0)}',
                           style: GoogleFonts.inter(
                             color: isSelected ? AppTheme.neonLime : AppTheme.textMuted,
                             fontSize: 11,
@@ -897,7 +900,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                 Row(
                   children: [
                     Text(
-                      '\$${_totalAmount.toStringAsFixed(2)}',
+                      '₱${_totalAmount.toStringAsFixed(2)}',
                       style: AppTheme.fontPriceHero,
                     ),
                     const SizedBox(width: 6),

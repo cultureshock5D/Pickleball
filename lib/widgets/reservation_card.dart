@@ -232,7 +232,7 @@ class _ReservationCardState extends State<ReservationCard>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '\$${booking.totalAmount.toStringAsFixed(2)}',
+                          '₱${booking.totalAmount.toStringAsFixed(2)}',
                           style: GoogleFonts.inter(
                             color: isCompleted ? Colors.white70 : AppTheme.neonLime,
                             fontSize: 16,

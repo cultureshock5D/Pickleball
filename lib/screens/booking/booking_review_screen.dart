@@ -239,7 +239,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                   border: Border.all(color: AppTheme.neonLimeAlpha30),
                 ),
                 child: Text(
-                  '\$${widget.court.hourlyRate.toStringAsFixed(0)}/hr',
+                  '₱${widget.court.hourlyRate.toStringAsFixed(0)}/hr',
                   style: GoogleFonts.inter(
                     color: AppTheme.neonLime,
                     fontSize: 12,
@@ -412,7 +412,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
           const SizedBox(height: 14),
           _buildPriceRow(
             'Court Rate (${widget.court.name})',
-            '\$${widget.court.hourlyRate.toStringAsFixed(2)} / hr',
+            '₱${widget.court.hourlyRate.toStringAsFixed(2)} / hr',
           ),
           const SizedBox(height: 8),
           _buildPriceRow(
@@ -422,12 +422,12 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
           const SizedBox(height: 8),
           _buildPriceRow(
             'Subtotal',
-            '\$${subtotal.toStringAsFixed(2)}',
+            '₱${subtotal.toStringAsFixed(2)}',
           ),
           const SizedBox(height: 8),
           _buildPriceRow(
             'Club Service & Booking Fee',
-            'FREE (\$0.00)',
+            'FREE (₱0.00)',
             valueColor: AppTheme.neonGreen,
           ),
           const Divider(color: AppTheme.borderSubtle, height: 20),
@@ -443,7 +443,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                 ),
               ),
               Text(
-                '\$${widget.totalAmount.toStringAsFixed(2)}',
+                '₱${widget.totalAmount.toStringAsFixed(2)}',
                 style: GoogleFonts.inter(
                   color: AppTheme.neonLime,
                   fontSize: 19,
@@ -673,7 +673,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                     ),
                   ),
                   Text(
-                    '\$${widget.totalAmount.toStringAsFixed(2)}',
+                    '₱${widget.totalAmount.toStringAsFixed(2)}',
                     style: GoogleFonts.inter(
                       color: AppTheme.neonLime,
                       fontSize: 22,

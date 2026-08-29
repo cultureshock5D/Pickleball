@@ -38,7 +38,7 @@ void main() {
         title: 'Pickleball @ SmashCourt - Court 1',
         startTime: start,
         endTime: end,
-        details: 'Reservation ID: BK-9024\nPrice: \$67.50',
+        details: 'Reservation ID: BK-9024\nPrice: ₱67.50',
         location: 'SmashCourt Arena - Center Championship',
       );
 
@@ -100,7 +100,7 @@ void main() {
       expect(find.text('Court 1 - Center Championship'), findsOneWidget);
       expect(find.text('SmashCourt Arena'), findsOneWidget);
       expect(find.text('Confirmed'), findsOneWidget);
-      expect(find.text('\$67.50'), findsOneWidget);
+      expect(find.text('₱67.50'), findsOneWidget);
       expect(find.text('BK-9999-TEST'), findsOneWidget);
 
       // Check Primary & Secondary CTA Buttons
@@ -124,7 +124,7 @@ void main() {
 
       expect(find.text('Court 1 - Center Championship'), findsOneWidget);
       expect(find.text('CONFIRMED'), findsOneWidget);
-      expect(find.text('\$67.50'), findsOneWidget);
+      expect(find.text('₱67.50'), findsOneWidget);
       expect(find.text('Add to Google Calendar'), findsOneWidget);
       expect(find.byIcon(Icons.event_available_rounded), findsOneWidget);
     });

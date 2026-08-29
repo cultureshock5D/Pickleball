@@ -326,7 +326,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                       const SizedBox(width: 8),
                       _buildHeroStatPill(
                         'Total Spend',
-                        '\$${_totalSpend.toStringAsFixed(0)}',
+                        '₱${_totalSpend.toStringAsFixed(0)}',
                         Icons.account_balance_wallet_outlined,
                       ),
                       const SizedBox(width: 8),
@@ -548,7 +548,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        '\$${booking.totalAmount.toStringAsFixed(2)}',
+                                        '₱${booking.totalAmount.toStringAsFixed(2)}',
                                         style: GoogleFonts.inter(
                                           color: AppTheme.neonGreen,
                                           fontSize: 12,

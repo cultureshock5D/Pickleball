@@ -154,7 +154,7 @@ class CalendarLinkService {
       ..writeln('🏟️ Court: $court')
       ..writeln('📅 Date: $formattedDate')
       ..writeln('⏰ Slot: $formattedTime')
-      ..writeln('💰 Total Paid: \$${booking.totalAmount.toStringAsFixed(2)}')
+      ..writeln('💰 Total Paid: ₱${booking.totalAmount.toStringAsFixed(2)}')
       ..writeln('🔖 Status: ${booking.status.toUpperCase()}')
       ..writeln('🆔 Booking Reference: ${booking.id}')
       ..writeln('')

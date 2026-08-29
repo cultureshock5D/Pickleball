@@ -278,7 +278,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                 _buildInfoRow(
                   icon: Icons.payments_outlined,
                   label: 'Total Paid',
-                  value: '\$${booking.totalAmount.toStringAsFixed(2)}',
+                  value: '₱${booking.totalAmount.toStringAsFixed(2)}',
                   valueColor: AppTheme.neonLime,
                   isBold: true,
                 ),
