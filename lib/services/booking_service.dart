@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../demo/demo_data.dart';
+import '../data/mock_data.dart';
 import '../models/booking_model.dart';
 import '../models/court_model.dart';
 import '../models/venue_model.dart';
@@ -64,15 +64,15 @@ class BookingService {
             .toList();
         if (list.isNotEmpty) return list;
       } catch (e) {
-        debugPrint('Notice: Supabase venues table fallback to DemoData: $e');
+        debugPrint('Notice: Supabase venues table fallback to MockData: $e');
       }
     }
-    return DemoData.mockVenues;
+    return MockData.venues;
   }
 
   /// Query active courts from public.courts
   Future<List<CourtModel>> fetchActiveCourts({String? venueId}) async {
-    List<CourtModel> courts = DemoData.mockCourts;
+    List<CourtModel> courts = MockData.courts;
 
     if (isSupabaseReady && _supabase != null) {
       try {
@@ -137,16 +137,16 @@ class BookingService {
         rethrow;
       }
     } else {
-      // Demo fallback: simulate ultra-fast latency (<200ms)
+      // Mock fallback: simulate ultra-fast latency (<200ms)
       await Future.delayed(const Duration(milliseconds: 150));
-      final court = DemoData.mockCourts.firstWhere(
+      final court = MockData.courts.firstWhere(
         (c) => c.id == courtId,
-        orElse: () => DemoData.mockCourts.first,
+        orElse: () => MockData.courts.first,
       );
 
       final newBooking = BookingModel(
         id: 'BK-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-        customerId: DemoData.demoUserId,
+        customerId: MockData.demoUserId,
         courtId: courtId,
         courtName: court.name,
         startTime: startTime,
@@ -156,7 +156,7 @@ class BookingService {
         createdAt: DateTime.now(),
       );
 
-      DemoData.addDemoBooking(newBooking);
+      MockData.addBooking(newBooking);
       invalidateAvailabilityCache(courtId: courtId, date: startTime);
       return newBooking;
     }
@@ -182,11 +182,11 @@ class BookingService {
             .toList();
       } catch (e) {
         debugPrint('Notice: Error fetching customer bookings: $e');
-        return DemoData.demoBookings;
+        return MockData.bookings;
       }
     }
 
-    return DemoData.demoBookings;
+    return MockData.bookings;
   }
 
   /// Fetch bookings for a court on a given date
@@ -219,8 +219,8 @@ class BookingService {
       }
     }
 
-    // Demo fallback: check demoBookings
-    final list = DemoData.demoBookings.where((b) {
+    // Mock fallback: check mock bookings
+    final list = MockData.bookings.where((b) {
       return b.courtId == courtId &&
           b.status != 'cancelled' &&
           b.startTime.isAfter(startOfDay) &&
@@ -247,7 +247,7 @@ class BookingService {
         rethrow;
       }
     } else {
-      DemoData.cancelDemoBooking(bookingId);
+      MockData.cancelBooking(bookingId);
       invalidateAvailabilityCache();
     }
   }

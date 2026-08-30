@@ -1,12 +1,12 @@
+import 'package:flutter/material.dart';
 import '../models/booking_model.dart';
 import '../models/court_model.dart';
 import '../models/user_profile.dart';
 import '../models/venue_model.dart';
 
-/// Centralized repository for demo / mock data used strictly for
-/// demo guest access and previewing the application.
-class DemoData {
-  DemoData._();
+/// Centralized repository for default seed data, clubs, courts, and mock fallback storage.
+class MockData {
+  MockData._();
 
   static const String demoUserId = 'demo-user-12345';
   static const String demoEmail = 'customer@pickleball.com';
@@ -17,7 +17,32 @@ class DemoData {
     role: 'customer',
   );
 
-  static final List<BookingModel> _demoBookings = [
+  /// Operating Time Slots (8:00 AM to 10:00 PM)
+  static const List<TimeOfDay> operatingTimeSlots = [
+    TimeOfDay(hour: 8, minute: 0),
+    TimeOfDay(hour: 9, minute: 0),
+    TimeOfDay(hour: 10, minute: 0),
+    TimeOfDay(hour: 11, minute: 0),
+    TimeOfDay(hour: 12, minute: 0),
+    TimeOfDay(hour: 13, minute: 0),
+    TimeOfDay(hour: 14, minute: 0),
+    TimeOfDay(hour: 15, minute: 0),
+    TimeOfDay(hour: 16, minute: 0),
+    TimeOfDay(hour: 17, minute: 0),
+    TimeOfDay(hour: 18, minute: 0),
+    TimeOfDay(hour: 19, minute: 0),
+    TimeOfDay(hour: 20, minute: 0),
+    TimeOfDay(hour: 21, minute: 0),
+    TimeOfDay(hour: 22, minute: 0),
+  ];
+
+  /// Standard Duration Options in Hours
+  static const List<double> standardDurations = [1.0, 1.5, 2.0, 3.0];
+
+  /// Standard Player Format Options (2 = Singles, 4 = Doubles, 6 = Group)
+  static const List<int> standardPlayerCounts = [2, 4, 6];
+
+  static final List<BookingModel> _mockBookings = [
     BookingModel(
       id: 'BK-9024',
       customerId: demoUserId,
@@ -31,20 +56,21 @@ class DemoData {
     ),
   ];
 
-  static List<BookingModel> get demoBookings => List.unmodifiable(_demoBookings);
+  static List<BookingModel> get bookings => List.unmodifiable(_mockBookings);
 
-  static void addDemoBooking(BookingModel booking) {
-    _demoBookings.insert(0, booking);
+  static void addBooking(BookingModel booking) {
+    _mockBookings.insert(0, booking);
   }
 
-  static void cancelDemoBooking(String bookingId) {
-    final index = _demoBookings.indexWhere((b) => b.id == bookingId);
+  static void cancelBooking(String bookingId) {
+    final index = _mockBookings.indexWhere((b) => b.id == bookingId);
     if (index != -1) {
-      _demoBookings[index] = _demoBookings[index].copyWith(status: 'cancelled');
+      _mockBookings[index] = _mockBookings[index].copyWith(status: 'cancelled');
     }
   }
 
-  static const List<VenueModel> mockVenues = [
+  /// 4 Premier Clubs & Venues
+  static const List<VenueModel> venues = [
     VenueModel(
       id: 'venue-bcn-1',
       name: 'Barcelona Smash Club',
@@ -120,7 +146,9 @@ class DemoData {
     ),
   ];
 
-  static const List<CourtModel> mockCourts = [
+  /// Available Courts per Venue
+  static const List<CourtModel> courts = [
+    // Barcelona Smash Club Courts
     CourtModel(
       id: 'a1111111-1111-1111-1111-111111111111',
       name: 'Center Championship Court',
@@ -182,10 +210,20 @@ class DemoData {
       venueId: 'venue-dtn-2',
       venueName: 'SmashCourt Central Arena',
     ),
+    CourtModel(
+      id: 'b3333333-3333-3333-3333-333333333333',
+      name: 'Pro Training Court 3',
+      status: 'active',
+      hourlyRate: 140.0,
+      surfaceType: 'Ultra-Fast Acrylic',
+      courtType: 'Training Indoor',
+      venueId: 'venue-dtn-2',
+      venueName: 'SmashCourt Central Arena',
+    ),
     // Skyline Rooftop Courts
     CourtModel(
       id: 'c1111111-1111-1111-1111-111111111111',
-      name: 'Panorama Rooftop Court A',
+      name: 'Skyline Panorama Court 1',
       status: 'active',
       hourlyRate: 160.0,
       surfaceType: 'All-Weather Surface',
@@ -195,7 +233,7 @@ class DemoData {
     ),
     CourtModel(
       id: 'c2222222-2222-2222-2222-222222222222',
-      name: 'Sunset Vista Court B',
+      name: 'Sunset VIP Court 2',
       status: 'active',
       hourlyRate: 175.0,
       surfaceType: 'High-Impact Resin',
@@ -206,11 +244,31 @@ class DemoData {
     // Green Valley Courts
     CourtModel(
       id: 'd1111111-1111-1111-1111-111111111111',
-      name: 'Pine Court 1',
+      name: 'Forest View Court 1',
       status: 'active',
       hourlyRate: 100.0,
       surfaceType: 'All-Weather Surface',
       courtType: 'Outdoor Lighted',
+      venueId: 'venue-grn-4',
+      venueName: 'Green Valley Country Club',
+    ),
+    CourtModel(
+      id: 'd2222222-2222-2222-2222-222222222222',
+      name: 'Clubhouse Court 2',
+      status: 'active',
+      hourlyRate: 100.0,
+      surfaceType: 'Pro Cushion',
+      courtType: 'Outdoor Lighted',
+      venueId: 'venue-grn-4',
+      venueName: 'Green Valley Country Club',
+    ),
+    CourtModel(
+      id: 'd3333333-3333-3333-3333-333333333333',
+      name: 'Garden Court 3',
+      status: 'active',
+      hourlyRate: 100.0,
+      surfaceType: 'All-Weather Surface',
+      courtType: 'Outdoor Standard',
       venueId: 'venue-grn-4',
       venueName: 'Green Valley Country Club',
     ),

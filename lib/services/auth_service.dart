@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../demo/demo_data.dart';
+import '../data/mock_data.dart';
 import '../models/user_profile.dart';
 
 class AuthService {
@@ -12,7 +12,7 @@ class AuthService {
       StreamController<AuthState>.broadcast();
 
   bool _isDemoLoggedIn = false;
-  UserProfile _currentDemoProfile = DemoData.demoProfile;
+  UserProfile _currentDemoProfile = MockData.demoProfile;
 
   bool get isSupabaseReady {
     try {
@@ -55,7 +55,7 @@ class AuthService {
         userMetadata: {'full_name': _currentDemoProfile.fullName},
         aud: 'authenticated',
         createdAt: DateTime.now().toIso8601String(),
-        email: DemoData.demoEmail,
+        email: MockData.demoEmail,
       );
     }
     return null;
@@ -84,7 +84,7 @@ class AuthService {
   bool get isLiveUser {
     if (isSupabaseReady && _supabase != null) {
       final user = _supabase!.auth.currentUser;
-      return user != null && !DemoData.isDemoUser(user.id) && !_isDemoLoggedIn;
+      return user != null && !MockData.isDemoUser(user.id) && !_isDemoLoggedIn;
     }
     return false;
   }
@@ -97,7 +97,7 @@ class AuthService {
     final cleanEmail = email.trim().toLowerCase();
     
     // Explicit demo guest bypass
-    if (cleanEmail == DemoData.demoEmail || !isSupabaseReady || _supabase == null) {
+    if (cleanEmail == MockData.demoEmail || !isSupabaseReady || _supabase == null) {
       return signInWithDemoAccess();
     }
 
@@ -118,7 +118,7 @@ class AuthService {
   /// Explicit quick demo access with mock preview data
   Future<AuthResponse> signInWithDemoAccess() async {
     _isDemoLoggedIn = true;
-    _currentDemoProfile = DemoData.demoProfile;
+    _currentDemoProfile = MockData.demoProfile;
     _mockAuthStreamController.add(
       AuthState(AuthChangeEvent.signedIn, currentSession),
     );
@@ -223,7 +223,7 @@ class AuthService {
   /// Fetch user profile details from public.profiles.
   /// Never returns mock/demo data for legitimate live users.
   Future<UserProfile?> fetchUserProfile(String userId) async {
-    if (DemoData.isDemoUser(userId) || _isDemoLoggedIn) {
+    if (MockData.isDemoUser(userId) || _isDemoLoggedIn) {
       return _currentDemoProfile;
     }
 
