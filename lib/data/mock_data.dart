@@ -14,7 +14,6 @@ class MockData {
   static const UserProfile demoProfile = UserProfile(
     id: demoUserId,
     fullName: 'Alex Morgan',
-    role: 'customer',
   );
 
   /// Operating Time Slots (8:00 AM to 10:00 PM)
@@ -152,8 +151,6 @@ class MockData {
     CourtModel(
       id: 'a1111111-1111-1111-1111-111111111111',
       name: 'Center Championship Court',
-      status: 'active',
-      hourlyRate: 120.0,
       surfaceType: 'Pro-Cushion Hardcourt',
       courtType: 'Championship Indoor',
       venueId: 'venue-bcn-1',
@@ -162,7 +159,6 @@ class MockData {
     CourtModel(
       id: 'a2222222-2222-2222-2222-222222222222',
       name: 'Neon Glow Arena 2',
-      status: 'active',
       hourlyRate: 150.0,
       surfaceType: 'Ultra-Fast Acrylic',
       courtType: 'LED Glow Indoor',
@@ -172,7 +168,6 @@ class MockData {
     CourtModel(
       id: 'a3333333-3333-3333-3333-333333333333',
       name: 'Glass Wall Showcase Court',
-      status: 'active',
       hourlyRate: 135.0,
       surfaceType: 'Tour Grade Pro-Turf',
       courtType: 'Glass Enclosed Indoor',
@@ -182,7 +177,6 @@ class MockData {
     CourtModel(
       id: 'a4444444-4444-4444-4444-444444444444',
       name: 'VIP Skybox Court 4',
-      status: 'active',
       hourlyRate: 160.0,
       surfaceType: 'High-Impact Resin',
       courtType: 'VIP Private Court',
@@ -193,7 +187,6 @@ class MockData {
     CourtModel(
       id: 'b1111111-1111-1111-1111-111111111111',
       name: 'Central Arena - Court 1',
-      status: 'active',
       hourlyRate: 140.0,
       surfaceType: 'Ultra-Fast Acrylic',
       courtType: 'Championship Indoor',
@@ -203,7 +196,6 @@ class MockData {
     CourtModel(
       id: 'b2222222-2222-2222-2222-222222222222',
       name: 'Central Arena - Court 2',
-      status: 'active',
       hourlyRate: 140.0,
       surfaceType: 'Pro Cushion',
       courtType: 'Indoor Standard',
@@ -213,7 +205,6 @@ class MockData {
     CourtModel(
       id: 'b3333333-3333-3333-3333-333333333333',
       name: 'Pro Training Court 3',
-      status: 'active',
       hourlyRate: 140.0,
       surfaceType: 'Ultra-Fast Acrylic',
       courtType: 'Training Indoor',
@@ -224,7 +215,6 @@ class MockData {
     CourtModel(
       id: 'c1111111-1111-1111-1111-111111111111',
       name: 'Skyline Panorama Court 1',
-      status: 'active',
       hourlyRate: 160.0,
       surfaceType: 'All-Weather Surface',
       courtType: 'Rooftop Covered',
@@ -234,7 +224,6 @@ class MockData {
     CourtModel(
       id: 'c2222222-2222-2222-2222-222222222222',
       name: 'Sunset VIP Court 2',
-      status: 'active',
       hourlyRate: 175.0,
       surfaceType: 'High-Impact Resin',
       courtType: 'Rooftop Open',
@@ -245,7 +234,6 @@ class MockData {
     CourtModel(
       id: 'd1111111-1111-1111-1111-111111111111',
       name: 'Forest View Court 1',
-      status: 'active',
       hourlyRate: 100.0,
       surfaceType: 'All-Weather Surface',
       courtType: 'Outdoor Lighted',
@@ -255,7 +243,6 @@ class MockData {
     CourtModel(
       id: 'd2222222-2222-2222-2222-222222222222',
       name: 'Clubhouse Court 2',
-      status: 'active',
       hourlyRate: 100.0,
       surfaceType: 'Pro Cushion',
       courtType: 'Outdoor Lighted',
@@ -265,7 +252,6 @@ class MockData {
     CourtModel(
       id: 'd3333333-3333-3333-3333-333333333333',
       name: 'Garden Court 3',
-      status: 'active',
       hourlyRate: 100.0,
       surfaceType: 'All-Weather Surface',
       courtType: 'Outdoor Standard',

@@ -18,12 +18,7 @@ class VenueModel {
     required this.address,
     this.rating = 4.9,
     this.reviewCount = 120,
-    this.amenities = const [
-      'Pro Cushioning',
-      'LED Glow Lighting',
-      'Locker Rooms',
-      'Beverage Lounge',
-    ],
+    this.amenities = const [],
     this.courtCount = 4,
     this.priceStartingAt = 120.0,
     this.tag = 'POPULAR',

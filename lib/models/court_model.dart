@@ -13,10 +13,10 @@ class CourtModel {
     required this.name,
     this.status = 'active',
     this.hourlyRate = 120.0,
-    this.surfaceType = 'Pro-Cushion Hardcourt',
-    this.courtType = 'Championship Indoor',
-    this.venueId = 'venue-bcn-1',
-    this.venueName = 'Barcelona Smash Club',
+    this.surfaceType,
+    this.courtType,
+    this.venueId,
+    this.venueName,
   });
 
   factory CourtModel.fromJson(Map<String, dynamic> json) {

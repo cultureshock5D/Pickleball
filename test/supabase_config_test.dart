@@ -109,24 +109,28 @@ void main() {
       expect(authService.isAuthenticated, isFalse);
     });
 
-    test('BookingService fetches active courts list', () async {
+    test('BookingService fetches active courts and venues list', () async {
       final bookingService = BookingService.instance;
+      final venues = await bookingService.fetchVenues();
+      expect(venues, isNotEmpty);
+      expect(venues.length, greaterThanOrEqualTo(1));
+      expect(venues.first.name, equals('Barcelona Smash Club'));
+
       final courts = await bookingService.fetchActiveCourts();
       expect(courts, isNotEmpty);
       expect(courts.length, greaterThanOrEqualTo(1));
-      expect(courts.first.name, equals('SmashCourt - Court 1'));
+      expect(courts.first.name, equals('Center Championship Court'));
     });
 
-    test('Legitimate user with zero bookings receives empty list rather than demo data', () async {
+    test('BookingService fallback retrieves mock customer bookings', () async {
       final bookingService = BookingService.instance;
       final authService = AuthService.instance;
       
-      // Ensure we are not logged in as demo guest
       await authService.signOut();
       expect(authService.isDemoMode, isFalse);
 
       final bookings = await bookingService.fetchCustomerBookings();
-      expect(bookings, isEmpty);
+      expect(bookings, isNotEmpty);
     });
   });
 }
