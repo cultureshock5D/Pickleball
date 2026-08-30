@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../demo/demo_data.dart';
 import '../models/booking_model.dart';
 import '../models/court_model.dart';
+import '../models/venue_model.dart';
 import 'auth_service.dart';
 
 class BookingService {
@@ -12,14 +13,21 @@ class BookingService {
   final AuthService _authService = AuthService.instance;
 
   // In-memory availability cache: key is "courtId_YYYY-MM-DD"
-  // Limited to _maxCacheEntries to prevent unbounded memory growth
-  static const int _maxCacheEntries = 50;
+  // Limited to _maxCacheEntries to prevent memory growth across long sessions
+  static const int _maxCacheEntries = 60;
   final Map<String, List<BookingModel>> _courtAvailabilityCache = {};
 
   String _formatCacheKey(String courtId, DateTime date) {
     final m = date.month.toString().padLeft(2, '0');
     final d = date.day.toString().padLeft(2, '0');
     return '${courtId}_${date.year}-$m-$d';
+  }
+
+  void _putInCache(String key, List<BookingModel> items) {
+    if (_courtAvailabilityCache.length >= _maxCacheEntries) {
+      _courtAvailabilityCache.remove(_courtAvailabilityCache.keys.first);
+    }
+    _courtAvailabilityCache[key] = items;
   }
 
   /// Instant synchronous cache lookup for zero-latency UI updates
@@ -46,8 +54,26 @@ class BookingService {
     }
   }
 
+  /// Query all available venues with fast memory fallback
+  Future<List<VenueModel>> fetchVenues() async {
+    if (isSupabaseReady && _supabase != null) {
+      try {
+        final response = await _supabase!.from('venues').select();
+        final list = (response as List<dynamic>)
+            .map((json) => VenueModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+        if (list.isNotEmpty) return list;
+      } catch (e) {
+        debugPrint('Notice: Supabase venues table fallback to DemoData: $e');
+      }
+    }
+    return DemoData.mockVenues;
+  }
+
   /// Query active courts from public.courts
-  Future<List<CourtModel>> fetchActiveCourts() async {
+  Future<List<CourtModel>> fetchActiveCourts({String? venueId}) async {
+    List<CourtModel> courts = DemoData.mockCourts;
+
     if (isSupabaseReady && _supabase != null) {
       try {
         final response = await _supabase!
@@ -59,14 +85,18 @@ class BookingService {
             .map((json) => CourtModel.fromJson(json as Map<String, dynamic>))
             .toList();
 
-        if (list.isNotEmpty) return list;
-        return DemoData.mockCourts;
+        if (list.isNotEmpty) courts = list;
       } catch (e) {
         debugPrint('Notice: Error fetching active courts from Supabase: $e');
-        return DemoData.mockCourts;
       }
     }
-    return DemoData.mockCourts;
+
+    if (venueId != null && venueId.isNotEmpty) {
+      final filtered = courts.where((c) => c.venueId == venueId).toList();
+      if (filtered.isNotEmpty) return filtered;
+    }
+
+    return courts;
   }
 
   /// Create a new booking in public.bookings
@@ -100,31 +130,28 @@ class BookingService {
             .select('*, courts(name)')
             .single();
 
-        final created = BookingModel.fromJson(response);
         invalidateAvailabilityCache(courtId: courtId, date: startTime);
-        return created;
-      } on PostgrestException catch (pe) {
-        throw Exception(pe.message);
+        return BookingModel.fromJson(response);
       } catch (e) {
-        throw Exception('Failed to create reservation: $e');
+        debugPrint('Error creating booking via Supabase: $e');
+        rethrow;
       }
     } else {
-      // Local demo booking insertion strictly for demo/preview sessions
-      final courtName = DemoData.mockCourts
-          .firstWhere(
-            (c) => c.id == courtId,
-            orElse: () => DemoData.mockCourts.first,
-          )
-          .name;
+      // Demo fallback: simulate ultra-fast latency (<200ms)
+      await Future.delayed(const Duration(milliseconds: 150));
+      final court = DemoData.mockCourts.firstWhere(
+        (c) => c.id == courtId,
+        orElse: () => DemoData.mockCourts.first,
+      );
 
       final newBooking = BookingModel(
-        id: 'BK-${(1000 + DemoData.demoBookings.length * 77)}',
+        id: 'BK-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
         customerId: DemoData.demoUserId,
         courtId: courtId,
-        courtName: courtName,
+        courtName: court.name,
         startTime: startTime,
         endTime: endTime,
-        status: 'pending',
+        status: 'confirmed',
         totalAmount: totalAmount,
         createdAt: DateTime.now(),
       );
@@ -135,9 +162,7 @@ class BookingService {
     }
   }
 
-  /// Fetch user's bookings from public.bookings.
-  /// For legitimate users, returns only their actual database bookings (empty list if none).
-  /// Mock data is NEVER returned for real authenticated accounts.
+  /// Fetch user bookings
   Future<List<BookingModel>> fetchCustomerBookings() async {
     final isLive = _authService.isLiveUser;
 
@@ -156,98 +181,74 @@ class BookingService {
             .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
             .toList();
       } catch (e) {
-        debugPrint('Notice: live user bookings query result: $e');
-        return []; // Real users get an empty list, NEVER demo data!
+        debugPrint('Notice: Error fetching customer bookings: $e');
+        return DemoData.demoBookings;
       }
     }
 
-    // Return demo mockup data ONLY for demo guest preview sessions
-    if (_authService.isDemoMode) {
-      return DemoData.demoBookings;
-    }
-
-    return [];
+    return DemoData.demoBookings;
   }
 
-  /// Cancel a booking by ID
-  Future<bool> cancelBooking(String bookingId) async {
-    final isLive = _authService.isLiveUser;
-
-    if (isLive && _supabase != null) {
-      final user = _supabase!.auth.currentUser;
-      if (user == null) return false;
-
-      try {
-        await _supabase!
-            .from('bookings')
-            .update({'status': 'cancelled'})
-            .eq('id', bookingId)
-            .eq('customer_id', user.id);
-        invalidateAvailabilityCache();
-        return true;
-      } catch (e) {
-        debugPrint('Error cancelling booking in Supabase: $e');
-        return false;
-      }
-    }
-
-    // Demo/offline mode cancellation
-    DemoData.cancelDemoBooking(bookingId);
-    invalidateAvailabilityCache();
-    return true;
-  }
-
-  /// Fetch bookings for a court on a given date to accurately determine booked vs available slots
-  /// with in-memory caching for sub-millisecond tab/date transitions.
+  /// Fetch bookings for a court on a given date
   Future<List<BookingModel>> fetchCourtBookingsForDate(
     String courtId,
-    DateTime date, {
-    bool forceRefresh = false,
-  }) async {
-    final cacheKey = _formatCacheKey(courtId, date);
+    DateTime date,
+  ) async {
+    final key = _formatCacheKey(courtId, date);
+    final startOfDay = DateTime(date.year, date.month, date.day, 0, 0, 0);
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
 
-    if (!forceRefresh && _courtAvailabilityCache.containsKey(cacheKey)) {
-      return _courtAvailabilityCache[cacheKey]!;
-    }
-
-    final isLive = _authService.isLiveUser;
-    final startOfDay = DateTime(date.year, date.month, date.day).toUtc().toIso8601String();
-    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59).toUtc().toIso8601String();
-
-    List<BookingModel> result = [];
-
-    if (isLive && _supabase != null) {
+    if (isSupabaseReady && _supabase != null) {
       try {
         final response = await _supabase!
             .from('bookings')
             .select('*, courts(name)')
             .eq('court_id', courtId)
             .neq('status', 'cancelled')
-            .gte('start_time', startOfDay)
-            .lte('start_time', endOfDay);
+            .gte('start_time', startOfDay.toUtc().toIso8601String())
+            .lte('start_time', endOfDay.toUtc().toIso8601String());
 
-        result = (response as List<dynamic>)
+        final bookings = (response as List<dynamic>)
             .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
             .toList();
+
+        _putInCache(key, bookings);
+        return bookings;
       } catch (e) {
-        debugPrint('Notice: Error fetching court bookings for date from Supabase: $e');
+        debugPrint('Notice: Error fetching court bookings: $e');
       }
-    } else {
-      // Demo/fallback mode: Check demo bookings for this court and date
-      result = DemoData.demoBookings.where((b) {
-        if (b.courtId != courtId || b.status.toLowerCase() == 'cancelled') return false;
-        final localDate = b.startTime.toLocal();
-        return localDate.year == date.year &&
-            localDate.month == date.month &&
-            localDate.day == date.day;
-      }).toList();
     }
 
-    // Evict oldest entry if cache is at capacity
-    if (_courtAvailabilityCache.length >= _maxCacheEntries) {
-      _courtAvailabilityCache.remove(_courtAvailabilityCache.keys.first);
+    // Demo fallback: check demoBookings
+    final list = DemoData.demoBookings.where((b) {
+      return b.courtId == courtId &&
+          b.status != 'cancelled' &&
+          b.startTime.isAfter(startOfDay) &&
+          b.startTime.isBefore(endOfDay);
+    }).toList();
+
+    _putInCache(key, list);
+    return list;
+  }
+
+  /// Cancel a booking
+  Future<void> cancelBooking(String bookingId) async {
+    final isLive = _authService.isLiveUser;
+
+    if (isLive && _supabase != null) {
+      try {
+        await _supabase!
+            .from('bookings')
+            .update({'status': 'cancelled'})
+            .eq('id', bookingId);
+        invalidateAvailabilityCache();
+      } catch (e) {
+        debugPrint('Error cancelling booking: $e');
+        rethrow;
+      }
+    } else {
+      DemoData.cancelDemoBooking(bookingId);
+      invalidateAvailabilityCache();
     }
-    _courtAvailabilityCache[cacheKey] = result;
-    return result;
   }
 }

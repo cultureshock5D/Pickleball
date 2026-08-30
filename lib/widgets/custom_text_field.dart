@@ -54,13 +54,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           widget.label,
           style: GoogleFonts.inter(
-            color: AppTheme.textSecondary,
+            color: colors.textSecondary,
             fontSize: 13,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.2,
@@ -72,11 +74,11 @@ class _CustomTextFieldState extends State<CustomTextField> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             boxShadow: _isFocused
-                ? const [
+                ? [
                     BoxShadow(
-                      color: AppTheme.neonGreenAlpha15,
+                      color: colors.neonGreenAlpha15,
                       blurRadius: 12,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ]
                 : const [],
@@ -90,18 +92,18 @@ class _CustomTextFieldState extends State<CustomTextField> {
             onFieldSubmitted: widget.onFieldSubmitted,
             validator: widget.validator,
             style: GoogleFonts.inter(
-              color: AppTheme.textPrimary,
+              color: colors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
-            cursorColor: AppTheme.neonGreen,
+            cursorColor: colors.neonGreen,
             decoration: InputDecoration(
               hintText: widget.hintText,
               prefixIcon: widget.prefixIcon != null
                   ? Icon(
                       widget.prefixIcon,
                       size: 20,
-                      color: _isFocused ? AppTheme.neonGreen : AppTheme.textMuted,
+                      color: _isFocused ? colors.neonGreen : colors.textMuted,
                     )
                   : null,
               suffixIcon: widget.isPassword
@@ -111,7 +113,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                         size: 20,
-                        color: AppTheme.textMuted,
+                        color: colors.textMuted,
                       ),
                       onPressed: () {
                         setState(() {

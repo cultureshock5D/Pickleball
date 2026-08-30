@@ -66,17 +66,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final user = _authService.currentUser;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: colors.background,
       appBar: CustomTopAppBar(
         title: _currentTabTitle,
         subtitle: _currentTabSubtitle,
         userProfile: _userProfile,
         userEmail: user?.email,
         onQuickAddPressed: () {
-          // Switch to Court Reservation tab
           setState(() => _currentIndex = 0);
         },
         onNotificationPressed: () {
@@ -88,11 +88,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           );
         },
         onProfilePressed: () {
-          // Switch to Profile Tab
           setState(() => _currentIndex = 2);
         },
       ),
-      // Preserves full widget and scroll state across tab switches
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -133,4 +131,3 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
-

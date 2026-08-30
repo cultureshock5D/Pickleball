@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/validators.dart';
 import '../../core/utils/snackbar_helper.dart';
+import '../../core/utils/validators.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
@@ -51,16 +51,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       if (mounted) {
-        // If Supabase has email confirmation enabled, inform the user
         if (response.session == null) {
           AppSnackBar.show(
             context,
-            message: 'Account created! Please check your email to confirm your account.',
+            message:
+                'Account created! Please check your email to confirm your account.',
             icon: Icons.check_circle_outline,
           );
           Navigator.of(context).pop();
         } else {
-          // If session is active immediately, pop back to trigger AuthGate redirect
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       }
@@ -86,8 +85,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: colors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -104,30 +105,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                      icon: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: colors.textPrimary,
+                        size: 20,
+                      ),
                       style: IconButton.styleFrom(
-                        backgroundColor: AppTheme.surfaceElevated,
+                        backgroundColor: colors.surfaceElevated,
                         padding: const EdgeInsets.all(12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(color: AppTheme.borderSubtle),
+                          side: BorderSide(color: colors.borderSubtle),
                         ),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceElevated,
+                        color: colors.surfaceElevated,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppTheme.borderSubtle),
+                        border: Border.all(color: colors.borderSubtle),
                       ),
                       child: Row(
                         children: [
                           Container(
                             width: 8,
                             height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.neonGreen,
+                            decoration: BoxDecoration(
+                              color: colors.neonGreen,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -135,7 +143,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           Text(
                             'Customer Role',
                             style: GoogleFonts.inter(
-                              color: AppTheme.textSecondary,
+                              color: colors.textSecondary,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -150,7 +158,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Text(
                   'Join SmashCourt',
                   style: GoogleFonts.inter(
-                    color: AppTheme.textSecondary,
+                    color: colors.textSecondary,
                     fontSize: 15,
                     fontWeight: FontWeight.w400,
                   ),
@@ -159,7 +167,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Text(
                   'Create Account',
                   style: GoogleFonts.inter(
-                    color: AppTheme.textPrimary,
+                    color: colors.textPrimary,
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.8,
@@ -167,9 +175,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign up to book courts, track your balance, and manage transactions.',
+                  'Sign up to book championship courts, view analytics, and access member perks.',
                   style: GoogleFonts.inter(
-                    color: AppTheme.textMuted,
+                    color: colors.textMuted,
                     fontSize: 14,
                     height: 1.4,
                   ),
@@ -218,25 +226,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Error message banner if any
                 if (_errorMessage != null)
                   Container(
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: AppTheme.errorRedAlpha12,
+                      color: colors.errorRedAlpha12,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.errorRedAlpha30),
+                      border: Border.all(color: colors.errorRedAlpha30),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline, color: AppTheme.errorRed, size: 18),
+                        Icon(
+                          Icons.info_outline,
+                          color: colors.errorRed,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _errorMessage!,
                             style: GoogleFonts.inter(
-                              color: AppTheme.errorRed,
+                              color: colors.errorRed,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -259,9 +270,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Already have an account?',
+                      'Already have an account? ',
                       style: GoogleFonts.inter(
-                        color: AppTheme.textSecondary,
+                        color: colors.textSecondary,
                         fontSize: 14,
                       ),
                     ),
@@ -270,9 +281,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: Text(
                         'Sign In',
                         style: GoogleFonts.inter(
-                          color: AppTheme.neonGreen,
+                          color: colors.neonGreen,
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),

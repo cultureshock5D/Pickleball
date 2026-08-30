@@ -7,13 +7,6 @@ import '../models/booking_model.dart';
 import '../services/calendar_link_service.dart';
 import 'booking_success_modal.dart';
 
-/// Reusable Luxury Reservation Card for booking feeds and schedules.
-///
-/// Features:
-/// - Memoized date/time formatters for high frame-rate rendering.
-/// - Venue / court identification with status chip.
-/// - Integrated emerald "Add to Google Calendar" button with micro-animation.
-/// - Tap to view full confirmation modal.
 class ReservationCard extends StatefulWidget {
   final BookingModel booking;
   final bool isUpcoming;
@@ -109,19 +102,21 @@ class _ReservationCardState extends State<ReservationCard>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = context.isDark;
     final booking = widget.booking;
     final status = booking.status.toLowerCase();
     final isConfirmed = status == 'confirmed';
     final isPending = status == 'pending';
     final isCompleted = status == 'completed';
 
-    Color statusColor = AppTheme.neonGreen;
+    Color statusColor = colors.neonGreen;
     if (isPending) {
-      statusColor = AppTheme.neonYellow;
+      statusColor = colors.neonYellow;
     } else if (isCompleted) {
-      statusColor = AppTheme.textMuted;
+      statusColor = colors.textMuted;
     } else if (status == 'cancelled') {
-      statusColor = AppTheme.errorRed;
+      statusColor = colors.errorRed;
     }
 
     final courtName = booking.courtName ?? 'SmashCourt - Court 1';
@@ -129,13 +124,13 @@ class _ReservationCardState extends State<ReservationCard>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
+        color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: widget.isUpcoming ? AppTheme.borderSubtle : AppTheme.borderSubtleAlpha50,
+          color: widget.isUpcoming ? colors.borderSubtle : colors.borderSubtleAlpha50,
           width: 1.2,
         ),
-        boxShadow: widget.isUpcoming ? AppTheme.cardShadow : null,
+        boxShadow: widget.isUpcoming ? colors.cardShadow : null,
       ),
       child: Material(
         color: Colors.transparent,
@@ -155,14 +150,14 @@ class _ReservationCardState extends State<ReservationCard>
                       children: [
                         Icon(
                           Icons.calendar_today_rounded,
-                          color: widget.isUpcoming ? AppTheme.neonGreen : AppTheme.textMuted,
+                          color: widget.isUpcoming ? colors.neonGreen : colors.textMuted,
                           size: 14,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           _formatDateHeader(booking.startTime),
                           style: GoogleFonts.inter(
-                            color: widget.isUpcoming ? Colors.white : AppTheme.textMuted,
+                            color: widget.isUpcoming ? colors.textPrimary : colors.textMuted,
                             fontSize: 12.5,
                             fontWeight: widget.isUpcoming ? FontWeight.w600 : FontWeight.w500,
                           ),
@@ -197,17 +192,17 @@ class _ReservationCardState extends State<ReservationCard>
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF26262E),
+                        color: colors.surfaceHighlight,
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: isConfirmed
-                              ? AppTheme.neonGreenAlpha40
-                              : AppTheme.borderSubtle,
+                              ? colors.neonGreenAlpha40
+                              : colors.borderSubtle,
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.sports_tennis_rounded,
-                        color: Colors.white,
+                        color: isConfirmed ? colors.neonGreen : colors.textSecondary,
                         size: 20,
                       ),
                     ),
@@ -218,12 +213,20 @@ class _ReservationCardState extends State<ReservationCard>
                         children: [
                           Text(
                             courtName,
-                            style: AppTheme.fontCardTitle,
+                            style: GoogleFonts.inter(
+                              color: colors.textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             _formatTimeSlot(booking.startTime, booking.endTime),
-                            style: AppTheme.fontMuted,
+                            style: GoogleFonts.inter(
+                              color: colors.textMuted,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
@@ -234,7 +237,7 @@ class _ReservationCardState extends State<ReservationCard>
                         Text(
                           '₱${booking.totalAmount.toStringAsFixed(2)}',
                           style: GoogleFonts.inter(
-                            color: isCompleted ? Colors.white70 : AppTheme.neonLime,
+                            color: isCompleted ? colors.textMuted : colors.neonLime,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             letterSpacing: -0.3,
@@ -244,7 +247,7 @@ class _ReservationCardState extends State<ReservationCard>
                         Text(
                           booking.id.length > 8 ? '${booking.id.substring(0, 8)}...' : booking.id,
                           style: GoogleFonts.robotoMono(
-                            color: AppTheme.textMuted,
+                            color: colors.textMuted,
                             fontSize: 10.5,
                           ),
                         ),
@@ -256,7 +259,7 @@ class _ReservationCardState extends State<ReservationCard>
                 // 3. Calendar Quick Action for upcoming bookings
                 if (widget.isUpcoming) ...[
                   const SizedBox(height: 12),
-                  const Divider(color: AppTheme.borderSubtle, height: 1),
+                  Divider(color: colors.borderSubtle, height: 1),
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -270,10 +273,10 @@ class _ReservationCardState extends State<ReservationCard>
                             child: Container(
                               height: 40,
                               decoration: BoxDecoration(
-                                color: AppTheme.neonGreenAlpha12,
+                                color: colors.neonGreenAlpha12,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: AppTheme.neonGreenAlpha50,
+                                  color: colors.neonGreenAlpha50,
                                   width: 1.2,
                                 ),
                               ),
@@ -284,29 +287,29 @@ class _ReservationCardState extends State<ReservationCard>
                                   onTap: _isAddingToCalendar ? null : _handleAddToCalendar,
                                   child: Center(
                                     child: _isAddingToCalendar
-                                        ? const SizedBox(
+                                        ? SizedBox(
                                             width: 16,
                                             height: 16,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
                                               valueColor: AlwaysStoppedAnimation<Color>(
-                                                AppTheme.neonGreen,
+                                                colors.neonGreen,
                                               ),
                                             ),
                                           )
                                         : Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              const Icon(
+                                              Icon(
                                                 Icons.event_available_rounded,
-                                                color: AppTheme.neonGreen,
+                                                color: colors.neonGreen,
                                                 size: 16,
                                               ),
                                               const SizedBox(width: 6),
                                               Text(
                                                 'Add to Google Calendar',
                                                 style: GoogleFonts.inter(
-                                                  color: Colors.white,
+                                                  color: isDark ? Colors.white : colors.neonGreenDark,
                                                   fontSize: 12.5,
                                                   fontWeight: FontWeight.w600,
                                                 ),

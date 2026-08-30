@@ -14,7 +14,6 @@ class InsightsScreen extends StatefulWidget {
   State<InsightsScreen> createState() => _InsightsScreenState();
 }
 
-// Backwards compatibility alias
 typedef AnalyticsScreen = InsightsScreen;
 
 class _InsightsScreenState extends State<InsightsScreen>
@@ -24,7 +23,6 @@ class _InsightsScreenState extends State<InsightsScreen>
 
   final BookingService _bookingService = BookingService.instance;
 
-  // Memoized formatters (zero allocation per frame)
   static final DateFormat _timeFormat = DateFormat('h:mm a');
 
   List<BookingModel> _bookings = [];
@@ -32,13 +30,20 @@ class _InsightsScreenState extends State<InsightsScreen>
   int _selectedPeriodIndex = 1;
   static const List<String> _periods = ['This Week', 'This Month', 'All-Time'];
 
-  // Cached calculated metrics (computed once on data fetch / filter switch)
   double _totalPlaytimeHours = 0.0;
   int _totalBookingsCount = 0;
   double _totalSpend = 0.0;
   double _avgSessionHours = 0.0;
-  Map<int, double> _weeklyHoursMap = {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 0.0};
-  String _preferredCourtName = 'Court 1 - Center Championship';
+  Map<int, double> _weeklyHoursMap = {
+    1: 0.0,
+    2: 0.0,
+    3: 0.0,
+    4: 0.0,
+    5: 0.0,
+    6: 0.0,
+    7: 0.0,
+  };
+  String _preferredCourtName = 'Center Championship Court';
   String _preferredCourtSubtitle = 'Reserve your first court to view venue insights';
   String _peakSlotName = 'Flexible';
   String _peakSlotTime = 'Flexible';
@@ -73,11 +78,9 @@ class _InsightsScreenState extends State<InsightsScreen>
     final now = DateTime.now();
 
     if (_selectedPeriodIndex == 0) {
-      // Last 7 days
       final sevenDaysAgo = now.subtract(const Duration(days: 7));
       return _bookings.where((b) => b.startTime.isAfter(sevenDaysAgo)).toList();
     } else if (_selectedPeriodIndex == 1) {
-      // This Month (last 30 days)
       final thirtyDaysAgo = now.subtract(const Duration(days: 30));
       return _bookings.where((b) => b.startTime.isAfter(thirtyDaysAgo)).toList();
     }
@@ -112,7 +115,7 @@ class _InsightsScreenState extends State<InsightsScreen>
       final weekday = b.startTime.weekday;
       map[weekday] = (map[weekday] ?? 0.0) + (durationMin / 60.0);
 
-      final court = b.courtName ?? 'Court 1 - Center Championship';
+      final court = b.courtName ?? 'Center Championship Court';
       courtCounts[court] = (courtCounts[court] ?? 0) + 1;
     }
 
@@ -122,7 +125,7 @@ class _InsightsScreenState extends State<InsightsScreen>
     _avgSessionHours = _totalPlaytimeHours / _totalBookingsCount;
     _weeklyHoursMap = map;
 
-    String topCourt = filtered.first.courtName ?? 'Court 1 - Center Championship';
+    String topCourt = filtered.first.courtName ?? 'Center Championship Court';
     int maxCount = 0;
     courtCounts.forEach((court, count) {
       if (count > maxCount) {
@@ -142,32 +145,37 @@ class _InsightsScreenState extends State<InsightsScreen>
     } else {
       _peakSlotName = 'Evening Sessions';
     }
-    _peakSlotTime = '${_timeFormat.format(filtered.first.startTime)} - ${_timeFormat.format(filtered.first.endTime)}';
+    _peakSlotTime =
+        '${_timeFormat.format(filtered.first.startTime)} - ${_timeFormat.format(filtered.first.endTime)}';
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final colors = context.colors;
 
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.neonGreen),
+          valueColor: AlwaysStoppedAnimation<Color>(colors.neonGreen),
         ),
       );
     }
 
     final hasData = _bookings.isNotEmpty;
     final weeklyMap = _weeklyHoursMap;
-    final maxDayHours = weeklyMap.values.fold<double>(0.0, (m, val) => val > m ? val : m);
+    final maxDayHours =
+        weeklyMap.values.fold<double>(0.0, (m, val) => val > m ? val : m);
     final chartMax = maxDayHours > 0 ? maxDayHours : 3.0;
 
     return RefreshIndicator(
-      color: AppTheme.neonGreen,
-      backgroundColor: AppTheme.surfaceElevated,
+      color: colors.neonGreen,
+      backgroundColor: colors.surfaceElevated,
       onRefresh: _loadData,
       child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,14 +194,19 @@ class _InsightsScreenState extends State<InsightsScreen>
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppTheme.neonGreenAlpha18
-                            : AppTheme.surfaceElevated,
+                            ? colors.neonGreenAlpha18
+                            : colors.surfaceElevated,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
+                          color: isSelected
+                              ? colors.neonGreen
+                              : colors.borderSubtle,
                           width: isSelected ? 1.5 : 1.0,
                         ),
                       ),
@@ -201,9 +214,13 @@ class _InsightsScreenState extends State<InsightsScreen>
                         child: Text(
                           _periods[index],
                           style: GoogleFonts.inter(
-                            color: isSelected ? Colors.white : AppTheme.textMuted,
+                            color: isSelected
+                                ? colors.textPrimary
+                                : colors.textMuted,
                             fontSize: 12.5,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
                           ),
                         ),
                       ),
@@ -219,10 +236,10 @@ class _InsightsScreenState extends State<InsightsScreen>
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: AppTheme.cardGradient,
+                gradient: colors.cardGradient,
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: AppTheme.borderSubtle),
-                boxShadow: AppTheme.cardShadow,
+                border: Border.all(color: colors.borderSubtle),
+                boxShadow: colors.cardShadow,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,23 +250,26 @@ class _InsightsScreenState extends State<InsightsScreen>
                       Text(
                         'TOTAL COURT PLAYTIME',
                         style: GoogleFonts.inter(
-                          color: AppTheme.textMuted,
+                          color: colors.textMuted,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.8,
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 3.5,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppTheme.neonGreenAlpha15,
+                          color: colors.neonGreenAlpha15,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.neonGreenAlpha30),
+                          border: Border.all(color: colors.neonGreenAlpha30),
                         ),
                         child: Text(
                           hasData ? 'ACTIVE PLAYER' : 'PRO READY',
                           style: GoogleFonts.inter(
-                            color: AppTheme.neonGreen,
+                            color: colors.neonGreen,
                             fontSize: 10.5,
                             fontWeight: FontWeight.w700,
                           ),
@@ -265,7 +285,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                       Text(
                         _totalPlaytimeHours.toStringAsFixed(1),
                         style: GoogleFonts.inter(
-                          color: AppTheme.textPrimary,
+                          color: colors.textPrimary,
                           fontSize: 34,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -1.0,
@@ -275,7 +295,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                       Text(
                         'HOURS',
                         style: GoogleFonts.inter(
-                          color: AppTheme.textSecondary,
+                          color: colors.textSecondary,
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
@@ -283,19 +303,26 @@ class _InsightsScreenState extends State<InsightsScreen>
                       const Spacer(),
                       if (hasData)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 3.5,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppTheme.neonLimeAlpha15,
+                            color: colors.neonLimeAlpha15,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.arrow_upward_rounded, color: AppTheme.neonLime, size: 14),
+                              Icon(
+                                Icons.arrow_upward_rounded,
+                                color: colors.neonLime,
+                                size: 14,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 'LIVE',
                                 style: GoogleFonts.inter(
-                                  color: AppTheme.neonLime,
+                                  color: colors.neonLime,
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -335,14 +362,21 @@ class _InsightsScreenState extends State<InsightsScreen>
             const SizedBox(height: 18),
 
             // 3. Weekly Playtime Distribution Chart
-            Text('Weekly Playtime Activity', style: AppTheme.fontSectionTitle),
+            Text(
+              'Weekly Playtime Activity',
+              style: GoogleFonts.inter(
+                color: colors.textPrimary,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.surfaceElevated,
+                color: colors.surfaceElevated,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.borderSubtle),
+                border: Border.all(color: colors.borderSubtle),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,11 +384,17 @@ class _InsightsScreenState extends State<InsightsScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Hours per Day', style: AppTheme.fontBody),
+                      Text(
+                        'Hours per Day',
+                        style: GoogleFonts.inter(
+                          color: colors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
                       Text(
                         hasData ? 'Target: 8.0 hrs/wk' : 'Schedule your match',
                         style: GoogleFonts.inter(
-                          color: AppTheme.neonGreen,
+                          color: colors.neonGreen,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                         ),
@@ -371,7 +411,12 @@ class _InsightsScreenState extends State<InsightsScreen>
                       _buildDayBar('Wed', weeklyMap[3] ?? 0.0, chartMax),
                       _buildDayBar('Thu', weeklyMap[4] ?? 0.0, chartMax),
                       _buildDayBar('Fri', weeklyMap[5] ?? 0.0, chartMax),
-                      _buildDayBar('Sat', weeklyMap[6] ?? 0.0, chartMax, isPeak: (weeklyMap[6] ?? 0) > 0),
+                      _buildDayBar(
+                        'Sat',
+                        weeklyMap[6] ?? 0.0,
+                        chartMax,
+                        isPeak: (weeklyMap[6] ?? 0) > 0,
+                      ),
                       _buildDayBar('Sun', weeklyMap[7] ?? 0.0, chartMax),
                     ],
                   ),
@@ -381,14 +426,23 @@ class _InsightsScreenState extends State<InsightsScreen>
             const SizedBox(height: 18),
 
             // 4. Booking Habits & Court Preferences
-            Text('Court & Venue Specifications', style: AppTheme.fontSectionTitle),
+            Text(
+              'Court & Venue Specifications',
+              style: GoogleFonts.inter(
+                color: colors.textPrimary,
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 10),
             _buildCourtDistributionTile(
               _preferredCourtName,
-              hasData ? 'Preferred Court • Pro-Cushion Surface' : 'Championship Indoor • Pro-Cushion Hardcourt',
+              hasData
+                  ? 'Preferred Court • Pro-Cushion Surface'
+                  : 'Championship Indoor • Pro-Cushion Hardcourt',
               _preferredCourtSubtitle,
               hasData ? 1.0 : 0.0,
-              AppTheme.neonGreen,
+              colors.neonGreen,
             ),
             const SizedBox(height: 18),
 
@@ -401,7 +455,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                     _peakSlotTime,
                     _peakSlotName,
                     Icons.nights_stay_rounded,
-                    AppTheme.neonGreen,
+                    colors.neonGreen,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -411,7 +465,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                     hasData ? '100%' : '0%',
                     hasData ? '0 Cancellations' : 'No Bookings Yet',
                     Icons.check_circle_outline_rounded,
-                    AppTheme.neonLime,
+                    colors.neonLime,
                   ),
                 ),
               ],
@@ -424,30 +478,37 @@ class _InsightsScreenState extends State<InsightsScreen>
   }
 
   Widget _buildHeroStatPill(String label, String value, IconData icon) {
+    final colors = context.colors;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
         decoration: BoxDecoration(
-          color: AppTheme.surfaceHighlight,
+          color: colors.surfaceHighlight,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.borderSubtle),
+          border: Border.all(color: colors.borderSubtle),
         ),
         child: Column(
           children: [
-            Icon(icon, color: AppTheme.neonGreen, size: 16),
+            Icon(icon, color: colors.neonGreen, size: 16),
             const SizedBox(height: 4),
             Text(
               value,
               style: GoogleFonts.inter(
-                color: Colors.white,
+                color: colors.textPrimary,
                 fontSize: 12.5,
                 fontWeight: FontWeight.w700,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 1),
             Text(
               label,
-              style: AppTheme.fontMuted,
+              style: GoogleFonts.inter(
+                color: colors.textMuted,
+                fontSize: 11,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -457,35 +518,54 @@ class _InsightsScreenState extends State<InsightsScreen>
     );
   }
 
-  Widget _buildDayBar(String day, double hours, double maxHours, {bool isPeak = false}) {
-    final ratio = (hours / maxHours).clamp(0.05, 1.0);
+  Widget _buildDayBar(
+    String day,
+    double hours,
+    double maxHours, {
+    bool isPeak = false,
+  }) {
+    final colors = context.colors;
+    final fillFraction = (hours / maxHours).clamp(0.08, 1.0);
+    final hasHours = hours > 0;
+
     return Column(
       children: [
         Text(
-          hours > 0 ? '${hours.toStringAsFixed(1)}h' : '-',
+          hasHours ? '${hours.toStringAsFixed(1)}h' : '-',
           style: GoogleFonts.inter(
-            color: isPeak ? AppTheme.neonGreen : AppTheme.textMuted,
+            color: hasHours ? colors.textPrimary : colors.textMuted,
             fontSize: 10,
-            fontWeight: isPeak ? FontWeight.w700 : FontWeight.w500,
+            fontWeight: hasHours ? FontWeight.w700 : FontWeight.w400,
           ),
         ),
         const SizedBox(height: 6),
         Container(
-          width: 22,
-          height: 65,
+          width: 24,
+          height: 80,
           decoration: BoxDecoration(
-            color: AppTheme.background,
-            borderRadius: BorderRadius.circular(10),
+            color: colors.surfaceHighlight,
+            borderRadius: BorderRadius.circular(6),
           ),
           alignment: Alignment.bottomCenter,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 260),
-            width: 22,
-            height: 65 * ratio,
+            duration: const Duration(milliseconds: 400),
+            height: 80 * fillFraction,
             decoration: BoxDecoration(
-              gradient: isPeak ? AppTheme.neonGreenGradient : null,
-              color: isPeak ? null : (hours > 0 ? AppTheme.neonGreenAlpha30 : Colors.transparent),
-              borderRadius: BorderRadius.circular(10),
+              gradient: isPeak
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [colors.neonLime, colors.neonGreen],
+                    )
+                  : (hasHours
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [colors.neonGreenLight, colors.neonGreenDark],
+                        )
+                      : null),
+              color: hasHours ? null : Colors.transparent,
+              borderRadius: BorderRadius.circular(6),
             ),
           ),
         ),
@@ -493,8 +573,8 @@ class _InsightsScreenState extends State<InsightsScreen>
         Text(
           day,
           style: GoogleFonts.inter(
-            color: isPeak ? Colors.white : AppTheme.textSecondary,
-            fontSize: 11.5,
+            color: isPeak ? colors.neonGreen : colors.textMuted,
+            fontSize: 11,
             fontWeight: isPeak ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
@@ -504,45 +584,79 @@ class _InsightsScreenState extends State<InsightsScreen>
 
   Widget _buildCourtDistributionTile(
     String title,
+    String type,
     String subtitle,
-    String statText,
-    double ratio,
+    double progress,
     Color color,
   ) {
+    final colors = context.colors;
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderSubtle),
+        color: colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: AppTheme.fontCardTitle),
-              Text(
-                statText,
-                style: GoogleFonts.inter(
-                  color: color,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.neonGreenAlpha15,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.sports_tennis_rounded,
+                  color: colors.neonGreen,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        color: colors.textPrimary,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      type,
+                      style: GoogleFonts.inter(
+                        color: colors.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 3),
-          Text(subtitle, style: AppTheme.fontMuted),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: ratio,
-              minHeight: 5,
-              backgroundColor: AppTheme.background,
+              value: progress,
+              backgroundColor: colors.surfaceHighlight,
               valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 6,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: GoogleFonts.inter(
+              color: colors.textSecondary,
+              fontSize: 11.5,
             ),
           ),
         ],
@@ -552,35 +666,45 @@ class _InsightsScreenState extends State<InsightsScreen>
 
   Widget _buildMetricTile(
     String title,
-    String value,
-    String subtitle,
+    String mainValue,
+    String subValue,
     IconData icon,
     Color accentColor,
   ) {
+    final colors = context.colors;
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderSubtle),
+        color: colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: accentColor, size: 18),
+          Icon(icon, color: accentColor, size: 20),
           const SizedBox(height: 10),
           Text(
-            value,
+            mainValue,
             style: GoogleFonts.inter(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w700,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
-          Text(title, style: AppTheme.fontBody),
-          const SizedBox(height: 1),
-          Text(subtitle, style: AppTheme.fontMuted),
+          Text(
+            subValue,
+            style: GoogleFonts.inter(
+              color: colors.textMuted,
+              fontSize: 11.5,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );

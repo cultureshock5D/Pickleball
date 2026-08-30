@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
-/// Centralized styled SnackBar helper that eliminates 80+ lines of
-/// duplicated SnackBar construction across login, signup, booking review,
-/// profile, and calendar link screens.
 class AppSnackBar {
   AppSnackBar._();
 
-  /// Shows a themed floating SnackBar with an icon, styled border, and message.
   static void show(
     BuildContext context, {
     required String message,
@@ -16,14 +12,15 @@ class AppSnackBar {
     IconData? icon,
     Duration? duration,
   }) {
+    final colors = context.colors;
     final effectiveIcon = icon ??
         (isError ? Icons.error_outline_rounded : Icons.check_circle_rounded);
-    final accentColor = isError ? AppTheme.errorRed : AppTheme.neonGreen;
+    final accentColor = isError ? colors.errorRed : colors.neonGreen;
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: AppTheme.surfaceElevated,
+        backgroundColor: colors.surfaceElevated,
         behavior: SnackBarBehavior.floating,
         elevation: 8,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -40,7 +37,7 @@ class AppSnackBar {
               child: Text(
                 message,
                 style: GoogleFonts.inter(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -52,12 +49,10 @@ class AppSnackBar {
     );
   }
 
-  /// Convenience: show a success-themed SnackBar.
   static void success(BuildContext context, String message) {
     show(context, message: message, isError: false);
   }
 
-  /// Convenience: show an error-themed SnackBar.
   static void error(BuildContext context, String message) {
     show(context, message: message, isError: true);
   }

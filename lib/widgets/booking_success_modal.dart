@@ -5,12 +5,6 @@ import '../core/theme/app_theme.dart';
 import '../models/booking_model.dart';
 import '../services/calendar_link_service.dart';
 
-/// Luxury dark-themed Booking Success Modal & Confirmation Card.
-///
-/// Features:
-/// - Displays confirmed reservation details (Venue/Court, Date & Time Slot, Price, Status).
-/// - Emerald-accented "Add to Google Calendar" primary CTA with smooth tap animation.
-/// - Secondary "Done / View My Bookings" CTA.
 class BookingSuccessModal extends StatefulWidget {
   final BookingModel booking;
   final VoidCallback? onViewBookings;
@@ -23,7 +17,6 @@ class BookingSuccessModal extends StatefulWidget {
     this.venueName,
   });
 
-  /// Displays the modal as a modern, polished bottom sheet or dialog.
   static Future<void> show(
     BuildContext context, {
     required BookingModel booking,
@@ -34,7 +27,7 @@ class BookingSuccessModal extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: AppTheme.blackAlpha75,
+      barrierColor: Colors.black54,
       builder: (ctx) => BookingSuccessModal(
         booking: booking,
         onViewBookings: onViewBookings,
@@ -104,12 +97,14 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = context.isDark;
     final booking = widget.booking;
     final courtName = booking.courtName ?? 'SmashCourt - Court 1';
-    final venue = widget.venueName ?? 'SmashCourt Arena';
+    final venue = widget.venueName ?? 'Barcelona Smash Club';
     final isConfirmed = booking.status.toLowerCase() == 'confirmed';
     final statusText = isConfirmed ? 'Confirmed' : booking.status.toUpperCase();
-    final statusColor = isConfirmed ? AppTheme.neonGreen : AppTheme.neonLime;
+    final statusColor = isConfirmed ? colors.neonGreen : colors.neonLime;
 
     return Container(
       padding: EdgeInsets.only(
@@ -118,11 +113,11 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
         right: 20,
         bottom: MediaQuery.of(context).padding.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF131317) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         border: Border(
-          top: BorderSide(color: AppTheme.borderSubtle, width: 1.5),
+          top: BorderSide(color: colors.borderSubtle, width: 1.5),
         ),
       ),
       child: Column(
@@ -134,7 +129,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
             width: 42,
             height: 4,
             decoration: BoxDecoration(
-              color: AppTheme.borderSubtle,
+              color: colors.borderSubtle,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -146,20 +141,20 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
             height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.neonGreenAlpha14,
-              border: Border.all(color: AppTheme.neonGreen, width: 2),
-              boxShadow: const [
+              color: colors.neonGreenAlpha14,
+              border: Border.all(color: colors.neonGreen, width: 2),
+              boxShadow: [
                 BoxShadow(
-                  color: AppTheme.neonGreenAlpha35,
+                  color: colors.neonGreenAlpha35,
                   blurRadius: 24,
                   spreadRadius: 2,
                 ),
               ],
             ),
-            child: const Center(
+            child: Center(
               child: Icon(
                 Icons.check_circle_rounded,
-                color: AppTheme.neonGreen,
+                color: colors.neonGreen,
                 size: 40,
               ),
             ),
@@ -169,7 +164,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
           Text(
             'Reservation Confirmed!',
             style: GoogleFonts.inter(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 22,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.5,
@@ -179,7 +174,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
           Text(
             'Your court has been successfully locked in.',
             style: GoogleFonts.inter(
-              color: AppTheme.textSecondary,
+              color: colors.textSecondary,
               fontSize: 13.5,
             ),
           ),
@@ -190,10 +185,10 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              gradient: AppTheme.cardGradient,
+              color: colors.surfaceElevated,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppTheme.borderSubtle, width: 1.2),
-              boxShadow: AppTheme.cardShadow,
+              border: Border.all(color: colors.borderSubtle, width: 1.2),
+              boxShadow: colors.cardShadow,
             ),
             child: Column(
               children: [
@@ -203,13 +198,13 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                     Container(
                       width: 44,
                       height: 44,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF26262E),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceHighlight,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.sports_tennis_rounded,
-                        color: AppTheme.neonGreen,
+                        color: colors.neonGreen,
                         size: 22,
                       ),
                     ),
@@ -221,7 +216,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                           Text(
                             courtName,
                             style: GoogleFonts.inter(
-                              color: AppTheme.textPrimary,
+                              color: colors.textPrimary,
                               fontSize: 15.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -230,7 +225,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                           Text(
                             venue,
                             style: GoogleFonts.inter(
-                              color: AppTheme.textMuted,
+                              color: colors.textMuted,
                               fontSize: 12,
                             ),
                           ),
@@ -256,10 +251,11 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                     ),
                   ],
                 ),
-                const Divider(color: AppTheme.borderSubtle, height: 24),
+                Divider(color: colors.borderSubtle, height: 24),
 
                 // Date Row
                 _buildInfoRow(
+                  colors: colors,
                   icon: Icons.calendar_today_rounded,
                   label: 'Date',
                   value: _formatExactDate(booking.startTime),
@@ -268,6 +264,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
 
                 // Time Slot Row
                 _buildInfoRow(
+                  colors: colors,
                   icon: Icons.schedule_rounded,
                   label: 'Time Slot',
                   value: _formatTimeSlot(booking.startTime, booking.endTime),
@@ -276,13 +273,14 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
 
                 // Total Price Row
                 _buildInfoRow(
+                  colors: colors,
                   icon: Icons.payments_outlined,
                   label: 'Total Paid',
                   value: '₱${booking.totalAmount.toStringAsFixed(2)}',
-                  valueColor: AppTheme.neonLime,
+                  valueColor: colors.neonLime,
                   isBold: true,
                 ),
-                const Divider(color: AppTheme.borderSubtle, height: 24),
+                Divider(color: colors.borderSubtle, height: 24),
 
                 // Booking Reference ID
                 Row(
@@ -291,20 +289,20 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                     Text(
                       'Booking Reference',
                       style: GoogleFonts.inter(
-                        color: AppTheme.textMuted,
+                        color: colors.textMuted,
                         fontSize: 12,
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppTheme.surfaceHighlight,
+                        color: colors.surfaceHighlight,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         booking.id,
                         style: GoogleFonts.robotoMono(
-                          color: AppTheme.textSecondary,
+                          color: colors.textSecondary,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -317,7 +315,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
           ),
           const SizedBox(height: 22),
 
-          // Primary CTA: Add to Google Calendar (Emerald outline/surface with animated tap)
+          // Primary CTA: Add to Google Calendar
           ScaleTransition(
             scale: _scaleAnimation,
             child: GestureDetector(
@@ -328,17 +326,17 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                 width: double.infinity,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: AppTheme.neonGreenAlpha12,
+                  color: colors.neonGreenAlpha12,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: AppTheme.neonGreen,
+                    color: colors.neonGreen,
                     width: 1.8,
                   ),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
-                      color: AppTheme.neonGreenAlpha22,
+                      color: colors.neonGreenAlpha22,
                       blurRadius: 16,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -349,27 +347,29 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                     onTap: _isLaunchingCalendar ? null : _handleAddCalendar,
                     child: Center(
                       child: _isLaunchingCalendar
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.neonGreen),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  colors.neonGreen,
+                                ),
                               ),
                             )
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.calendar_month_rounded,
-                                  color: AppTheme.neonGreen,
+                                  color: colors.neonGreen,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
                                   'Add to Google Calendar',
                                   style: GoogleFonts.inter(
-                                    color: Colors.white,
+                                    color: isDark ? Colors.white : colors.neonGreenDark,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: -0.2,
@@ -397,7 +397,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                 }
               },
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppTheme.borderSubtle),
+                side: BorderSide(color: colors.borderSubtle),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -405,7 +405,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
               child: Text(
                 'Done • View My Bookings',
                 style: GoogleFonts.inter(
-                  color: AppTheme.textSecondary,
+                  color: colors.textSecondary,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -418,6 +418,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
   }
 
   Widget _buildInfoRow({
+    required AppPalette colors,
     required IconData icon,
     required String label,
     required String value,
@@ -426,12 +427,12 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
   }) {
     return Row(
       children: [
-        Icon(icon, color: AppTheme.textMuted, size: 16),
+        Icon(icon, color: colors.textMuted, size: 16),
         const SizedBox(width: 8),
         Text(
           label,
           style: GoogleFonts.inter(
-            color: AppTheme.textMuted,
+            color: colors.textMuted,
             fontSize: 13,
           ),
         ),
@@ -439,7 +440,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
         Text(
           value,
           style: GoogleFonts.inter(
-            color: valueColor ?? Colors.white,
+            color: valueColor ?? colors.textPrimary,
             fontSize: isBold ? 14.5 : 13,
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
           ),

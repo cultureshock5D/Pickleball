@@ -11,19 +11,23 @@ import '../../widgets/neon_button.dart';
 
 class BookingReviewScreen extends StatefulWidget {
   final CourtModel court;
+  final String venueName;
   final DateTime startTime;
   final DateTime endTime;
   final double durationHours;
   final double totalAmount;
+  final int playerCount;
   final VoidCallback? onViewBookings;
 
   const BookingReviewScreen({
     super.key,
     required this.court,
+    this.venueName = 'Barcelona Smash Club',
     required this.startTime,
     required this.endTime,
     required this.durationHours,
     required this.totalAmount,
+    this.playerCount = 4,
     this.onViewBookings,
   });
 
@@ -40,9 +44,15 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   final List<Map<String, dynamic>> _paymentMethods = [
     {
       'title': 'Apple Pay / Google Pay',
-      'subtitle': 'Instant 1-Tap Checkout',
+      'subtitle': 'Instant 1-Tap Secure Checkout',
       'icon': Icons.payment_rounded,
       'isDefault': true,
+    },
+    {
+      'title': 'Club Membership Card',
+      'subtitle': 'Prepaid Luxury Account Balance',
+      'icon': Icons.credit_card_rounded,
+      'isDefault': false,
     },
   ];
 
@@ -66,23 +76,21 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       );
 
       if (mounted) {
-        // Trigger Google Calendar zero-auth sync if enabled
         if (_autoLaunchCalendar) {
           CalendarLinkService.addBookingToCalendar(
             booking,
             context: context,
-            venueName: 'SmashCourt Arena',
+            venueName: widget.venueName,
           );
         }
 
-        // Close the review screen and show the luxury success confirmation modal
         Navigator.of(context).pop();
 
         BookingSuccessModal.show(
           context,
           booking: booking,
           onViewBookings: widget.onViewBookings,
-          venueName: 'SmashCourt Arena',
+          venueName: widget.venueName,
         );
       }
     } catch (e) {
@@ -98,19 +106,25 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: colors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: colors.textPrimary,
+            size: 20,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Review & Confirm',
           style: GoogleFonts.inter(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -164,14 +178,16 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   Widget _buildCourtSummaryCard() {
+    final colors = context.colors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
+        color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.borderSubtle),
-        boxShadow: AppTheme.cardShadow,
+        border: Border.all(color: colors.borderSubtle),
+        boxShadow: colors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,14 +199,14 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.neonGreenAlpha12,
+                  color: colors.neonGreenAlpha12,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.neonGreenAlpha30),
+                  border: Border.all(color: colors.neonGreenAlpha30),
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.sports_tennis_rounded,
-                    color: AppTheme.neonGreen,
+                    color: colors.neonGreen,
                     size: 24,
                   ),
                 ),
@@ -203,16 +219,16 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                     Text(
                       widget.court.name,
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: colors.textPrimary,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'SmashCourt Arena • Downtown Venue',
+                      '${widget.venueName} • Championship Venue',
                       style: GoogleFonts.inter(
-                        color: AppTheme.textMuted,
+                        color: colors.textMuted,
                         fontSize: 12.5,
                       ),
                     ),
@@ -222,14 +238,14 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.neonLimeAlpha12,
+                  color: colors.neonLimeAlpha12,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.neonLimeAlpha30),
+                  border: Border.all(color: colors.neonLimeAlpha30),
                 ),
                 child: Text(
                   '₱${widget.court.hourlyRate.toStringAsFixed(0)}/hr',
                   style: GoogleFonts.inter(
-                    color: AppTheme.neonLime,
+                    color: colors.neonLime,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -238,13 +254,19 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          const Divider(color: AppTheme.borderSubtle, height: 1),
+          Divider(color: colors.borderSubtle, height: 1),
           const SizedBox(height: 14),
           Row(
             children: [
-              _buildFeatureBadge(Icons.layers_rounded, widget.court.surfaceType ?? 'Pro-Cushion Hardcourt'),
+              _buildFeatureBadge(
+                Icons.layers_rounded,
+                widget.court.surfaceType ?? 'Pro-Cushion Hardcourt',
+              ),
               const SizedBox(width: 8),
-              _buildFeatureBadge(Icons.roofing_rounded, widget.court.courtType ?? 'Championship Indoor'),
+              _buildFeatureBadge(
+                Icons.roofing_rounded,
+                widget.court.courtType ?? 'Championship Indoor',
+              ),
             ],
           ),
         ],
@@ -253,23 +275,28 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   Widget _buildFeatureBadge(IconData icon, String label) {
+    final colors = context.colors;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: AppTheme.background,
+          color: colors.surfaceHighlight,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.borderSubtle),
+          border: Border.all(color: colors.borderSubtle),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppTheme.textMuted, size: 14),
+            Icon(icon, color: colors.textMuted, size: 14),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 11.5),
+                style: GoogleFonts.inter(
+                  color: colors.textSecondary,
+                  fontSize: 11.5,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -281,42 +308,44 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   Widget _buildScheduleCard() {
+    final colors = context.colors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
+        color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.borderSubtle),
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_month_rounded, color: AppTheme.neonGreen, size: 18),
+              Icon(Icons.calendar_month_rounded, color: colors.neonGreen, size: 18),
               const SizedBox(width: 8),
               Text(
-                'Date & Time Details',
+                'Date & Schedule Details',
                 style: GoogleFonts.inter(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppTheme.neonGreenAlpha12,
+                  color: colors.neonGreenAlpha12,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${widget.durationHours} Hours Session',
+                  '${widget.durationHours}h · ${widget.playerCount} Players',
                   style: GoogleFonts.inter(
-                    color: AppTheme.neonGreenLight,
+                    color: colors.neonGreen,
                     fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -326,35 +355,35 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppTheme.background,
+              color: colors.surfaceHighlight,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.borderSubtle),
+              border: Border.all(color: colors.borderSubtle),
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Date', style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 13)),
+                    Text('Date', style: GoogleFonts.inter(color: colors.textMuted, fontSize: 13)),
                     Text(
                       _formatDateFull(widget.startTime),
                       style: GoogleFonts.inter(
-                        color: Colors.white,
+                        color: colors.textPrimary,
                         fontSize: 13.5,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                const Divider(color: AppTheme.borderSubtle, height: 16),
+                Divider(color: colors.borderSubtle, height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Time Window', style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 13)),
+                    Text('Time Window', style: GoogleFonts.inter(color: colors.textMuted, fontSize: 13)),
                     Text(
                       '${_formatTime(widget.startTime)} – ${_formatTime(widget.endTime)}',
                       style: GoogleFonts.inter(
-                        color: AppTheme.neonLime,
+                        color: colors.neonLime,
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
                       ),
@@ -370,29 +399,30 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   Widget _buildPricingBreakdownCard() {
+    final colors = context.colors;
     final subtotal = widget.court.hourlyRate * widget.durationHours;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
+        color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.borderSubtle),
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime, size: 18),
+              Icon(Icons.receipt_long_rounded, color: colors.neonLime, size: 18),
               const SizedBox(width: 8),
               Text(
                 'Price Breakdown',
                 style: GoogleFonts.inter(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -416,16 +446,16 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
           _buildPriceRow(
             'Club Service & Booking Fee',
             'FREE (₱0.00)',
-            valueColor: AppTheme.neonGreen,
+            valueColor: colors.neonGreen,
           ),
-          const Divider(color: AppTheme.borderSubtle, height: 20),
+          Divider(color: colors.borderSubtle, height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Total Amount',
                 style: GoogleFonts.inter(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 15.5,
                   fontWeight: FontWeight.w700,
                 ),
@@ -433,7 +463,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               Text(
                 '₱${widget.totalAmount.toStringAsFixed(2)}',
                 style: GoogleFonts.inter(
-                  color: AppTheme.neonLime,
+                  color: colors.neonLime,
                   fontSize: 19,
                   fontWeight: FontWeight.w800,
                 ),
@@ -446,14 +476,16 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   Widget _buildPriceRow(String label, String value, {Color? valueColor}) {
+    final colors = context.colors;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 13)),
+        Text(label, style: GoogleFonts.inter(color: colors.textMuted, fontSize: 13)),
         Text(
           value,
           style: GoogleFonts.inter(
-            color: valueColor ?? AppTheme.textSecondary,
+            color: valueColor ?? colors.textSecondary,
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
@@ -463,23 +495,29 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   Widget _buildCalendarSyncCard() {
+    final colors = context.colors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceElevated,
+        color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSubtle),
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: AppTheme.neonGreenAlpha12,
+            decoration: BoxDecoration(
+              color: colors.neonGreenAlpha12,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.event_available_rounded, color: AppTheme.neonGreen, size: 20),
+            child: Icon(
+              Icons.event_available_rounded,
+              color: colors.neonGreen,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -489,21 +527,21 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                 Text(
                   '1-Tap Google Calendar Sync',
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: colors.textPrimary,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   'Auto-generate calendar event with zero auth',
-                  style: GoogleFonts.inter(color: AppTheme.textMuted, fontSize: 11.5),
+                  style: GoogleFonts.inter(color: colors.textMuted, fontSize: 11.5),
                 ),
               ],
             ),
           ),
           Switch.adaptive(
             value: _autoLaunchCalendar,
-            activeTrackColor: AppTheme.neonGreen,
+            activeTrackColor: colors.neonGreen,
             onChanged: (val) => setState(() => _autoLaunchCalendar = val),
           ),
         ],
@@ -512,13 +550,15 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   Widget _buildPaymentMethodSection() {
+    final colors = context.colors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Select Payment Method',
           style: GoogleFonts.inter(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
@@ -534,10 +574,12 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.neonGreenAlpha08 : AppTheme.surfaceElevated,
+                color: isSelected
+                    ? colors.neonGreenAlpha08
+                    : colors.surfaceElevated,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isSelected ? AppTheme.neonGreen : AppTheme.borderSubtle,
+                  color: isSelected ? colors.neonGreen : colors.borderSubtle,
                   width: isSelected ? 1.5 : 1,
                 ),
               ),
@@ -545,7 +587,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                 children: [
                   Icon(
                     method['icon'] as IconData,
-                    color: isSelected ? AppTheme.neonGreen : AppTheme.textMuted,
+                    color: isSelected ? colors.neonGreen : colors.textMuted,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -556,7 +598,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                         Text(
                           method['title'] as String,
                           style: GoogleFonts.inter(
-                            color: Colors.white,
+                            color: colors.textPrimary,
                             fontSize: 13.5,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                           ),
@@ -564,7 +606,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                         Text(
                           method['subtitle'] as String,
                           style: GoogleFonts.inter(
-                            color: AppTheme.textMuted,
+                            color: colors.textMuted,
                             fontSize: 11.5,
                           ),
                         ),
@@ -572,8 +614,10 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                     ),
                   ),
                   Icon(
-                    isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                    color: isSelected ? AppTheme.neonGreen : AppTheme.textMuted,
+                    isSelected
+                        ? Icons.radio_button_checked_rounded
+                        : Icons.radio_button_off_rounded,
+                    color: isSelected ? colors.neonGreen : colors.textMuted,
                     size: 20,
                   ),
                 ],
@@ -586,18 +630,20 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   Widget _buildPolicyCard() {
+    final colors = context.colors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceElevatedAlpha60,
-        borderRadius: BorderRadius.all(Radius.circular(18)),
-        border: Border.fromBorderSide(BorderSide(color: AppTheme.borderSubtleAlpha60)),
+      decoration: BoxDecoration(
+        color: colors.surfaceElevated,
+        borderRadius: const BorderRadius.all(Radius.circular(18)),
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.shield_outlined, color: AppTheme.neonLime, size: 18),
+          Icon(Icons.shield_outlined, color: colors.neonLime, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -606,7 +652,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                 Text(
                   'Flexible Cancellation Guarantee',
                   style: GoogleFonts.inter(
-                    color: Colors.white,
+                    color: colors.textPrimary,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                   ),
@@ -615,7 +661,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                 Text(
                   'Cancel up to 12 hours before start time for a 100% full refund to your payment method.',
                   style: GoogleFonts.inter(
-                    color: AppTheme.textMuted,
+                    color: colors.textMuted,
                     fontSize: 11.5,
                     height: 1.4,
                   ),
@@ -629,18 +675,15 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   Widget _buildBottomCheckoutBar() {
+    final colors = context.colors;
+    final isDark = context.isDark;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-      decoration: const BoxDecoration(
-        color: AppTheme.surfaceElevated,
-        border: Border(top: BorderSide(color: AppTheme.borderSubtle)),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.blackAlpha35,
-            blurRadius: 16,
-            offset: Offset(0, -4),
-          ),
-        ],
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111115) : Colors.white,
+        border: Border(top: BorderSide(color: colors.borderSubtle)),
+        boxShadow: colors.cardShadow,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -654,7 +697,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                   Text(
                     'TOTAL AMOUNT',
                     style: GoogleFonts.inter(
-                      color: AppTheme.textMuted,
+                      color: colors.textMuted,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.6,
@@ -663,7 +706,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                   Text(
                     '₱${widget.totalAmount.toStringAsFixed(2)}',
                     style: GoogleFonts.inter(
-                      color: AppTheme.neonLime,
+                      color: colors.neonLime,
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                     ),
@@ -673,14 +716,14 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.neonGreenAlpha12,
+                  color: colors.neonGreenAlpha12,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.neonGreenAlpha30),
+                  border: Border.all(color: colors.neonGreenAlpha30),
                 ),
                 child: Text(
                   '${widget.durationHours}h Session',
                   style: GoogleFonts.inter(
-                    color: AppTheme.neonGreen,
+                    color: colors.neonGreen,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/validators.dart';
 import '../../core/utils/snackbar_helper.dart';
+import '../../core/utils/validators.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
@@ -45,7 +45,6 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text,
         password: _passwordController.text,
       );
-      // Navigation is handled automatically by AuthGate on auth state change
     } on AuthException catch (e) {
       setState(() {
         _errorMessage = e.message;
@@ -68,17 +67,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: colors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom - 32,
+              minHeight: size.height -
+                  MediaQuery.of(context).padding.top -
+                  MediaQuery.of(context).padding.bottom -
+                  32,
             ),
             child: Form(
               key: _formKey,
@@ -97,30 +100,33 @@ class _LoginScreenState extends State<LoginScreen> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppTheme.surfaceElevated,
+                              color: colors.surfaceElevated,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppTheme.borderSubtle),
+                              border: Border.all(color: colors.borderSubtle),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.bolt_rounded,
-                              color: Colors.white,
+                              color: colors.textPrimary,
                               size: 18,
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppTheme.surfaceElevated,
+                              color: colors.surfaceElevated,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppTheme.borderSubtle),
+                              border: Border.all(color: colors.borderSubtle),
                             ),
                             child: Row(
                               children: [
                                 Container(
                                   width: 8,
                                   height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppTheme.neonLime,
+                                  decoration: BoxDecoration(
+                                    color: colors.neonLime,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -128,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Text(
                                   'Online',
                                   style: GoogleFonts.inter(
-                                    color: AppTheme.textSecondary,
+                                    color: colors.textSecondary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -144,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'Welcome to SmashCourt',
                         style: GoogleFonts.inter(
-                          color: AppTheme.neonGreen,
+                          color: colors.neonGreen,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,
@@ -154,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'Account Access',
                         style: GoogleFonts.inter(
-                          color: AppTheme.textPrimary,
+                          color: colors.textPrimary,
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.8,
@@ -167,10 +173,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          gradient: AppTheme.cardGradient,
+                          gradient: colors.cardGradient,
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: AppTheme.borderSubtle),
-                          boxShadow: AppTheme.cardShadow,
+                          border: Border.all(color: colors.borderSubtle),
+                          boxShadow: colors.cardShadow,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,37 +184,37 @@ class _LoginScreenState extends State<LoginScreen> {
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(10),
+                                  width: 36,
+                                  height: 36,
                                   decoration: BoxDecoration(
-                                    color: AppTheme.neonGreenAlpha15,
+                                    color: colors.neonGreenAlpha15,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: AppTheme.neonGreenAlpha30),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.sports_tennis_rounded,
-                                    color: AppTheme.neonGreen,
-                                    size: 22,
+                                    color: colors.neonGreen,
+                                    size: 20,
                                   ),
                                 ),
-                                const SizedBox(width: 14),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'SmashCourt Pickleball',
+                                        'Championship Club Suite',
                                         style: GoogleFonts.inter(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
+                                          color: colors.textPrimary,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
                                       Text(
-                                        'Court Booking & Performance Hub',
+                                        'Pickleball Club System',
                                         style: GoogleFonts.inter(
-                                          color: AppTheme.textMuted,
-                                          fontSize: 12,
+                                          color: colors.textMuted,
+                                          fontSize: 11.5,
                                         ),
                                       ),
                                     ],
@@ -216,181 +222,121 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
-                            const Divider(color: AppTheme.borderSubtle, height: 1),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                _buildAppFeaturePill(Icons.calendar_month_rounded, 'Easy Booking'),
-                                const SizedBox(width: 8),
-                                _buildAppFeaturePill(Icons.insights_rounded, 'Analytics'),
-                                const SizedBox(width: 8),
-                                _buildAppFeaturePill(Icons.verified_user_rounded, 'VIP Pass'),
-                              ],
+                            const SizedBox(height: 12),
+                            Text(
+                              'Instant court reservations, performance analytics, and member management powered by Supabase.',
+                              style: GoogleFonts.inter(
+                                color: colors.textSecondary,
+                                fontSize: 12.5,
+                                height: 1.4,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 24),
 
-                      // Input Fields
-                      CustomTextField(
-                        controller: _emailController,
-                        label: 'Email Address',
-                        hintText: 'name@example.com',
-                        prefixIcon: Icons.alternate_email_rounded,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: Validators.validateEmail,
-                      ),
-                      const SizedBox(height: 18),
-                      CustomTextField(
-                        controller: _passwordController,
-                        label: 'Password',
-                        hintText: '••••••••',
-                        prefixIcon: Icons.lock_outline_rounded,
-                        isPassword: true,
-                        validator: Validators.validatePassword,
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _handleSignIn(),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Error message inline if present
-                      if (_errorMessage != null)
+                      if (_errorMessage != null) ...[
                         Container(
                           padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: AppTheme.errorRedAlpha12,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.errorRedAlpha30),
+                            color: colors.errorRedAlpha12,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: colors.errorRedAlpha30),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.info_outline, color: AppTheme.errorRed, size: 18),
-                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.error_outline_rounded,
+                                color: colors.errorRed,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   _errorMessage!,
                                   style: GoogleFonts.inter(
-                                    color: AppTheme.errorRed,
+                                    color: colors.errorRed,
                                     fontSize: 13,
-                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Form Fields
+                      CustomTextField(
+                        controller: _emailController,
+                        label: 'Email Address',
+                        hintText: 'player@pickleball.com',
+                        prefixIcon: Icons.alternate_email_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: Validators.validateEmail,
+                      ),
+                      const SizedBox(height: 16),
+
+                      CustomTextField(
+                        controller: _passwordController,
+                        label: 'Password',
+                        hintText: 'Enter secure password',
+                        prefixIcon: Icons.lock_outline_rounded,
+                        isPassword: true,
+                        validator: Validators.validatePassword,
+                        onFieldSubmitted: (_) => _handleSignIn(),
+                      ),
+                      const SizedBox(height: 24),
+
+                      NeonButton(
+                        text: 'Sign In to Account',
+                        isLoading: _isLoading,
+                        icon: Icons.login_rounded,
+                        onPressed: _handleSignIn,
+                      ),
                     ],
                   ),
 
-                  // Bottom Action Area with Neon CTA button
+                  // Bottom Sign Up Switch
                   Padding(
                     padding: const EdgeInsets.only(top: 24, bottom: 8),
-                    child: Column(
-                      children: [
-                        NeonButton(
-                          text: 'Sign In',
-                          isLoading: _isLoading,
-                          trailing: const Icon(
-                            Icons.arrow_forward_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          onPressed: _handleSignIn,
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account?",
-                              style: GoogleFonts.inter(
-                                color: AppTheme.textSecondary,
-                                fontSize: 14,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const SignUpScreen(),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                              ),
-                              child: Text(
-                                'Sign Up',
-                                style: GoogleFonts.inter(
-                                  color: AppTheme.neonGreen,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton.icon(
-                          onPressed: () async {
-                            await _authService.signInWithDemoAccess();
-                          },
-                          icon: const Icon(
-                            Icons.bolt_rounded,
-                            color: AppTheme.neonLime,
-                            size: 18,
-                          ),
-                          label: Text(
-                            'Quick Demo Access (VIP Pass)',
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Don't have an account? ",
                             style: GoogleFonts.inter(
-                              color: AppTheme.neonLime,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                              color: colors.textMuted,
+                              fontSize: 13.5,
                             ),
                           ),
-                        ),
-                      ],
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SignupScreen(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              'Sign Up',
+                              style: GoogleFonts.inter(
+                                color: colors.neonGreen,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppFeaturePill(IconData icon, String label) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceElevated,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.borderSubtle),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: AppTheme.neonGreen, size: 14),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                style: GoogleFonts.inter(
-                  color: AppTheme.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
         ),
       ),
     );
