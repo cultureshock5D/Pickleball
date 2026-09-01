@@ -29,20 +29,25 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isDark = context.isDark;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF09090C),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0B0B0E) : Colors.white,
         border: Border(
           top: BorderSide(
-            color: AppTheme.borderSubtle,
-            width: 1.0,
+            color: colors.borderSubtle,
+            width: 0.8,
           ),
         ),
+        boxShadow: colors.cardShadow,
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(items.length, (index) {
@@ -50,73 +55,59 @@ class CustomBottomNavBar extends StatelessWidget {
               final isSelected = index == currentIndex;
 
               return Expanded(
-                child: Semantics(
-                  selected: isSelected,
-                  label: item.label,
-                  button: true,
-                  child: InkWell(
-                    onTap: () {
-                      if (!isSelected) {
-                        HapticFeedback.lightImpact();
-                        onTap(index);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    splashColor: AppTheme.neonMagenta.withOpacity(0.1),
-                    highlightColor: Colors.transparent,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeInOut,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Active Glow / Indicator Pill
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeInOut,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppTheme.neonMagenta.withOpacity(0.14)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                              border: isSelected
-                                  ? Border.all(
-                                      color: AppTheme.neonMagenta.withOpacity(0.4),
-                                      width: 1,
-                                    )
-                                  : Border.all(color: Colors.transparent),
-                            ),
-                            child: Icon(
-                              isSelected ? item.activeIcon : item.icon,
-                              size: 22,
-                              color: isSelected
-                                  ? AppTheme.neonMagenta
-                                  : AppTheme.textMuted,
-                            ),
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onTap(index);
+                  },
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeInOut,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Active Pill Indicator
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isSelected ? 16 : 0,
+                            vertical: 4,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item.label,
-                            style: GoogleFonts.inter(
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppTheme.textMuted,
-                              fontSize: 11.5,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                              letterSpacing: 0.1,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? colors.neonGreenAlpha15
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                        ],
-                      ),
+                          child: Icon(
+                            isSelected ? item.activeIcon : item.icon,
+                            size: 22,
+                            color: isSelected
+                                ? colors.neonGreen
+                                : colors.textMuted,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          item.label,
+                          style: GoogleFonts.inter(
+                            color: isSelected
+                                ? (isDark ? Colors.white : colors.neonGreenDark)
+                                : colors.textMuted,
+                            fontSize: 11,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            letterSpacing: -0.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                 ),

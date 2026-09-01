@@ -52,4 +52,28 @@ class BookingModel {
       'total_amount': totalAmount,
     };
   }
+
+  BookingModel copyWith({
+    String? id,
+    String? customerId,
+    String? courtId,
+    DateTime? startTime,
+    DateTime? endTime,
+    String? status,
+    double? totalAmount,
+    DateTime? createdAt,
+    String? courtName,
+  }) {
+    return BookingModel(
+      id: id ?? this.id,
+      customerId: customerId ?? this.customerId,
+      courtId: courtId ?? this.courtId,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      status: status ?? this.status,
+      totalAmount: totalAmount ?? this.totalAmount,
+      createdAt: createdAt ?? this.createdAt,
+      courtName: courtName ?? this.courtName,
+    );
+  }
 }

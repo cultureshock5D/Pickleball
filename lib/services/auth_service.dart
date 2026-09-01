@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../data/mock_data.dart';
 import '../models/user_profile.dart';
 
 class AuthService {
@@ -11,15 +12,12 @@ class AuthService {
       StreamController<AuthState>.broadcast();
 
   bool _isDemoLoggedIn = false;
-  UserProfile _demoProfile = const UserProfile(
-    id: 'demo-user-12345',
-    fullName: 'Alex Morgan',
-    role: 'customer',
-  );
+  UserProfile _currentDemoProfile = MockData.demoProfile;
 
   bool get isSupabaseReady {
     try {
-      return Supabase.instance.client != null;
+      Supabase.instance.client;
+      return true;
     } catch (_) {
       return false;
     }
@@ -33,6 +31,9 @@ class AuthService {
     }
   }
 
+  /// Whether current session is in demo/guest mode
+  bool get isDemoMode => _isDemoLoggedIn;
+
   /// Stream of authentication state changes
   Stream<AuthState> get authStateChanges {
     if (isSupabaseReady && _supabase != null) {
@@ -44,16 +45,17 @@ class AuthService {
   /// Current authenticated user
   User? get currentUser {
     if (isSupabaseReady && _supabase != null) {
-      return _supabase!.auth.currentUser;
+      final liveUser = _supabase!.auth.currentUser;
+      if (liveUser != null) return liveUser;
     }
     if (_isDemoLoggedIn) {
       return User(
-        id: _demoProfile.id,
+        id: _currentDemoProfile.id,
         appMetadata: {},
-        userMetadata: {'full_name': _demoProfile.fullName},
+        userMetadata: {'full_name': _currentDemoProfile.fullName},
         aud: 'authenticated',
         createdAt: DateTime.now().toIso8601String(),
-        email: 'customer@pickleball.com',
+        email: MockData.demoEmail,
       );
     }
     return null;
@@ -62,9 +64,10 @@ class AuthService {
   /// Current active session
   Session? get currentSession {
     if (isSupabaseReady && _supabase != null) {
-      return _supabase!.auth.currentSession;
+      final liveSession = _supabase!.auth.currentSession;
+      if (liveSession != null) return liveSession;
     }
-    if (_isDemoLoggedIn) {
+    if (_isDemoLoggedIn && currentUser != null) {
       return Session(
         accessToken: 'demo-access-token',
         tokenType: 'bearer',
@@ -77,31 +80,49 @@ class AuthService {
   /// Whether a valid session exists
   bool get isAuthenticated => currentSession != null;
 
-  /// Sign in with email and password
+  /// Whether the active user is a legitimate live Supabase user (not demo/mockup)
+  bool get isLiveUser {
+    if (isSupabaseReady && _supabase != null) {
+      final user = _supabase!.auth.currentUser;
+      return user != null && !MockData.isDemoUser(user.id) && !_isDemoLoggedIn;
+    }
+    return false;
+  }
+
+  /// Sign in with email and password for legitimate accounts
   Future<AuthResponse> signIn({
     required String email,
     required String password,
   }) async {
-    if (isSupabaseReady && _supabase != null) {
-      try {
-        final response = await _supabase!.auth.signInWithPassword(
-          email: email.trim(),
-          password: password,
-        );
-        return response;
-      } on AuthException {
-        rethrow;
-      } catch (e) {
-        throw AuthException('An unexpected error occurred during sign in: $e');
-      }
-    } else {
-      // Demo authentication mode fallback
-      _isDemoLoggedIn = true;
-      _mockAuthStreamController.add(
-        AuthState(AuthChangeEvent.signedIn, currentSession),
-      );
-      return AuthResponse(session: currentSession, user: currentUser);
+    final cleanEmail = email.trim().toLowerCase();
+    
+    // Explicit demo guest bypass
+    if (cleanEmail == MockData.demoEmail || !isSupabaseReady || _supabase == null) {
+      return signInWithDemoAccess();
     }
+
+    try {
+      _isDemoLoggedIn = false;
+      final response = await _supabase!.auth.signInWithPassword(
+        email: cleanEmail,
+        password: password,
+      );
+      return response;
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw AuthException('An unexpected error occurred during sign in: $e');
+    }
+  }
+
+  /// Explicit quick demo access with mock preview data
+  Future<AuthResponse> signInWithDemoAccess() async {
+    _isDemoLoggedIn = true;
+    _currentDemoProfile = MockData.demoProfile;
+    _mockAuthStreamController.add(
+      AuthState(AuthChangeEvent.signedIn, currentSession),
+    );
+    return AuthResponse(session: currentSession, user: currentUser);
   }
 
   /// Sign up with email, password, and insert user into public.profiles
@@ -112,6 +133,7 @@ class AuthService {
   }) async {
     if (isSupabaseReady && _supabase != null) {
       try {
+        _isDemoLoggedIn = false;
         final response = await _supabase!.auth.signUp(
           email: email.trim(),
           password: password,
@@ -119,24 +141,26 @@ class AuthService {
         );
 
         final user = response.user;
-        if (user != null) {
-          await _supabase!.from('profiles').upsert({
-            'id': user.id,
-            'full_name': fullName.trim(),
-            'role': 'customer',
-          });
+        if (user != null && response.session != null) {
+          try {
+            await _supabase!.from('profiles').upsert({
+              'id': user.id,
+              'full_name': fullName.trim(),
+              'role': 'customer',
+            });
+          } catch (pe) {
+            debugPrint('Notice: Initial profile upsert: $pe');
+          }
         }
 
         return response;
       } on AuthException {
         rethrow;
-      } on PostgrestException catch (pe) {
-        throw AuthException('Profile setup failed: ${pe.message}');
       } catch (e) {
         throw AuthException('Sign up failed: $e');
       }
     } else {
-      _demoProfile = _demoProfile.copyWith(fullName: fullName.trim());
+      _currentDemoProfile = _currentDemoProfile.copyWith(fullName: fullName.trim());
       _isDemoLoggedIn = true;
       _mockAuthStreamController.add(
         AuthState(AuthChangeEvent.signedIn, currentSession),
@@ -147,7 +171,8 @@ class AuthService {
 
   /// Update user full name in public.profiles and auth user metadata
   Future<UserProfile> updateUserProfile({required String fullName}) async {
-    if (isSupabaseReady && _supabase != null) {
+    final trimmedName = fullName.trim();
+    if (isLiveUser && _supabase != null) {
       final user = currentUser;
       if (user == null) {
         throw const AuthException('No authenticated user session found.');
@@ -156,13 +181,13 @@ class AuthService {
       try {
         final response = await _supabase!
             .from('profiles')
-            .update({'full_name': fullName.trim()})
+            .update({'full_name': trimmedName})
             .eq('id', user.id)
             .select()
             .single();
 
         await _supabase!.auth.updateUser(
-          UserAttributes(data: {'full_name': fullName.trim()}),
+          UserAttributes(data: {'full_name': trimmedName}),
         );
 
         return UserProfile.fromJson(response);
@@ -172,13 +197,14 @@ class AuthService {
         throw Exception('Failed to update profile: $e');
       }
     } else {
-      _demoProfile = _demoProfile.copyWith(fullName: fullName.trim());
-      return _demoProfile;
+      _currentDemoProfile = _currentDemoProfile.copyWith(fullName: trimmedName);
+      return _currentDemoProfile;
     }
   }
 
   /// Sign out the current user and purge local session tokens
   Future<void> signOut() async {
+    _isDemoLoggedIn = false;
     if (isSupabaseReady && _supabase != null) {
       try {
         await _supabase!.auth.signOut(scope: SignOutScope.local);
@@ -188,15 +214,19 @@ class AuthService {
         throw AuthException('Failed to sign out: $e');
       }
     } else {
-      _isDemoLoggedIn = false;
       _mockAuthStreamController.add(
-        AuthState(AuthChangeEvent.signedOut, null),
+        const AuthState(AuthChangeEvent.signedOut, null),
       );
     }
   }
 
-  /// Fetch user profile details from public.profiles
+  /// Fetch user profile details from public.profiles.
+  /// Never returns mock/demo data for legitimate live users.
   Future<UserProfile?> fetchUserProfile(String userId) async {
+    if (MockData.isDemoUser(userId) || _isDemoLoggedIn) {
+      return _currentDemoProfile;
+    }
+
     if (isSupabaseReady && _supabase != null) {
       try {
         final data = await _supabase!
@@ -205,13 +235,27 @@ class AuthService {
             .eq('id', userId)
             .maybeSingle();
 
-        if (data == null) return null;
-        return UserProfile.fromJson(data);
+        if (data != null) {
+          return UserProfile.fromJson(data);
+        }
       } catch (e) {
-        debugPrint('Error fetching profile: $e');
-        return _demoProfile;
+        debugPrint('Notice: Error querying live profile: $e');
       }
+
+      // Fallback for real user without a database profile row yet:
+      // Construct profile from real user metadata, NEVER from DemoData!
+      final liveUser = currentUser;
+      final metaName = (liveUser?.userMetadata?['full_name'] as String?)?.trim();
+      final emailPrefix = liveUser?.email?.split('@').first ?? 'Player';
+      final displayName = (metaName != null && metaName.isNotEmpty) ? metaName : emailPrefix;
+
+      return UserProfile(
+        id: userId,
+        fullName: displayName,
+        role: 'customer',
+      );
     }
-    return _demoProfile;
+
+    return null;
   }
 }

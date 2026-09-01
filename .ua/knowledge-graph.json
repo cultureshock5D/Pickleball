@@ -1,0 +1,2455 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "pickleball_app",
+    "languages": [
+      "dart",
+      "markdown",
+      "yaml"
+    ],
+    "frameworks": [
+      "flutter",
+      "supabase"
+    ],
+    "description": "A luxury dark-themed Flutter application integrated with Supabase Auth and Postgres profiles, featuring court bookings, live analytics, and interactive calendar scheduling.",
+    "analyzedAt": "2026-08-27T12:10:00.387Z",
+    "gitCommitHash": "015f10f0a35f2efa325fb46671f4e0c8fbe3f70d"
+  },
+  "nodes": [
+    {
+      "id": "file:lib/core/theme/app_theme.dart",
+      "type": "file",
+      "name": "app_theme.dart",
+      "filePath": "lib/core/theme/app_theme.dart",
+      "summary": "Central design system providing luxury dark theme styling, neon green/gold accents, typography, and glow effects.",
+      "tags": [
+        "theme",
+        "design-system",
+        "ui",
+        "styling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/core/theme/app_theme.dart:AppTheme",
+      "type": "class",
+      "name": "AppTheme",
+      "filePath": "lib/core/theme/app_theme.dart",
+      "summary": "Static theme definitions including Material 3 darkTheme data, curated color constants, and custom box shadows.",
+      "tags": [
+        "theme",
+        "constants",
+        "styling"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:lib/core/theme/app_theme.dart:darkTheme",
+      "type": "function",
+      "name": "darkTheme",
+      "filePath": "lib/core/theme/app_theme.dart",
+      "summary": "Constructs the comprehensive ThemeData for dark mode featuring Inter typography and high-contrast surfaces.",
+      "tags": [
+        "theme",
+        "factory",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/core/utils/validators.dart",
+      "type": "file",
+      "name": "validators.dart",
+      "filePath": "lib/core/utils/validators.dart",
+      "summary": "Form validation helpers for user authentication input including email formatting, names, and password strength.",
+      "tags": [
+        "validation",
+        "utility",
+        "auth",
+        "forms"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:lib/core/utils/validators.dart:Validators",
+      "type": "class",
+      "name": "Validators",
+      "filePath": "lib/core/utils/validators.dart",
+      "summary": "Stateless validation suite for checking email, password complexity, full names, and confirmation matches.",
+      "tags": [
+        "validation",
+        "utility"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:lib/core/utils/validators.dart:validateEmail",
+      "type": "function",
+      "name": "validateEmail",
+      "filePath": "lib/core/utils/validators.dart",
+      "summary": "Validates email address syntax against regex patterns and non-empty constraints.",
+      "tags": [
+        "validation",
+        "regex"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:lib/core/utils/validators.dart:validatePassword",
+      "type": "function",
+      "name": "validatePassword",
+      "filePath": "lib/core/utils/validators.dart",
+      "summary": "Enforces minimum password length and complexity requirements for user account security.",
+      "tags": [
+        "validation",
+        "security"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:lib/core/utils/validators.dart:validateFullName",
+      "type": "function",
+      "name": "validateFullName",
+      "filePath": "lib/core/utils/validators.dart",
+      "summary": "Ensures user full name inputs are non-empty and satisfy length constraints.",
+      "tags": [
+        "validation",
+        "forms"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:lib/core/utils/validators.dart:validateConfirmPassword",
+      "type": "function",
+      "name": "validateConfirmPassword",
+      "filePath": "lib/core/utils/validators.dart",
+      "summary": "Checks password confirmation equality during registration workflows.",
+      "tags": [
+        "validation",
+        "auth"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:lib/screens/auth/login_screen.dart",
+      "type": "file",
+      "name": "login_screen.dart",
+      "filePath": "lib/screens/auth/login_screen.dart",
+      "summary": "User sign-in screen featuring sleek glassmorphic inputs, validation handling, Supabase auth integration, and guest bypass.",
+      "tags": [
+        "screen",
+        "auth",
+        "ui",
+        "form"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/screens/auth/login_screen.dart:LoginScreen",
+      "type": "class",
+      "name": "LoginScreen",
+      "filePath": "lib/screens/auth/login_screen.dart",
+      "summary": "Stateful entry widget for user authentication with email/password and demo navigation routes.",
+      "tags": [
+        "screen",
+        "auth",
+        "stateful-widget"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:lib/screens/auth/signup_screen.dart",
+      "type": "file",
+      "name": "signup_screen.dart",
+      "filePath": "lib/screens/auth/signup_screen.dart",
+      "summary": "Registration screen allowing new players to create accounts with email verification, profile names, and validation checks.",
+      "tags": [
+        "screen",
+        "auth",
+        "ui",
+        "registration"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/screens/auth/signup_screen.dart:SignUpScreen",
+      "type": "class",
+      "name": "SignUpScreen",
+      "filePath": "lib/screens/auth/signup_screen.dart",
+      "summary": "Stateful widget managing account creation workflows, password confirmation checks, and error snackbars.",
+      "tags": [
+        "screen",
+        "auth",
+        "stateful-widget"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:lib/screens/profile/profile_screen.dart",
+      "type": "file",
+      "name": "profile_screen.dart",
+      "filePath": "lib/screens/profile/profile_screen.dart",
+      "summary": "User profile management screen displaying player tier, membership details, stats, skill ratings, and sign-out controls.",
+      "tags": [
+        "screen",
+        "profile",
+        "ui",
+        "user-management"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/screens/profile/profile_screen.dart:ProfileScreen",
+      "type": "class",
+      "name": "ProfileScreen",
+      "filePath": "lib/screens/profile/profile_screen.dart",
+      "summary": "Stateful screen rendering user account details, editable display name, skill level selectors, and session termination.",
+      "tags": [
+        "screen",
+        "profile",
+        "stateful-widget"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:lib/widgets/custom_text_field.dart",
+      "type": "file",
+      "name": "custom_text_field.dart",
+      "filePath": "lib/widgets/custom_text_field.dart",
+      "summary": "Reusable styled text input field with neon focus borders, error hints, label animations, and obscure text toggle.",
+      "tags": [
+        "widget",
+        "form-control",
+        "ui",
+        "input"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/widgets/custom_text_field.dart:CustomTextField",
+      "type": "class",
+      "name": "CustomTextField",
+      "filePath": "lib/widgets/custom_text_field.dart",
+      "summary": "Custom TextFormField wrapper conforming to the luxury dark theme design system.",
+      "tags": [
+        "widget",
+        "stateless-widget",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/widgets/neon_button.dart",
+      "type": "file",
+      "name": "neon_button.dart",
+      "filePath": "lib/widgets/neon_button.dart",
+      "summary": "Interactive action button featuring neon green gradients, pulsing glow shadows, loading spinners, and tactile feedback.",
+      "tags": [
+        "widget",
+        "button",
+        "ui",
+        "animation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/widgets/neon_button.dart:NeonButton",
+      "type": "class",
+      "name": "NeonButton",
+      "filePath": "lib/widgets/neon_button.dart",
+      "summary": "Primary CTA button widget styled with neon glow borders and async loading state support.",
+      "tags": [
+        "widget",
+        "ui",
+        "stateful-widget"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/models/booking_model.dart",
+      "type": "file",
+      "name": "booking_model.dart",
+      "filePath": "lib/models/booking_model.dart",
+      "summary": "Data model representing court reservations, start/end timestamps, court references, pricing, and player metadata.",
+      "tags": [
+        "data-model",
+        "booking",
+        "serialization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/models/booking_model.dart:BookingModel",
+      "type": "class",
+      "name": "BookingModel",
+      "filePath": "lib/models/booking_model.dart",
+      "summary": "Immutable representation of a pickleball court booking with JSON serialization and timestamp parsers.",
+      "tags": [
+        "data-model",
+        "serialization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:lib/models/booking_model.dart:BookingModel.fromJson",
+      "type": "function",
+      "name": "BookingModel.fromJson",
+      "filePath": "lib/models/booking_model.dart",
+      "summary": "Factory constructor deserializing Postgres/Supabase records into BookingModel instances.",
+      "tags": [
+        "factory",
+        "deserialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:lib/models/booking_model.dart:toJson",
+      "type": "function",
+      "name": "toJson",
+      "filePath": "lib/models/booking_model.dart",
+      "summary": "Serializes BookingModel state into map format for database insertion.",
+      "tags": [
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:lib/screens/analytics/analytics_screen.dart",
+      "type": "file",
+      "name": "analytics_screen.dart",
+      "filePath": "lib/screens/analytics/analytics_screen.dart",
+      "summary": "Executive analytics dashboard visualizing weekly court hours, spending trends, match history, and peak performance metrics.",
+      "tags": [
+        "screen",
+        "analytics",
+        "dashboard",
+        "charts"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/screens/analytics/analytics_screen.dart:AnalyticsScreen",
+      "type": "class",
+      "name": "AnalyticsScreen",
+      "filePath": "lib/screens/analytics/analytics_screen.dart",
+      "summary": "Stateful screen calculating booking metrics, weekly hours charts, spending summaries, and match statistics.",
+      "tags": [
+        "screen",
+        "analytics",
+        "stateful-widget"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:lib/screens/bookings/my_bookings_screen.dart",
+      "type": "file",
+      "name": "my_bookings_screen.dart",
+      "filePath": "lib/screens/bookings/my_bookings_screen.dart",
+      "summary": "User reservation ledger listing active, upcoming, and past court bookings with filtering and quick calendar actions.",
+      "tags": [
+        "screen",
+        "bookings",
+        "ui",
+        "list-view"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/screens/bookings/my_bookings_screen.dart:MyBookingsScreen",
+      "type": "class",
+      "name": "MyBookingsScreen",
+      "filePath": "lib/screens/bookings/my_bookings_screen.dart",
+      "summary": "Stateful screen querying customer bookings from Supabase, handling pull-to-refresh and reservation cards.",
+      "tags": [
+        "screen",
+        "bookings",
+        "stateful-widget"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:lib/services/calendar_link_service.dart",
+      "type": "file",
+      "name": "calendar_link_service.dart",
+      "filePath": "lib/services/calendar_link_service.dart",
+      "summary": "External calendar integration generating Google Calendar URLs and launching event add intents.",
+      "tags": [
+        "service",
+        "calendar",
+        "integration",
+        "url-launcher"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/services/calendar_link_service.dart:CalendarLinkService",
+      "type": "class",
+      "name": "CalendarLinkService",
+      "filePath": "lib/services/calendar_link_service.dart",
+      "summary": "Utility service formatting UTC event timestamps, Google Calendar web links, and handling URL launches.",
+      "tags": [
+        "service",
+        "calendar"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:lib/services/calendar_link_service.dart:addBookingToCalendar",
+      "type": "function",
+      "name": "addBookingToCalendar",
+      "filePath": "lib/services/calendar_link_service.dart",
+      "summary": "Generates calendar URL for a booking and opens the Google Calendar web/app intent.",
+      "tags": [
+        "calendar",
+        "url-launcher"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:lib/services/calendar_link_service.dart:buildGoogleCalendarUrl",
+      "type": "function",
+      "name": "buildGoogleCalendarUrl",
+      "filePath": "lib/services/calendar_link_service.dart",
+      "summary": "Constructs RFC3339 formatted event query parameters for Google Calendar additions.",
+      "tags": [
+        "calendar",
+        "url-builder"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/widgets/booking_success_modal.dart",
+      "type": "file",
+      "name": "booking_success_modal.dart",
+      "filePath": "lib/widgets/booking_success_modal.dart",
+      "summary": "Celebratory bottom sheet / dialog displaying booking confirmation details, QR mock, and calendar sync CTA.",
+      "tags": [
+        "widget",
+        "modal",
+        "dialog",
+        "booking"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/widgets/booking_success_modal.dart:BookingSuccessModal",
+      "type": "class",
+      "name": "BookingSuccessModal",
+      "filePath": "lib/widgets/booking_success_modal.dart",
+      "summary": "Stateful modal presenting confirmed court reservation summary with animated checkmark and calendar export.",
+      "tags": [
+        "widget",
+        "modal",
+        "stateful-widget"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:lib/widgets/reservation_card.dart",
+      "type": "file",
+      "name": "reservation_card.dart",
+      "filePath": "lib/widgets/reservation_card.dart",
+      "summary": "Card widget rendering individual court booking details, time slots, court type badge, price, and action triggers.",
+      "tags": [
+        "widget",
+        "card",
+        "booking",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/widgets/reservation_card.dart:ReservationCard",
+      "type": "class",
+      "name": "ReservationCard",
+      "filePath": "lib/widgets/reservation_card.dart",
+      "summary": "Stateful reservation card widget supporting status indicators, countdown timers, and calendar sync triggers.",
+      "tags": [
+        "widget",
+        "card",
+        "stateful-widget"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:test/calendar_link_service_test.dart",
+      "type": "file",
+      "name": "calendar_link_service_test.dart",
+      "filePath": "test/calendar_link_service_test.dart",
+      "summary": "Unit tests validating Google Calendar URL generation, UTC timestamp formatting, and parameter encoding.",
+      "tags": [
+        "test",
+        "unit-test",
+        "calendar"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/models/user_profile.dart",
+      "type": "file",
+      "name": "user_profile.dart",
+      "filePath": "lib/models/user_profile.dart",
+      "summary": "User profile data model encapsulating player name, avatar URL, tier, skill level, and Postgres metadata.",
+      "tags": [
+        "data-model",
+        "user",
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:lib/models/user_profile.dart:UserProfile",
+      "type": "class",
+      "name": "UserProfile",
+      "filePath": "lib/models/user_profile.dart",
+      "summary": "Immutable data class holding user account info and tier ratings with serialization methods.",
+      "tags": [
+        "data-model",
+        "serialization"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:lib/screens/home/main_navigation_screen.dart",
+      "type": "file",
+      "name": "main_navigation_screen.dart",
+      "filePath": "lib/screens/home/main_navigation_screen.dart",
+      "summary": "Root shell screen hosting the persistent bottom navigation bar and managing tab switching across primary views.",
+      "tags": [
+        "screen",
+        "navigation",
+        "root",
+        "shell"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/screens/home/main_navigation_screen.dart:MainNavigationScreen",
+      "type": "class",
+      "name": "MainNavigationScreen",
+      "filePath": "lib/screens/home/main_navigation_screen.dart",
+      "summary": "Stateful navigation container switching between Court Booking, My Bookings, Analytics, and Profile tabs.",
+      "tags": [
+        "screen",
+        "navigation",
+        "stateful-widget"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/services/auth_service.dart",
+      "type": "file",
+      "name": "auth_service.dart",
+      "filePath": "lib/services/auth_service.dart",
+      "summary": "Authentication service wrapping Supabase Auth with session persistence, user profiles, and mock fallback.",
+      "tags": [
+        "service",
+        "auth",
+        "supabase",
+        "singleton"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/services/auth_service.dart:AuthService",
+      "type": "class",
+      "name": "AuthService",
+      "filePath": "lib/services/auth_service.dart",
+      "summary": "Singleton managing authentication lifecycle, login, registration, password resets, and user profile sync.",
+      "tags": [
+        "service",
+        "auth",
+        "singleton"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:lib/services/auth_service.dart:signIn",
+      "type": "function",
+      "name": "signIn",
+      "filePath": "lib/services/auth_service.dart",
+      "summary": "Authenticates existing users via email/password credentials against Supabase Auth.",
+      "tags": [
+        "auth",
+        "signin"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:lib/services/auth_service.dart:signUp",
+      "type": "function",
+      "name": "signUp",
+      "filePath": "lib/services/auth_service.dart",
+      "summary": "Registers new player accounts with credentials and creates corresponding profile records in Postgres.",
+      "tags": [
+        "auth",
+        "signup"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:lib/services/auth_service.dart:signOut",
+      "type": "function",
+      "name": "signOut",
+      "filePath": "lib/services/auth_service.dart",
+      "summary": "Logs out current user session and cleans up local auth state.",
+      "tags": [
+        "auth",
+        "signout"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:lib/widgets/auth_gate.dart",
+      "type": "file",
+      "name": "auth_gate.dart",
+      "filePath": "lib/widgets/auth_gate.dart",
+      "summary": "Routing guard checking active session status to direct users between LoginScreen and MainNavigationScreen.",
+      "tags": [
+        "widget",
+        "routing",
+        "auth",
+        "guard"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:lib/widgets/auth_gate.dart:AuthGate",
+      "type": "class",
+      "name": "AuthGate",
+      "filePath": "lib/widgets/auth_gate.dart",
+      "summary": "StreamBuilder widget listening to auth state changes to conditionally render the authenticated app shell.",
+      "tags": [
+        "widget",
+        "auth-guard",
+        "stateless-widget"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:lib/widgets/custom_bottom_nav_bar.dart",
+      "type": "file",
+      "name": "custom_bottom_nav_bar.dart",
+      "filePath": "lib/widgets/custom_bottom_nav_bar.dart",
+      "summary": "Luxury glassmorphic bottom navigation bar with animated indicator pill and neon highlight accents.",
+      "tags": [
+        "widget",
+        "navigation",
+        "ui",
+        "bottom-bar"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/widgets/custom_bottom_nav_bar.dart:CustomBottomNavBar",
+      "type": "class",
+      "name": "CustomBottomNavBar",
+      "filePath": "lib/widgets/custom_bottom_nav_bar.dart",
+      "summary": "Navigation bar widget presenting court booking, reservations, analytics, and profile icons.",
+      "tags": [
+        "widget",
+        "navigation",
+        "stateless-widget"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/widgets/custom_top_app_bar.dart",
+      "type": "file",
+      "name": "custom_top_app_bar.dart",
+      "filePath": "lib/widgets/custom_top_app_bar.dart",
+      "summary": "Top app bar component displaying brand header, notification bell, and user avatar badge.",
+      "tags": [
+        "widget",
+        "app-bar",
+        "header",
+        "ui"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/widgets/custom_top_app_bar.dart:CustomTopAppBar",
+      "type": "class",
+      "name": "CustomTopAppBar",
+      "filePath": "lib/widgets/custom_top_app_bar.dart",
+      "summary": "PreferredSizeWidget implementing luxury custom header with neon branding.",
+      "tags": [
+        "widget",
+        "app-bar",
+        "stateless-widget"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/models/court_model.dart",
+      "type": "file",
+      "name": "court_model.dart",
+      "filePath": "lib/models/court_model.dart",
+      "summary": "Court entity model defining indoor/outdoor court attributes, hourly rates, surface types, and availability status.",
+      "tags": [
+        "data-model",
+        "court",
+        "serialization"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/models/court_model.dart:CourtModel",
+      "type": "class",
+      "name": "CourtModel",
+      "filePath": "lib/models/court_model.dart",
+      "summary": "Data model representing physical pickleball court facilities with features and pricing info.",
+      "tags": [
+        "data-model",
+        "court"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/screens/booking/booking_screen.dart",
+      "type": "file",
+      "name": "booking_screen.dart",
+      "filePath": "lib/screens/booking/booking_screen.dart",
+      "summary": "Court discovery and booking wizard allowing players to filter courts, pick dates, select hourly slots, and checkout.",
+      "tags": [
+        "screen",
+        "booking",
+        "wizard",
+        "ui"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/screens/booking/booking_screen.dart:BookingScreen",
+      "type": "class",
+      "name": "BookingScreen",
+      "filePath": "lib/screens/booking/booking_screen.dart",
+      "summary": "Stateful booking screen managing court selection, calendar date pickers, time slot chips, and reservation submission.",
+      "tags": [
+        "screen",
+        "booking",
+        "stateful-widget"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:lib/services/booking_service.dart",
+      "type": "file",
+      "name": "booking_service.dart",
+      "filePath": "lib/services/booking_service.dart",
+      "summary": "Business logic service handling court inventory queries, time slot collision detection, and booking persistence.",
+      "tags": [
+        "service",
+        "booking",
+        "supabase",
+        "database"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:lib/services/booking_service.dart:BookingService",
+      "type": "class",
+      "name": "BookingService",
+      "filePath": "lib/services/booking_service.dart",
+      "summary": "Singleton managing court fetching, booking record creation, and customer reservation histories.",
+      "tags": [
+        "service",
+        "booking",
+        "singleton"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:lib/services/booking_service.dart:fetchActiveCourts",
+      "type": "function",
+      "name": "fetchActiveCourts",
+      "filePath": "lib/services/booking_service.dart",
+      "summary": "Queries available courts from Supabase database with fallback to default court facilities.",
+      "tags": [
+        "booking",
+        "data-fetch"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:lib/services/booking_service.dart:createBooking",
+      "type": "function",
+      "name": "createBooking",
+      "filePath": "lib/services/booking_service.dart",
+      "summary": "Persists new reservation to database after validating time slot availability.",
+      "tags": [
+        "booking",
+        "mutation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:lib/services/booking_service.dart:fetchCustomerBookings",
+      "type": "function",
+      "name": "fetchCustomerBookings",
+      "filePath": "lib/services/booking_service.dart",
+      "summary": "Retrieves all past and upcoming reservations associated with current authenticated user.",
+      "tags": [
+        "booking",
+        "query"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:test/supabase_config_test.dart",
+      "type": "file",
+      "name": "supabase_config_test.dart",
+      "filePath": "test/supabase_config_test.dart",
+      "summary": "Unit tests verifying Supabase configuration validation, URL sanity, and fallback environment parsing.",
+      "tags": [
+        "test",
+        "unit-test",
+        "config"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/core/constants/supabase_config.dart",
+      "type": "file",
+      "name": "supabase_config.dart",
+      "filePath": "lib/core/constants/supabase_config.dart",
+      "summary": "Environment configuration container reading Supabase URL, anon key, and validating setup readiness.",
+      "tags": [
+        "config",
+        "constants",
+        "supabase",
+        "environment"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/core/constants/supabase_config.dart:SupabaseConfig",
+      "type": "class",
+      "name": "SupabaseConfig",
+      "filePath": "lib/core/constants/supabase_config.dart",
+      "summary": "Static configuration class accessing flutter_dotenv variables with validation checks.",
+      "tags": [
+        "config",
+        "supabase"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:lib/main.dart",
+      "type": "file",
+      "name": "main.dart",
+      "filePath": "lib/main.dart",
+      "summary": "Application entry point initializing Flutter bindings, loading .env credentials, setting up Supabase, and launching MyApp.",
+      "tags": [
+        "entry-point",
+        "initialization",
+        "app-root",
+        "flutter"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:lib/main.dart:MyApp",
+      "type": "class",
+      "name": "MyApp",
+      "filePath": "lib/main.dart",
+      "summary": "Root MaterialApp widget applying AppTheme dark styling and mounting the AuthGate.",
+      "tags": [
+        "app-root",
+        "stateless-widget"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:lib/main.dart:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "lib/main.dart",
+      "summary": "Main async bootstrap routine setting orientations, system overlay styles, Supabase client, and running runApp.",
+      "tags": [
+        "entry-point",
+        "bootstrap"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:test/widget_test.dart",
+      "type": "file",
+      "name": "widget_test.dart",
+      "filePath": "test/widget_test.dart",
+      "summary": "Smoke and widget tests validating root application bootstrapping and initial widget tree mounting.",
+      "tags": [
+        "test",
+        "widget-test",
+        "smoke-test"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:README.md",
+      "type": "document",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "Project documentation overview detailing getting started instructions, Flutter architecture, and Supabase integration.",
+      "tags": [
+        "documentation",
+        "readme",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:analysis_options.yaml",
+      "type": "config",
+      "name": "analysis_options.yaml",
+      "filePath": "analysis_options.yaml",
+      "summary": "Dart analyzer and linter configuration enforcing strict coding standards and flutter_lints best practices.",
+      "tags": [
+        "configuration",
+        "linter",
+        "code-quality"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "config:pubspec.yaml",
+      "type": "config",
+      "name": "pubspec.yaml",
+      "filePath": "pubspec.yaml",
+      "summary": "Flutter package specification defining project metadata, SDK constraints, Supabase/GoogleFonts dependencies, and assets.",
+      "tags": [
+        "configuration",
+        "manifest",
+        "build-system",
+        "dependencies"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.agents/skills/AGENTS.md",
+      "type": "document",
+      "name": "AGENTS.md",
+      "filePath": ".agents/skills/AGENTS.md",
+      "summary": "Agent guidelines and architecture instructions for assistant development in the workspace.",
+      "tags": [
+        "documentation",
+        "agent-config",
+        "guidelines"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.agents/skills/Flutterexpert.md",
+      "type": "document",
+      "name": "Flutterexpert.md",
+      "filePath": ".agents/skills/Flutterexpert.md",
+      "summary": "Comprehensive Flutter and Dart development expert skill defining state management, styling, and architectural best practices.",
+      "tags": [
+        "documentation",
+        "flutter",
+        "best-practices",
+        "skill"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.agents/skills/antigravity-skills-manager/asm.md",
+      "type": "document",
+      "name": "asm.md",
+      "filePath": ".agents/skills/antigravity-skills-manager/asm.md",
+      "summary": "Skills manager documentation explaining skill discovery, installation, and configuration patterns.",
+      "tags": [
+        "documentation",
+        "skills-management"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "document:.agents/skills/optimize/optimize.md",
+      "type": "document",
+      "name": "optimize.md",
+      "filePath": ".agents/skills/optimize/optimize.md",
+      "summary": "Code and performance optimization workflows guide for Flutter app profiling and speed tuning.",
+      "tags": [
+        "documentation",
+        "optimization",
+        "performance"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.agents/skills/ui-ux/ui-ux.md",
+      "type": "document",
+      "name": "ui-ux.md",
+      "filePath": ".agents/skills/ui-ux/ui-ux.md",
+      "summary": "Luxury dark UI/UX design specifications, color tokens, layout hierarchy, and micro-interaction principles.",
+      "tags": [
+        "documentation",
+        "design-system",
+        "ui-ux"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "document:.agents/skills/ui-ux/ui-visual-validator.md",
+      "type": "document",
+      "name": "ui-visual-validator.md",
+      "filePath": ".agents/skills/ui-ux/ui-visual-validator.md",
+      "summary": "Visual validation protocol and QA checklist for Flutter luxury dark-theme interfaces.",
+      "tags": [
+        "documentation",
+        "qa",
+        "ui-validator"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:lib/core/theme/app_theme.dart",
+      "target": "class:lib/core/theme/app_theme.dart:AppTheme",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/core/theme/app_theme.dart",
+      "target": "class:lib/core/theme/app_theme.dart:AppTheme",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/core/theme/app_theme.dart",
+      "target": "function:lib/core/theme/app_theme.dart:darkTheme",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/core/theme/app_theme.dart",
+      "target": "function:lib/core/theme/app_theme.dart:darkTheme",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "class:lib/core/utils/validators.dart:Validators",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "class:lib/core/utils/validators.dart:Validators",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "function:lib/core/utils/validators.dart:validateEmail",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "function:lib/core/utils/validators.dart:validateEmail",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "function:lib/core/utils/validators.dart:validatePassword",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "function:lib/core/utils/validators.dart:validatePassword",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "function:lib/core/utils/validators.dart:validateFullName",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "function:lib/core/utils/validators.dart:validateFullName",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "function:lib/core/utils/validators.dart:validateConfirmPassword",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/core/utils/validators.dart",
+      "target": "function:lib/core/utils/validators.dart:validateConfirmPassword",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/auth/login_screen.dart",
+      "target": "class:lib/screens/auth/login_screen.dart:LoginScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/screens/auth/login_screen.dart",
+      "target": "class:lib/screens/auth/login_screen.dart:LoginScreen",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/auth/login_screen.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/login_screen.dart",
+      "target": "file:lib/core/utils/validators.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/login_screen.dart",
+      "target": "file:lib/services/auth_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/login_screen.dart",
+      "target": "file:lib/widgets/custom_text_field.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/login_screen.dart",
+      "target": "file:lib/widgets/neon_button.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/login_screen.dart",
+      "target": "file:lib/screens/auth/signup_screen.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/signup_screen.dart",
+      "target": "class:lib/screens/auth/signup_screen.dart:SignUpScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/screens/auth/signup_screen.dart",
+      "target": "class:lib/screens/auth/signup_screen.dart:SignUpScreen",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/auth/signup_screen.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/signup_screen.dart",
+      "target": "file:lib/core/utils/validators.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/signup_screen.dart",
+      "target": "file:lib/services/auth_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/signup_screen.dart",
+      "target": "file:lib/widgets/custom_text_field.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/auth/signup_screen.dart",
+      "target": "file:lib/widgets/neon_button.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/profile/profile_screen.dart",
+      "target": "class:lib/screens/profile/profile_screen.dart:ProfileScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/screens/profile/profile_screen.dart",
+      "target": "class:lib/screens/profile/profile_screen.dart:ProfileScreen",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/profile/profile_screen.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/profile/profile_screen.dart",
+      "target": "file:lib/core/utils/validators.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/profile/profile_screen.dart",
+      "target": "file:lib/models/user_profile.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/profile/profile_screen.dart",
+      "target": "file:lib/services/auth_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/profile/profile_screen.dart",
+      "target": "file:lib/services/booking_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/profile/profile_screen.dart",
+      "target": "file:lib/widgets/custom_text_field.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/profile/profile_screen.dart",
+      "target": "file:lib/widgets/neon_button.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/custom_text_field.dart",
+      "target": "class:lib/widgets/custom_text_field.dart:CustomTextField",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/widgets/custom_text_field.dart",
+      "target": "class:lib/widgets/custom_text_field.dart:CustomTextField",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/widgets/custom_text_field.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/neon_button.dart",
+      "target": "class:lib/widgets/neon_button.dart:NeonButton",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/widgets/neon_button.dart",
+      "target": "class:lib/widgets/neon_button.dart:NeonButton",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/widgets/neon_button.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:lib/screens/auth/login_screen.dart:LoginScreen",
+      "target": "class:lib/core/theme/app_theme.dart:AppTheme",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/screens/auth/login_screen.dart:LoginScreen",
+      "target": "class:lib/core/utils/validators.dart:Validators",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/screens/auth/login_screen.dart:LoginScreen",
+      "target": "class:lib/widgets/custom_text_field.dart:CustomTextField",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/screens/auth/login_screen.dart:LoginScreen",
+      "target": "class:lib/widgets/neon_button.dart:NeonButton",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/screens/auth/signup_screen.dart:SignUpScreen",
+      "target": "class:lib/core/utils/validators.dart:Validators",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/models/booking_model.dart",
+      "target": "class:lib/models/booking_model.dart:BookingModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/models/booking_model.dart",
+      "target": "class:lib/models/booking_model.dart:BookingModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/models/booking_model.dart",
+      "target": "function:lib/models/booking_model.dart:BookingModel.fromJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/models/booking_model.dart",
+      "target": "function:lib/models/booking_model.dart:BookingModel.fromJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/models/booking_model.dart",
+      "target": "function:lib/models/booking_model.dart:toJson",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/models/booking_model.dart",
+      "target": "function:lib/models/booking_model.dart:toJson",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/analytics/analytics_screen.dart",
+      "target": "class:lib/screens/analytics/analytics_screen.dart:AnalyticsScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/screens/analytics/analytics_screen.dart",
+      "target": "class:lib/screens/analytics/analytics_screen.dart:AnalyticsScreen",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/analytics/analytics_screen.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/analytics/analytics_screen.dart",
+      "target": "file:lib/models/booking_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/analytics/analytics_screen.dart",
+      "target": "file:lib/services/booking_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/analytics/analytics_screen.dart",
+      "target": "file:lib/widgets/booking_success_modal.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/analytics/analytics_screen.dart",
+      "target": "file:lib/widgets/neon_button.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/bookings/my_bookings_screen.dart",
+      "target": "class:lib/screens/bookings/my_bookings_screen.dart:MyBookingsScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/screens/bookings/my_bookings_screen.dart",
+      "target": "class:lib/screens/bookings/my_bookings_screen.dart:MyBookingsScreen",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/bookings/my_bookings_screen.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/bookings/my_bookings_screen.dart",
+      "target": "file:lib/models/booking_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/bookings/my_bookings_screen.dart",
+      "target": "file:lib/services/booking_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/bookings/my_bookings_screen.dart",
+      "target": "file:lib/widgets/neon_button.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/bookings/my_bookings_screen.dart",
+      "target": "file:lib/widgets/reservation_card.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/services/calendar_link_service.dart",
+      "target": "class:lib/services/calendar_link_service.dart:CalendarLinkService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/calendar_link_service.dart",
+      "target": "class:lib/services/calendar_link_service.dart:CalendarLinkService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/calendar_link_service.dart",
+      "target": "function:lib/services/calendar_link_service.dart:addBookingToCalendar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/calendar_link_service.dart",
+      "target": "function:lib/services/calendar_link_service.dart:addBookingToCalendar",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/calendar_link_service.dart",
+      "target": "function:lib/services/calendar_link_service.dart:buildGoogleCalendarUrl",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/calendar_link_service.dart",
+      "target": "function:lib/services/calendar_link_service.dart:buildGoogleCalendarUrl",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/calendar_link_service.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/services/calendar_link_service.dart",
+      "target": "file:lib/models/booking_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/booking_success_modal.dart",
+      "target": "class:lib/widgets/booking_success_modal.dart:BookingSuccessModal",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/widgets/booking_success_modal.dart",
+      "target": "class:lib/widgets/booking_success_modal.dart:BookingSuccessModal",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/widgets/booking_success_modal.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/booking_success_modal.dart",
+      "target": "file:lib/models/booking_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/booking_success_modal.dart",
+      "target": "file:lib/services/calendar_link_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/reservation_card.dart",
+      "target": "class:lib/widgets/reservation_card.dart:ReservationCard",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/widgets/reservation_card.dart",
+      "target": "class:lib/widgets/reservation_card.dart:ReservationCard",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/widgets/reservation_card.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/reservation_card.dart",
+      "target": "file:lib/models/booking_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/reservation_card.dart",
+      "target": "file:lib/services/calendar_link_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/reservation_card.dart",
+      "target": "file:lib/widgets/booking_success_modal.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/calendar_link_service_test.dart",
+      "target": "file:lib/models/booking_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/calendar_link_service_test.dart",
+      "target": "file:lib/services/calendar_link_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/calendar_link_service_test.dart",
+      "target": "file:lib/widgets/booking_success_modal.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/calendar_link_service_test.dart",
+      "target": "file:lib/widgets/reservation_card.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:lib/screens/analytics/analytics_screen.dart:AnalyticsScreen",
+      "target": "class:lib/models/booking_model.dart:BookingModel",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/screens/bookings/my_bookings_screen.dart:MyBookingsScreen",
+      "target": "class:lib/models/booking_model.dart:BookingModel",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/widgets/reservation_card.dart:ReservationCard",
+      "target": "class:lib/models/booking_model.dart:BookingModel",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/widgets/booking_success_modal.dart:BookingSuccessModal",
+      "target": "class:lib/services/calendar_link_service.dart:CalendarLinkService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/models/user_profile.dart",
+      "target": "class:lib/models/user_profile.dart:UserProfile",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/models/user_profile.dart",
+      "target": "class:lib/models/user_profile.dart:UserProfile",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "class:lib/screens/home/main_navigation_screen.dart:MainNavigationScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "class:lib/screens/home/main_navigation_screen.dart:MainNavigationScreen",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "file:lib/models/user_profile.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "file:lib/services/auth_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "file:lib/widgets/custom_bottom_nav_bar.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "file:lib/widgets/custom_top_app_bar.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "file:lib/screens/analytics/analytics_screen.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "file:lib/screens/booking/booking_screen.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "file:lib/screens/bookings/my_bookings_screen.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/home/main_navigation_screen.dart",
+      "target": "file:lib/screens/profile/profile_screen.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/services/auth_service.dart",
+      "target": "class:lib/services/auth_service.dart:AuthService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/auth_service.dart",
+      "target": "class:lib/services/auth_service.dart:AuthService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/auth_service.dart",
+      "target": "function:lib/services/auth_service.dart:signIn",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/auth_service.dart",
+      "target": "function:lib/services/auth_service.dart:signIn",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/auth_service.dart",
+      "target": "function:lib/services/auth_service.dart:signUp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/auth_service.dart",
+      "target": "function:lib/services/auth_service.dart:signUp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/auth_service.dart",
+      "target": "function:lib/services/auth_service.dart:signOut",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/auth_service.dart",
+      "target": "function:lib/services/auth_service.dart:signOut",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/auth_service.dart",
+      "target": "file:lib/models/user_profile.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/auth_gate.dart",
+      "target": "class:lib/widgets/auth_gate.dart:AuthGate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/widgets/auth_gate.dart",
+      "target": "class:lib/widgets/auth_gate.dart:AuthGate",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/widgets/auth_gate.dart",
+      "target": "file:lib/screens/auth/login_screen.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/auth_gate.dart",
+      "target": "file:lib/screens/home/main_navigation_screen.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/auth_gate.dart",
+      "target": "file:lib/services/auth_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/custom_bottom_nav_bar.dart",
+      "target": "class:lib/widgets/custom_bottom_nav_bar.dart:CustomBottomNavBar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/widgets/custom_bottom_nav_bar.dart",
+      "target": "class:lib/widgets/custom_bottom_nav_bar.dart:CustomBottomNavBar",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/widgets/custom_bottom_nav_bar.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/custom_top_app_bar.dart",
+      "target": "class:lib/widgets/custom_top_app_bar.dart:CustomTopAppBar",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/widgets/custom_top_app_bar.dart",
+      "target": "class:lib/widgets/custom_top_app_bar.dart:CustomTopAppBar",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/widgets/custom_top_app_bar.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/widgets/custom_top_app_bar.dart",
+      "target": "file:lib/models/user_profile.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:lib/screens/home/main_navigation_screen.dart:MainNavigationScreen",
+      "target": "class:lib/widgets/custom_bottom_nav_bar.dart:CustomBottomNavBar",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/widgets/auth_gate.dart:AuthGate",
+      "target": "class:lib/services/auth_service.dart:AuthService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/services/auth_service.dart:AuthService",
+      "target": "class:lib/models/user_profile.dart:UserProfile",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/models/court_model.dart",
+      "target": "class:lib/models/court_model.dart:CourtModel",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/models/court_model.dart",
+      "target": "class:lib/models/court_model.dart:CourtModel",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/booking/booking_screen.dart",
+      "target": "class:lib/screens/booking/booking_screen.dart:BookingScreen",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/screens/booking/booking_screen.dart",
+      "target": "class:lib/screens/booking/booking_screen.dart:BookingScreen",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/screens/booking/booking_screen.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/booking/booking_screen.dart",
+      "target": "file:lib/models/court_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/booking/booking_screen.dart",
+      "target": "file:lib/services/booking_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/booking/booking_screen.dart",
+      "target": "file:lib/services/calendar_link_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/booking/booking_screen.dart",
+      "target": "file:lib/widgets/booking_success_modal.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/screens/booking/booking_screen.dart",
+      "target": "file:lib/widgets/neon_button.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "class:lib/services/booking_service.dart:BookingService",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "class:lib/services/booking_service.dart:BookingService",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "function:lib/services/booking_service.dart:fetchActiveCourts",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "function:lib/services/booking_service.dart:fetchActiveCourts",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "function:lib/services/booking_service.dart:createBooking",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "function:lib/services/booking_service.dart:createBooking",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "function:lib/services/booking_service.dart:fetchCustomerBookings",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "function:lib/services/booking_service.dart:fetchCustomerBookings",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "file:lib/models/booking_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/services/booking_service.dart",
+      "target": "file:lib/models/court_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/supabase_config_test.dart",
+      "target": "file:lib/core/constants/supabase_config.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/supabase_config_test.dart",
+      "target": "file:lib/models/booking_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/supabase_config_test.dart",
+      "target": "file:lib/models/court_model.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/supabase_config_test.dart",
+      "target": "file:lib/models/user_profile.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/supabase_config_test.dart",
+      "target": "file:lib/services/auth_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/supabase_config_test.dart",
+      "target": "file:lib/services/booking_service.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "class:lib/screens/booking/booking_screen.dart:BookingScreen",
+      "target": "class:lib/models/court_model.dart:CourtModel",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "class:lib/screens/booking/booking_screen.dart:BookingScreen",
+      "target": "class:lib/services/booking_service.dart:BookingService",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/core/constants/supabase_config.dart",
+      "target": "class:lib/core/constants/supabase_config.dart:SupabaseConfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/core/constants/supabase_config.dart",
+      "target": "class:lib/core/constants/supabase_config.dart:SupabaseConfig",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/main.dart",
+      "target": "class:lib/main.dart:MyApp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/main.dart",
+      "target": "class:lib/main.dart:MyApp",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/main.dart",
+      "target": "function:lib/main.dart:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:lib/main.dart",
+      "target": "function:lib/main.dart:main",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:lib/main.dart",
+      "target": "file:lib/core/constants/supabase_config.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/main.dart",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:lib/main.dart",
+      "target": "file:lib/widgets/auth_gate.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/widget_test.dart",
+      "target": "file:lib/main.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:test/widget_test.dart",
+      "target": "file:lib/screens/auth/login_screen.dart",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "function:lib/main.dart:main",
+      "target": "class:lib/core/constants/supabase_config.dart:SupabaseConfig",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "function:lib/main.dart:main",
+      "target": "class:lib/main.dart:MyApp",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "document:README.md",
+      "target": "file:lib/main.dart",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "config:analysis_options.yaml",
+      "target": "file:lib/main.dart",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "config:pubspec.yaml",
+      "target": "file:lib/main.dart",
+      "type": "configures",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "document:.agents/skills/AGENTS.md",
+      "target": "document:README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:.agents/skills/Flutterexpert.md",
+      "target": "file:lib/main.dart",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:.agents/skills/antigravity-skills-manager/asm.md",
+      "target": "document:README.md",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:.agents/skills/optimize/optimize.md",
+      "target": "file:lib/main.dart",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:.agents/skills/ui-ux/ui-ux.md",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "document:.agents/skills/ui-ux/ui-visual-validator.md",
+      "target": "file:lib/core/theme/app_theme.dart",
+      "type": "documents",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer:entry-bootstrap",
+      "name": "Application Bootstrap",
+      "description": "Main entry point, Flutter initialization, environment configuration, and root application mounting.",
+      "nodeIds": [
+        "file:lib/main.dart"
+      ]
+    },
+    {
+      "id": "layer:screens",
+      "name": "Presentation Screens",
+      "description": "Primary user views for court reservations, analytics dashboard, ledger management, authentication, and player profile.",
+      "nodeIds": [
+        "file:lib/screens/home/main_navigation_screen.dart",
+        "file:lib/screens/booking/booking_screen.dart",
+        "file:lib/screens/bookings/my_bookings_screen.dart",
+        "file:lib/screens/analytics/analytics_screen.dart",
+        "file:lib/screens/auth/login_screen.dart",
+        "file:lib/screens/auth/signup_screen.dart",
+        "file:lib/screens/profile/profile_screen.dart"
+      ]
+    },
+    {
+      "id": "layer:ui-widgets",
+      "name": "UI Components & Widgets",
+      "description": "Reusable custom widgets, luxury dark-themed cards, neon action buttons, navigation bars, and modal sheets.",
+      "nodeIds": [
+        "file:lib/widgets/auth_gate.dart",
+        "file:lib/widgets/booking_success_modal.dart",
+        "file:lib/widgets/custom_bottom_nav_bar.dart",
+        "file:lib/widgets/custom_text_field.dart",
+        "file:lib/widgets/custom_top_app_bar.dart",
+        "file:lib/widgets/neon_button.dart",
+        "file:lib/widgets/reservation_card.dart"
+      ]
+    },
+    {
+      "id": "layer:services",
+      "name": "Services & Backend Integration",
+      "description": "Business logic and Supabase client integration for auth session handling, booking operations, and calendar sync.",
+      "nodeIds": [
+        "file:lib/services/auth_service.dart",
+        "file:lib/services/booking_service.dart",
+        "file:lib/services/calendar_link_service.dart",
+        "file:lib/core/constants/supabase_config.dart"
+      ]
+    },
+    {
+      "id": "layer:domain-models",
+      "name": "Domain Models & Entities",
+      "description": "Immutable data structures and serialization contracts for court facilities, reservations, and player profiles.",
+      "nodeIds": [
+        "file:lib/models/booking_model.dart",
+        "file:lib/models/court_model.dart",
+        "file:lib/models/user_profile.dart"
+      ]
+    },
+    {
+      "id": "layer:core-foundation",
+      "name": "Core Foundation & Theme",
+      "description": "App theme specifications, color palette constants, typography tokens, and form input validators.",
+      "nodeIds": [
+        "file:lib/core/theme/app_theme.dart",
+        "file:lib/core/utils/validators.dart"
+      ]
+    },
+    {
+      "id": "layer:testing",
+      "name": "Testing Suite",
+      "description": "Unit tests, configuration verification tests, and widget smoke tests.",
+      "nodeIds": [
+        "file:test/calendar_link_service_test.dart",
+        "file:test/supabase_config_test.dart",
+        "file:test/widget_test.dart"
+      ]
+    },
+    {
+      "id": "layer:configuration",
+      "name": "Configuration & Tooling",
+      "description": "Project dependencies, SDK constraints, and analyzer linting rules.",
+      "nodeIds": [
+        "config:pubspec.yaml",
+        "config:analysis_options.yaml"
+      ]
+    },
+    {
+      "id": "layer:documentation",
+      "name": "Documentation & Skill Guidelines",
+      "description": "Workspace architecture manuals, design guidelines, optimization protocols, and skills reference.",
+      "nodeIds": [
+        "document:README.md",
+        "document:.agents/skills/AGENTS.md",
+        "document:.agents/skills/Flutterexpert.md",
+        "document:.agents/skills/antigravity-skills-manager/asm.md",
+        "document:.agents/skills/optimize/optimize.md",
+        "document:.agents/skills/ui-ux/ui-ux.md",
+        "document:.agents/skills/ui-ux/ui-visual-validator.md"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "Project Architecture & Setup",
+      "description": "Start with the project documentation and package manifest to understand the application dependencies, Supabase integration, and luxury dark theme design.",
+      "nodeIds": [
+        "document:README.md",
+        "config:pubspec.yaml"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Application Bootstrap & Initialization",
+      "description": "Explore main.dart to see how Flutter initializes bindings, loads .env variables, sets system UI overlay brightness, and safely bootstraps Supabase.",
+      "nodeIds": [
+        "file:lib/main.dart",
+        "file:lib/core/constants/supabase_config.dart"
+      ]
+    },
+    {
+      "order": 3,
+      "title": "Luxury Design System & Core Theme",
+      "description": "Understand the central design tokens, neon green accents, dark surface hierarchy, and reusable UI components like NeonButton and CustomTextField.",
+      "nodeIds": [
+        "file:lib/core/theme/app_theme.dart",
+        "file:lib/widgets/neon_button.dart",
+        "file:lib/widgets/custom_text_field.dart"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "Authentication Flow & Route Guarding",
+      "description": "Discover how AuthGate uses a reactive StreamBuilder on AuthService to seamlessly navigate between LoginScreen and MainNavigationScreen.",
+      "nodeIds": [
+        "file:lib/services/auth_service.dart",
+        "file:lib/widgets/auth_gate.dart",
+        "file:lib/screens/auth/login_screen.dart",
+        "file:lib/models/user_profile.dart"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "Court Discovery & Reservation Workflow",
+      "description": "Trace the primary booking experience where players select dates and times, calculate prices, call BookingService, and receive animated confirmation modals.",
+      "nodeIds": [
+        "file:lib/models/court_model.dart",
+        "file:lib/models/booking_model.dart",
+        "file:lib/services/booking_service.dart",
+        "file:lib/screens/booking/booking_screen.dart",
+        "file:lib/widgets/booking_success_modal.dart"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "Analytics Dashboard & Calendar Integration",
+      "description": "Examine how user booking histories are visualized in charts on AnalyticsScreen, listed on MyBookingsScreen, and exported to Google Calendar via CalendarLinkService.",
+      "nodeIds": [
+        "file:lib/screens/analytics/analytics_screen.dart",
+        "file:lib/screens/bookings/my_bookings_screen.dart",
+        "file:lib/widgets/reservation_card.dart",
+        "file:lib/services/calendar_link_service.dart"
+      ]
+    }
+  ]
+}

@@ -35,7 +35,16 @@ class _NeonButtonState extends State<NeonButton> {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveGradient = widget.gradient ?? AppTheme.neonMagentaGradient;
+    final colors = context.colors;
+    final effectiveGradient = widget.gradient ??
+        LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.neonGreenDark,
+            colors.neonGreen,
+          ],
+        );
     final isEnabled = widget.onPressed != null && !widget.isLoading;
 
     return Semantics(
@@ -60,7 +69,7 @@ class _NeonButtonState extends State<NeonButton> {
               decoration: BoxDecoration(
                 gradient: effectiveGradient,
                 borderRadius: BorderRadius.circular(28),
-                boxShadow: isEnabled ? AppTheme.neonGlow : null,
+                boxShadow: isEnabled ? colors.neonGlow : null,
               ),
               child: Center(
                 child: widget.isLoading

@@ -1,0 +1,371 @@
+{
+  "name": "pickleball_app",
+  "description": "A luxury dark-themed Flutter application integrated with Supabase Auth and Postgres profiles, featuring court bookings, live analytics, and interactive calendar scheduling.",
+  "languages": [
+    "dart",
+    "markdown",
+    "yaml"
+  ],
+  "frameworks": [
+    "flutter",
+    "supabase"
+  ],
+  "files": [
+    {
+      "path": ".agents/skills/AGENTS.md",
+      "language": "markdown",
+      "sizeLines": 109,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/Flutterexpert.md",
+      "language": "markdown",
+      "sizeLines": 198,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/antigravity-skills-manager/asm.md",
+      "language": "markdown",
+      "sizeLines": 99,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/optimize/optimize.md",
+      "language": "markdown",
+      "sizeLines": 153,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/ui-ux/ui-ux.md",
+      "language": "markdown",
+      "sizeLines": 207,
+      "fileCategory": "docs"
+    },
+    {
+      "path": ".agents/skills/ui-ux/ui-visual-validator.md",
+      "language": "markdown",
+      "sizeLines": 212,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 17,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "analysis_options.yaml",
+      "language": "yaml",
+      "sizeLines": 28,
+      "fileCategory": "config"
+    },
+    {
+      "path": "lib/core/constants/supabase_config.dart",
+      "language": "dart",
+      "sizeLines": 68,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/core/theme/app_theme.dart",
+      "language": "dart",
+      "sizeLines": 193,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/core/utils/validators.dart",
+      "language": "dart",
+      "sizeLines": 46,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/main.dart",
+      "language": "dart",
+      "sizeLines": 69,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/models/booking_model.dart",
+      "language": "dart",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/models/court_model.dart",
+      "language": "dart",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/models/user_profile.dart",
+      "language": "dart",
+      "sizeLines": 47,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/screens/analytics/analytics_screen.dart",
+      "language": "dart",
+      "sizeLines": 814,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/screens/auth/login_screen.dart",
+      "language": "dart",
+      "sizeLines": 421,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/screens/auth/signup_screen.dart",
+      "language": "dart",
+      "sizeLines": 326,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/screens/booking/booking_screen.dart",
+      "language": "dart",
+      "sizeLines": 764,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/screens/bookings/my_bookings_screen.dart",
+      "language": "dart",
+      "sizeLines": 309,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/screens/home/main_navigation_screen.dart",
+      "language": "dart",
+      "sizeLines": 154,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/screens/profile/profile_screen.dart",
+      "language": "dart",
+      "sizeLines": 517,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/services/auth_service.dart",
+      "language": "dart",
+      "sizeLines": 229,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/services/booking_service.dart",
+      "language": "dart",
+      "sizeLines": 197,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/services/calendar_link_service.dart",
+      "language": "dart",
+      "sizeLines": 227,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/widgets/auth_gate.dart",
+      "language": "dart",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/widgets/booking_success_modal.dart",
+      "language": "dart",
+      "sizeLines": 450,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/widgets/custom_bottom_nav_bar.dart",
+      "language": "dart",
+      "sizeLines": 130,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/widgets/custom_text_field.dart",
+      "language": "dart",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/widgets/custom_top_app_bar.dart",
+      "language": "dart",
+      "sizeLines": 199,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/widgets/neon_button.dart",
+      "language": "dart",
+      "sizeLines": 109,
+      "fileCategory": "code"
+    },
+    {
+      "path": "lib/widgets/reservation_card.dart",
+      "language": "dart",
+      "sizeLines": 332,
+      "fileCategory": "code"
+    },
+    {
+      "path": "pubspec.yaml",
+      "language": "yaml",
+      "sizeLines": 28,
+      "fileCategory": "config"
+    },
+    {
+      "path": "test/calendar_link_service_test.dart",
+      "language": "dart",
+      "sizeLines": 132,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test/supabase_config_test.dart",
+      "language": "dart",
+      "sizeLines": 123,
+      "fileCategory": "code"
+    },
+    {
+      "path": "test/widget_test.dart",
+      "language": "dart",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    }
+  ],
+  "totalFiles": 36,
+  "filteredByIgnore": 87,
+  "estimatedComplexity": "moderate",
+  "importMap": {
+    ".agents/skills/AGENTS.md": [],
+    ".agents/skills/Flutterexpert.md": [],
+    ".agents/skills/antigravity-skills-manager/asm.md": [],
+    ".agents/skills/optimize/optimize.md": [],
+    ".agents/skills/ui-ux/ui-ux.md": [],
+    ".agents/skills/ui-ux/ui-visual-validator.md": [],
+    "README.md": [],
+    "analysis_options.yaml": [],
+    "lib/core/constants/supabase_config.dart": [],
+    "lib/core/theme/app_theme.dart": [],
+    "lib/core/utils/validators.dart": [],
+    "lib/main.dart": [
+      "lib/core/constants/supabase_config.dart",
+      "lib/core/theme/app_theme.dart",
+      "lib/widgets/auth_gate.dart"
+    ],
+    "lib/models/booking_model.dart": [],
+    "lib/models/court_model.dart": [],
+    "lib/models/user_profile.dart": [],
+    "lib/screens/analytics/analytics_screen.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/models/booking_model.dart",
+      "lib/services/booking_service.dart",
+      "lib/widgets/booking_success_modal.dart",
+      "lib/widgets/neon_button.dart"
+    ],
+    "lib/screens/auth/login_screen.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/core/utils/validators.dart",
+      "lib/services/auth_service.dart",
+      "lib/widgets/custom_text_field.dart",
+      "lib/widgets/neon_button.dart",
+      "lib/screens/auth/signup_screen.dart"
+    ],
+    "lib/screens/auth/signup_screen.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/core/utils/validators.dart",
+      "lib/services/auth_service.dart",
+      "lib/widgets/custom_text_field.dart",
+      "lib/widgets/neon_button.dart"
+    ],
+    "lib/screens/booking/booking_screen.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/models/court_model.dart",
+      "lib/services/booking_service.dart",
+      "lib/services/calendar_link_service.dart",
+      "lib/widgets/booking_success_modal.dart",
+      "lib/widgets/neon_button.dart"
+    ],
+    "lib/screens/bookings/my_bookings_screen.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/models/booking_model.dart",
+      "lib/services/booking_service.dart",
+      "lib/widgets/neon_button.dart",
+      "lib/widgets/reservation_card.dart"
+    ],
+    "lib/screens/home/main_navigation_screen.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/models/user_profile.dart",
+      "lib/services/auth_service.dart",
+      "lib/widgets/custom_bottom_nav_bar.dart",
+      "lib/widgets/custom_top_app_bar.dart",
+      "lib/screens/analytics/analytics_screen.dart",
+      "lib/screens/booking/booking_screen.dart",
+      "lib/screens/bookings/my_bookings_screen.dart",
+      "lib/screens/profile/profile_screen.dart"
+    ],
+    "lib/screens/profile/profile_screen.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/core/utils/validators.dart",
+      "lib/models/user_profile.dart",
+      "lib/services/auth_service.dart",
+      "lib/services/booking_service.dart",
+      "lib/widgets/custom_text_field.dart",
+      "lib/widgets/neon_button.dart"
+    ],
+    "lib/services/auth_service.dart": [
+      "lib/models/user_profile.dart"
+    ],
+    "lib/services/booking_service.dart": [
+      "lib/models/booking_model.dart",
+      "lib/models/court_model.dart"
+    ],
+    "lib/services/calendar_link_service.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/models/booking_model.dart"
+    ],
+    "lib/widgets/auth_gate.dart": [
+      "lib/screens/auth/login_screen.dart",
+      "lib/screens/home/main_navigation_screen.dart",
+      "lib/services/auth_service.dart"
+    ],
+    "lib/widgets/booking_success_modal.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/models/booking_model.dart",
+      "lib/services/calendar_link_service.dart"
+    ],
+    "lib/widgets/custom_bottom_nav_bar.dart": [
+      "lib/core/theme/app_theme.dart"
+    ],
+    "lib/widgets/custom_text_field.dart": [
+      "lib/core/theme/app_theme.dart"
+    ],
+    "lib/widgets/custom_top_app_bar.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/models/user_profile.dart"
+    ],
+    "lib/widgets/neon_button.dart": [
+      "lib/core/theme/app_theme.dart"
+    ],
+    "lib/widgets/reservation_card.dart": [
+      "lib/core/theme/app_theme.dart",
+      "lib/models/booking_model.dart",
+      "lib/services/calendar_link_service.dart",
+      "lib/widgets/booking_success_modal.dart"
+    ],
+    "pubspec.yaml": [],
+    "test/calendar_link_service_test.dart": [
+      "lib/models/booking_model.dart",
+      "lib/services/calendar_link_service.dart",
+      "lib/widgets/booking_success_modal.dart",
+      "lib/widgets/reservation_card.dart"
+    ],
+    "test/supabase_config_test.dart": [
+      "lib/core/constants/supabase_config.dart",
+      "lib/models/booking_model.dart",
+      "lib/models/court_model.dart",
+      "lib/models/user_profile.dart",
+      "lib/services/auth_service.dart",
+      "lib/services/booking_service.dart"
+    ],
+    "test/widget_test.dart": [
+      "lib/main.dart",
+      "lib/screens/auth/login_screen.dart"
+    ]
+  }
+}
