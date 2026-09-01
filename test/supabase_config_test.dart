@@ -125,7 +125,7 @@ void main() {
     test('BookingService fallback retrieves mock customer bookings', () async {
       final bookingService = BookingService.instance;
       final authService = AuthService.instance;
-      
+
       await authService.signOut();
       expect(authService.isDemoMode, isFalse);
 

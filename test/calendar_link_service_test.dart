@@ -109,7 +109,7 @@ void main() {
       expect(find.byIcon(Icons.calendar_month_rounded), findsOneWidget);
     });
 
-    testWidgets('ReservationCard renders quick action Add to Google Calendar button', (tester) async {
+    testWidgets('ReservationCard renders quick action buttons and Google Calendar action', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -125,7 +125,8 @@ void main() {
       expect(find.text('Court 1 - Center Championship'), findsOneWidget);
       expect(find.text('CONFIRMED'), findsOneWidget);
       expect(find.text('₱67.50'), findsOneWidget);
-      expect(find.text('Add to Google Calendar'), findsOneWidget);
+      expect(find.text('Gate Pass'), findsOneWidget);
+      expect(find.text('Receipt'), findsOneWidget);
       expect(find.byIcon(Icons.event_available_rounded), findsOneWidget);
     });
   });
