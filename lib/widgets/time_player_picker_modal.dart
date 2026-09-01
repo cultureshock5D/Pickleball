@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/theme/app_theme.dart';
+import '../data/mock_data.dart';
 import 'neon_button.dart';
 
 class TimePlayerSelection {
@@ -70,8 +71,8 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
   late double _selectedDuration;
   late int _selectedPlayerCount;
 
-  static const List<double> _durations = [1.0, 1.5, 2.0, 3.0];
-  static const List<int> _playerOptions = [2, 4, 6];
+  static List<double> get _durations => MockData.standardDurations;
+  static List<int> get _playerOptions => MockData.standardPlayerCounts;
 
   @override
   void initState() {
@@ -277,11 +278,6 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                   Row(
                     children: _playerOptions.map((count) {
                       final isSelected = _selectedPlayerCount == count;
-                      final label = count == 2
-                          ? '2 Players (Singles)'
-                          : count == 4
-                              ? '4 Players (Doubles)'
-                              : '6 Players (Group)';
                       final icon = count == 2
                           ? Icons.person_rounded
                           : count == 4

@@ -138,18 +138,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                           final updated = await _authService.updateUserProfile(
                             fullName: nameController.text,
                           );
-                          if (mounted) {
+                          if (context.mounted) {
                             setState(() {
                               _userProfile = updated;
                             });
                             navigator.pop();
-                            if (mounted) {
-                              AppSnackBar.show(
-                                context,
-                                message: 'Profile updated successfully in Supabase!',
-                                icon: Icons.check_circle_rounded,
-                              );
-                            }
+                            AppSnackBar.show(
+                              context,
+                              message: 'Profile updated successfully in Supabase!',
+                              icon: Icons.check_circle_rounded,
+                            );
                           }
                         } catch (e) {
                           setModalState(() => isSaving = false);

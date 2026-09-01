@@ -23,34 +23,6 @@ class AppPalette {
   final List<BoxShadow> cardShadow;
   final List<BoxShadow> neonGlow;
 
-  // Alphas
-  final Color neonGreenAlpha10;
-  final Color neonGreenAlpha12;
-  final Color neonGreenAlpha15;
-  final Color neonGreenAlpha18;
-  final Color neonGreenAlpha20;
-  final Color neonGreenAlpha30;
-  final Color neonGreenAlpha40;
-  final Color neonGreenAlpha50;
-  final Color neonLimeAlpha14;
-  final Color neonLimeAlpha15;
-  final Color neonLimeAlpha20;
-  final Color neonLimeAlpha35;
-  final Color borderSubtleAlpha30;
-  final Color borderSubtleAlpha50;
-  final Color borderSubtleAlpha60;
-  final Color errorRedAlpha12;
-  final Color errorRedAlpha30;
-  final Color neonLimeAlpha12;
-  final Color neonLimeAlpha30;
-  final Color neonGreenAlpha08;
-  final Color neonGreenAlpha14;
-  final Color neonGreenAlpha22;
-  final Color neonGreenAlpha35;
-  final Color neonGreenAlpha45;
-  final Color neonYellowAlpha14;
-  final Color neonYellowAlpha28;
-
   const AppPalette({
     required this.brightness,
     required this.background,
@@ -72,35 +44,41 @@ class AppPalette {
     required this.elevatedCardGradient,
     required this.cardShadow,
     required this.neonGlow,
-    required this.neonGreenAlpha10,
-    required this.neonGreenAlpha12,
-    required this.neonGreenAlpha15,
-    required this.neonGreenAlpha18,
-    required this.neonGreenAlpha20,
-    required this.neonGreenAlpha30,
-    required this.neonGreenAlpha40,
-    required this.neonGreenAlpha50,
-    required this.neonLimeAlpha14,
-    required this.neonLimeAlpha15,
-    required this.neonLimeAlpha20,
-    required this.neonLimeAlpha35,
-    required this.borderSubtleAlpha30,
-    required this.borderSubtleAlpha50,
-    required this.borderSubtleAlpha60,
-    required this.errorRedAlpha12,
-    required this.errorRedAlpha30,
-    required this.neonLimeAlpha12,
-    required this.neonLimeAlpha30,
-    required this.neonGreenAlpha08,
-    required this.neonGreenAlpha14,
-    required this.neonGreenAlpha22,
-    required this.neonGreenAlpha35,
-    required this.neonGreenAlpha45,
-    required this.neonYellowAlpha14,
-    required this.neonYellowAlpha28,
   });
 
   bool get isDark => brightness == Brightness.dark;
+
+  // Computed Alpha Tokens (Derived dynamically from theme colors)
+  Color get neonGreenAlpha08 => neonGreen.withValues(alpha: 0.08);
+  Color get neonGreenAlpha10 => neonGreen.withValues(alpha: 0.10);
+  Color get neonGreenAlpha12 => neonGreen.withValues(alpha: 0.12);
+  Color get neonGreenAlpha14 => neonGreen.withValues(alpha: 0.14);
+  Color get neonGreenAlpha15 => neonGreen.withValues(alpha: 0.15);
+  Color get neonGreenAlpha18 => neonGreen.withValues(alpha: 0.18);
+  Color get neonGreenAlpha20 => neonGreen.withValues(alpha: 0.20);
+  Color get neonGreenAlpha22 => neonGreen.withValues(alpha: 0.22);
+  Color get neonGreenAlpha30 => neonGreen.withValues(alpha: 0.30);
+  Color get neonGreenAlpha35 => neonGreen.withValues(alpha: 0.35);
+  Color get neonGreenAlpha40 => neonGreen.withValues(alpha: 0.40);
+  Color get neonGreenAlpha45 => neonGreen.withValues(alpha: 0.45);
+  Color get neonGreenAlpha50 => neonGreen.withValues(alpha: 0.50);
+
+  Color get neonLimeAlpha12 => neonLime.withValues(alpha: 0.12);
+  Color get neonLimeAlpha14 => neonLime.withValues(alpha: 0.14);
+  Color get neonLimeAlpha15 => neonLime.withValues(alpha: 0.15);
+  Color get neonLimeAlpha20 => neonLime.withValues(alpha: 0.20);
+  Color get neonLimeAlpha30 => neonLime.withValues(alpha: 0.30);
+  Color get neonLimeAlpha35 => neonLime.withValues(alpha: 0.35);
+
+  Color get borderSubtleAlpha30 => borderSubtle.withValues(alpha: 0.30);
+  Color get borderSubtleAlpha50 => borderSubtle.withValues(alpha: 0.50);
+  Color get borderSubtleAlpha60 => borderSubtle.withValues(alpha: 0.60);
+
+  Color get errorRedAlpha12 => errorRed.withValues(alpha: 0.12);
+  Color get errorRedAlpha30 => errorRed.withValues(alpha: 0.30);
+
+  Color get neonYellowAlpha14 => neonYellow.withValues(alpha: 0.14);
+  Color get neonYellowAlpha28 => neonYellow.withValues(alpha: 0.28);
 }
 
 class AppTheme {
@@ -245,7 +223,6 @@ class AppTheme {
     BoxShadow(
       color: neonGreenAlpha45,
       blurRadius: 20,
-      spreadRadius: 0,
       offset: Offset(0, 4),
     ),
   ];
@@ -294,32 +271,6 @@ class AppTheme {
     neonGlow: [
       BoxShadow(color: Color(0x7310B981), blurRadius: 20, offset: Offset(0, 4)),
     ],
-    neonGreenAlpha10: Color(0x1A10B981),
-    neonGreenAlpha12: Color(0x1F10B981),
-    neonGreenAlpha15: Color(0x2610B981),
-    neonGreenAlpha18: Color(0x2E10B981),
-    neonGreenAlpha20: Color(0x3310B981),
-    neonGreenAlpha30: Color(0x4D10B981),
-    neonGreenAlpha40: Color(0x6610B981),
-    neonGreenAlpha50: Color(0x8010B981),
-    neonLimeAlpha14: Color(0x2484CC16),
-    neonLimeAlpha15: Color(0x2684CC16),
-    neonLimeAlpha20: Color(0x3384CC16),
-    neonLimeAlpha35: Color(0x5984CC16),
-    borderSubtleAlpha30: Color(0x4D1E1E24),
-    borderSubtleAlpha50: Color(0x801E1E24),
-    borderSubtleAlpha60: Color(0x991E1E24),
-    errorRedAlpha12: Color(0x1FEF4444),
-    errorRedAlpha30: Color(0x4DEF4444),
-    neonLimeAlpha12: Color(0x1F84CC16),
-    neonLimeAlpha30: Color(0x4D84CC16),
-    neonGreenAlpha08: Color(0x1410B981),
-    neonGreenAlpha14: Color(0x2410B981),
-    neonGreenAlpha22: Color(0x3810B981),
-    neonGreenAlpha35: Color(0x5910B981),
-    neonGreenAlpha45: Color(0x7310B981),
-    neonYellowAlpha14: Color(0x24FACC15),
-    neonYellowAlpha28: Color(0x47FACC15),
   );
 
   static const AppPalette lightPalette = AppPalette(
@@ -356,32 +307,6 @@ class AppTheme {
     neonGlow: [
       BoxShadow(color: Color(0x33059669), blurRadius: 16, offset: Offset(0, 4)),
     ],
-    neonGreenAlpha10: Color(0x1A059669),
-    neonGreenAlpha12: Color(0x1F059669),
-    neonGreenAlpha15: Color(0x26059669),
-    neonGreenAlpha18: Color(0x2E059669),
-    neonGreenAlpha20: Color(0x33059669),
-    neonGreenAlpha30: Color(0x4D059669),
-    neonGreenAlpha40: Color(0x66059669),
-    neonGreenAlpha50: Color(0x80059669),
-    neonLimeAlpha14: Color(0x2465A30D),
-    neonLimeAlpha15: Color(0x2665A30D),
-    neonLimeAlpha20: Color(0x3365A30D),
-    neonLimeAlpha35: Color(0x5965A30D),
-    borderSubtleAlpha30: Color(0x4DCBD5E1),
-    borderSubtleAlpha50: Color(0x80CBD5E1),
-    borderSubtleAlpha60: Color(0x99CBD5E1),
-    errorRedAlpha12: Color(0x1FDC2626),
-    errorRedAlpha30: Color(0x4DDC2626),
-    neonLimeAlpha12: Color(0x1F65A30D),
-    neonLimeAlpha30: Color(0x4D65A30D),
-    neonGreenAlpha08: Color(0x14059669),
-    neonGreenAlpha14: Color(0x24059669),
-    neonGreenAlpha22: Color(0x38059669),
-    neonGreenAlpha35: Color(0x59059669),
-    neonGreenAlpha45: Color(0x73059669),
-    neonYellowAlpha14: Color(0x24CA8A04),
-    neonYellowAlpha28: Color(0x47CA8A04),
   );
 
   /// Helper to get current adaptive palette from context
@@ -398,10 +323,8 @@ class AppTheme {
 
   static ThemeData _buildDarkTheme() {
     return ThemeData(
-      useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: background,
-      primaryColor: neonGreen,
       colorScheme: const ColorScheme.dark(
         primary: neonGreen,
         onPrimary: Colors.white,
@@ -511,10 +434,8 @@ class AppTheme {
     final p = lightPalette;
 
     return ThemeData(
-      useMaterial3: true,
       brightness: Brightness.light,
       scaffoldBackgroundColor: p.background,
-      primaryColor: p.neonGreen,
       colorScheme: ColorScheme.light(
         primary: p.neonGreen,
         onPrimary: Colors.white,

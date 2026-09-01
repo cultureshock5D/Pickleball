@@ -13,7 +13,7 @@ Future<void> main() async {
 
   // Load .env file safely
   try {
-    await dotenv.load(fileName: ".env");
+    await dotenv.load();
     debugPrint('.env file loaded successfully.');
   } catch (e) {
     debugPrint('.env load notice: $e (using environment/default config fallback)');
