@@ -106,6 +106,17 @@ class BookingService {
     required DateTime endTime,
     required double totalAmount,
   }) async {
+    final cleanCourtId = courtId.trim();
+    if (cleanCourtId.isEmpty) {
+      throw ArgumentError('Court ID must not be empty.');
+    }
+    if (!startTime.isBefore(endTime)) {
+      throw ArgumentError('Booking start time must be before end time.');
+    }
+    if (totalAmount.isNaN || totalAmount.isInfinite || totalAmount < 0) {
+      throw ArgumentError('Total amount must be a non-negative finite number.');
+    }
+
     final isLive = _authService.isLiveUser;
 
     if (isLive && _supabase != null) {
@@ -117,7 +128,7 @@ class BookingService {
       try {
         final payload = {
           'customer_id': user.id,
-          'court_id': courtId,
+          'court_id': cleanCourtId,
           'start_time': startTime.toUtc().toIso8601String(),
           'end_time': endTime.toUtc().toIso8601String(),
           'status': 'pending',

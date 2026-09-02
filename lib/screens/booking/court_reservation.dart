@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/validators.dart';
 import '../../data/mock_data.dart';
 import '../../models/booking_model.dart';
 import '../../models/court_model.dart';
@@ -52,8 +53,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   // Booking details state
   DateTime _selectedDate = DateTime.now();
   int _selectedTimeSlotIndex = 2; // Default 10:00 AM
-  double _selectedDurationHours = 1.5;
-  int _selectedPlayerCount = 4;
+  static const double _standardSlotDuration = 1.0; // 1.0 hour standard match slot
 
   List<BookingModel> _bookedSlotsForCurrentDay = [];
   bool _isLoadingAvailability = false;
@@ -181,8 +181,13 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     return _courts[_selectedCourtIndex];
   }
 
+  TimeOfDay get _selectedTime => _allStartTimes[_selectedTimeSlotIndex];
+  bool get _isSelectedSlotPeak => _currentCourt?.isPeakHour(_selectedTime.hour) ?? false;
+  double get _currentRate => _isSelectedSlotPeak
+      ? (_currentCourt?.peakHourlyRate ?? 180.0)
+      : (_currentCourt?.hourlyRate ?? 120.0);
   double get _baseRate => _currentCourt?.hourlyRate ?? 120.0;
-  double get _subtotal => _baseRate * _selectedDurationHours;
+  double get _subtotal => _currentRate * _standardSlotDuration;
   double get _totalAmount => _subtotal;
 
   DateTime get _calculatedStartDateTime {
@@ -198,7 +203,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
   DateTime get _calculatedEndDateTime {
     final start = _calculatedStartDateTime;
-    final totalMinutes = (_selectedDurationHours * 60).round();
+    final totalMinutes = (_standardSlotDuration * 60).round();
     return start.add(Duration(minutes: totalMinutes));
   }
 
@@ -212,17 +217,22 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       time.minute,
     );
     final slotEnd = slotStart.add(
-      Duration(minutes: (_selectedDurationHours * 60).round()),
+      Duration(minutes: (_standardSlotDuration * 60).round()),
     );
 
     final now = DateTime.now();
-    if (slotStart.isBefore(now)) {
+    if (slotEnd.isBefore(now)) {
       return true;
     }
 
     for (final b in _bookedSlotsForCurrentDay) {
       if (b.status.toLowerCase() == 'cancelled') continue;
-      if (slotStart.isBefore(b.endTime) && slotEnd.isAfter(b.startTime)) {
+      if (Validators.hasTimeOverlap(
+        newStart: slotStart,
+        newEnd: slotEnd,
+        existingStart: b.startTime,
+        existingEnd: b.endTime,
+      )) {
         return true;
       }
     }
@@ -260,21 +270,22 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     }
   }
 
-  Future<void> _openTimePlayerPicker() async {
+  Future<void> _openTimePicker() async {
     final sel = await TimePlayerPickerModal.show(
       context,
       availableTimes: _allStartTimes,
       initialTimeSlotIndex: _selectedTimeSlotIndex,
-      initialDuration: _selectedDurationHours,
-      initialPlayerCount: _selectedPlayerCount,
-      hourlyRate: _baseRate,
+      initialDuration: _standardSlotDuration,
+      hourlyRate: _currentCourt?.hourlyRate ?? 120.0,
+      peakHourlyRate: _currentCourt?.peakHourlyRate ?? 180.0,
+      peakStartHour: _currentCourt?.peakStartHour ?? 17,
+      peakEndHour: _currentCourt?.peakEndHour ?? 22,
+      isSlotDisabled: (index) => _isSlotBooked(index),
     );
 
     if (sel != null) {
       setState(() {
         _selectedTimeSlotIndex = sel.timeSlotIndex;
-        _selectedDurationHours = sel.durationHours;
-        _selectedPlayerCount = sel.playerCount;
       });
       _loadCourtAvailability();
     }
@@ -291,9 +302,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           venueName: _selectedVenue?.name ?? 'Barcelona Smash Club',
           startTime: _calculatedStartDateTime,
           endTime: _calculatedEndDateTime,
-          durationHours: _selectedDurationHours,
+          durationHours: _standardSlotDuration,
           totalAmount: _totalAmount,
-          playerCount: _selectedPlayerCount,
           onViewBookings: () {
             _loadCustomerBookings();
             _loadCourtAvailability();
@@ -483,17 +493,16 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
         selectedVenue: _selectedVenue,
         selectedDate: _selectedDate,
         selectedTime: selectedTime,
-        durationHours: _selectedDurationHours,
-        playerCount: _selectedPlayerCount,
+        durationHours: _standardSlotDuration,
         totalAmount: _totalAmount,
         onSelectVenue: _openVenuePicker,
         onSelectDate: _openDatePicker,
-        onSelectTimeAndPlayers: _openTimePlayerPicker,
+        onSelectTimeAndPlayers: _openTimePicker,
         onSearchOrBook: () {
           if (isSlotAvailable) {
             _navigateToReviewScreen();
           } else {
-            _openTimePlayerPicker();
+            _openTimePicker();
           }
         },
         actionButtonText: isSlotAvailable

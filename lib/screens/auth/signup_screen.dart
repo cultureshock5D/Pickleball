@@ -93,138 +93,143 @@ class _SignUpScreenState extends State<SignUpScreen> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                // Top Header Row with back button and avatar pill
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: colors.textPrimary,
-                        size: 20,
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: colors.surfaceElevated,
-                        padding: const EdgeInsets.all(12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(color: colors.borderSubtle),
+          child: AutofillGroup(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  // Top Header Row with back button and avatar pill
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          color: colors.textPrimary,
+                          size: 20,
+                        ),
+                        style: IconButton.styleFrom(
+                          backgroundColor: colors.surfaceElevated,
+                          padding: const EdgeInsets.all(12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: BorderSide(color: colors.borderSubtle),
+                          ),
                         ),
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceElevated,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: colors.borderSubtle),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: colors.neonGreen,
-                              shape: BoxShape.circle,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: colors.borderSubtle),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: colors.neonGreen,
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Customer Role',
-                            style: GoogleFonts.inter(
-                              color: colors.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                            const SizedBox(width: 8),
+                            Text(
+                              'Customer Role',
+                              style: GoogleFonts.inter(
+                                color: colors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  Text(
+                    'Join SmashCourt',
+                    style: GoogleFonts.inter(
+                      color: colors.textSecondary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 24),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Create Account',
+                    style: GoogleFonts.inter(
+                      color: colors.textPrimary,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sign up to book championship courts, view analytics, and access member perks.',
+                    style: GoogleFonts.inter(
+                      color: colors.textMuted,
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
-                Text(
-                  'Join SmashCourt',
-                  style: GoogleFonts.inter(
-                    color: colors.textSecondary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
+                  // Form Fields
+                  CustomTextField(
+                    controller: _nameController,
+                    label: 'Full Name',
+                    hintText: 'Alex Morgan',
+                    prefixIcon: Icons.person_outline_rounded,
+                    autofillHints: const [AutofillHints.name],
+                    validator: Validators.validateFullName,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Create Account',
-                  style: GoogleFonts.inter(
-                    color: colors.textPrimary,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.8,
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _emailController,
+                    label: 'Email Address',
+                    hintText: 'alex@example.com',
+                    prefixIcon: Icons.alternate_email_rounded,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email, AutofillHints.username],
+                    validator: Validators.validateEmail,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sign up to book championship courts, view analytics, and access member perks.',
-                  style: GoogleFonts.inter(
-                    color: colors.textMuted,
-                    fontSize: 14,
-                    height: 1.4,
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _passwordController,
+                    label: 'Password',
+                    hintText: '••••••••',
+                    prefixIcon: Icons.lock_outline_rounded,
+                    isPassword: true,
+                    autofillHints: const [AutofillHints.newPassword],
+                    validator: Validators.validatePassword,
                   ),
-                ),
-                const SizedBox(height: 24),
-
-                // Form Fields
-                CustomTextField(
-                  controller: _nameController,
-                  label: 'Full Name',
-                  hintText: 'Alex Morgan',
-                  prefixIcon: Icons.person_outline_rounded,
-                  validator: Validators.validateFullName,
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _emailController,
-                  label: 'Email Address',
-                  hintText: 'alex@example.com',
-                  prefixIcon: Icons.alternate_email_rounded,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: Validators.validateEmail,
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _passwordController,
-                  label: 'Password',
-                  hintText: '••••••••',
-                  prefixIcon: Icons.lock_outline_rounded,
-                  isPassword: true,
-                  validator: Validators.validatePassword,
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _confirmPasswordController,
-                  label: 'Confirm Password',
-                  hintText: '••••••••',
-                  prefixIcon: Icons.lock_clock_outlined,
-                  isPassword: true,
-                  validator: (val) => Validators.validateConfirmPassword(
-                    val,
-                    _passwordController.text,
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _confirmPasswordController,
+                    label: 'Confirm Password',
+                    hintText: '••••••••',
+                    prefixIcon: Icons.lock_clock_outlined,
+                    isPassword: true,
+                    autofillHints: const [AutofillHints.newPassword],
+                    validator: (val) => Validators.validateConfirmPassword(
+                      val,
+                      _passwordController.text,
+                    ),
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _handleSignUp(),
                   ),
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleSignUp(),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                 if (_errorMessage != null)
                   Container(
@@ -295,6 +300,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

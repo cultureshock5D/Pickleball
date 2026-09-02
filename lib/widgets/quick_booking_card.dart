@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/validators.dart';
 import '../models/venue_model.dart';
 
 class QuickBookingCard extends StatelessWidget {
@@ -40,13 +41,6 @@ class QuickBookingCard extends StatelessWidget {
   static final DateFormat _dateFormat = DateFormat('EEE, d MMM');
   static final DateFormat _dateRangeFormat = DateFormat('EEE d MMM');
 
-  String _formatTimeOfDay(TimeOfDay time) {
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
-  }
-
   String get _formattedDateString {
     if (selectedEndDate != null && !DateUtils.isSameDay(selectedDate, selectedEndDate)) {
       return '${_dateRangeFormat.format(selectedDate)} - ${_dateRangeFormat.format(selectedEndDate!)}';
@@ -60,10 +54,12 @@ class QuickBookingCard extends StatelessWidget {
     return _dateFormat.format(selectedDate);
   }
 
-  String get _formattedPlayerTimeString {
-    final timeStr = _formatTimeOfDay(selectedTime);
-    final durStr = '${durationHours.toString().replaceAll('.0', '')}h';
-    return '$timeStr · $durStr · $playerCount Players';
+  String get _formattedTimeString {
+    final totalMinutes = selectedTime.hour * 60 + selectedTime.minute + (durationHours * 60).round();
+    final endHour = (totalMinutes ~/ 60) % 24;
+    final endMinute = totalMinutes % 60;
+    final endTime = TimeOfDay(hour: endHour, minute: endMinute);
+    return Validators.formatTimeOfDaySlotRange(selectedTime, endTime);
   }
 
   @override
@@ -139,20 +135,28 @@ class QuickBookingCard extends StatelessWidget {
 
             _buildDivider(colors),
 
-            // Row 3: Time, Court & Players (Reference: 1 room - 2 adults)
+            // Row 3: Match Start Time & Auto-Computed Slot
             _buildSelectionRow(
               context: context,
-              icon: Icons.person_outline_rounded,
-              title: _formattedPlayerTimeString,
-              subtitle: '1 Court · ${durationHours}h Match Session',
+              icon: Icons.schedule_rounded,
+              title: _formattedTimeString,
+              subtitle: '1 Championship Court · Standard 1 Hour Slot',
               onTap: onSelectTimeAndPlayers,
               showTopBorder: false,
-              trailingWidget: Text(
-                '₱${totalAmount.toStringAsFixed(0)}',
-                style: GoogleFonts.inter(
-                  color: colors.neonLime,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+              trailingWidget: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: colors.neonLimeAlpha15,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: colors.neonLimeAlpha30),
+                ),
+                child: Text(
+                  '₱${totalAmount.toStringAsFixed(0)}',
+                  style: GoogleFonts.inter(
+                    color: colors.neonLime,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
