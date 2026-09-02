@@ -7,6 +7,8 @@ import '../core/utils/validators.dart';
 import '../models/booking_model.dart';
 import '../services/calendar_link_service.dart';
 import 'booking_success_modal.dart';
+import 'check_in_qr_modal.dart';
+import 'downloadable_receipt_modal.dart';
 
 class ReservationCard extends StatefulWidget {
   final BookingModel booking;
@@ -96,6 +98,16 @@ class _ReservationCardState extends State<ReservationCard>
       context,
       booking: widget.booking,
     );
+  }
+
+  void _openCheckInQrModal() {
+    HapticFeedback.mediumImpact();
+    CheckInQrModal.show(context, booking: widget.booking);
+  }
+
+  void _openReceiptModal() {
+    HapticFeedback.lightImpact();
+    DownloadableReceiptModal.show(context, booking: widget.booking);
   }
 
   @override
@@ -254,76 +266,86 @@ class _ReservationCardState extends State<ReservationCard>
                   ],
                 ),
 
-                // 3. Calendar Quick Action for upcoming bookings
-                if (widget.isUpcoming) ...[
-                  const SizedBox(height: 12),
-                  Divider(color: colors.borderSubtle, height: 1),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ScaleTransition(
-                          scale: _scaleAnimation,
-                          child: GestureDetector(
-                            onTapDown: (_) => _pressController.reverse(),
-                            onTapUp: (_) => _pressController.forward(),
-                            onTapCancel: () => _pressController.forward(),
-                            child: Container(
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: colors.neonGreenAlpha12,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: colors.neonGreenAlpha50,
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: _isAddingToCalendar ? null : _handleAddToCalendar,
-                                  child: Center(
-                                    child: _isAddingToCalendar
-                                        ? SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation<Color>(
-                                                colors.neonGreen,
-                                              ),
-                                            ),
-                                          )
-                                        : Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.event_available_rounded,
-                                                color: colors.neonGreen,
-                                                size: 16,
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                'Add to Google Calendar',
-                                                style: GoogleFonts.inter(
-                                                  color: isDark ? Colors.white : colors.neonGreenDark,
-                                                  fontSize: 12.5,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                // 3. Quick Action Buttons: Gate QR Check-In, PayMongo Receipt, & Add to Calendar
+                const SizedBox(height: 12),
+                Divider(color: colors.borderSubtle, height: 1),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    // QR Pass Action
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          side: BorderSide(color: colors.neonGreenAlpha50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: _openCheckInQrModal,
+                        icon: Icon(Icons.qr_code_2_rounded, size: 16, color: colors.neonGreen),
+                        label: Text(
+                          'Gate Pass',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: colors.neonGreen,
                           ),
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Receipt Action
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          side: BorderSide(color: colors.borderSubtle),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: _openReceiptModal,
+                        icon: Icon(Icons.receipt_long_rounded, size: 16, color: colors.textSecondary),
+                        label: Text(
+                          'Receipt',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (widget.isUpcoming) ...[
+                      const SizedBox(width: 8),
+                      // Calendar Action Icon Button
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: colors.neonGreenAlpha12,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: BorderSide(color: colors.neonGreenAlpha40),
+                          ),
+                        ),
+                        onPressed: _isAddingToCalendar ? null : _handleAddToCalendar,
+                        icon: _isAddingToCalendar
+                            ? SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(colors.neonGreen),
+                                ),
+                              )
+                            : Icon(Icons.event_available_rounded, size: 18, color: colors.neonGreen),
+                        tooltip: 'Add to Google Calendar',
+                      ),
                     ],
-                  ),
-                ],
+                  ],
+                ),
               ],
             ),
           ),
