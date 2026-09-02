@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/utils/validators.dart';
 import '../data/mock_data.dart';
 import '../models/user_profile.dart';
+import 'booking_service.dart';
 
 class AuthService {
   AuthService._internal();
@@ -131,13 +133,16 @@ class AuthService {
     required String password,
     required String fullName,
   }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final sanitizedName = Validators.sanitizeText(fullName, maxLength: Validators.maxFullNameLength);
+
     if (isSupabaseReady && _supabase != null) {
       try {
         _isDemoLoggedIn = false;
         final response = await _supabase!.auth.signUp(
-          email: email.trim(),
+          email: cleanEmail,
           password: password,
-          data: {'full_name': fullName.trim()},
+          data: {'full_name': sanitizedName},
         );
 
         final user = response.user;
@@ -145,7 +150,7 @@ class AuthService {
           try {
             await _supabase!.from('profiles').upsert({
               'id': user.id,
-              'full_name': fullName.trim(),
+              'full_name': sanitizedName,
               'role': 'customer',
             });
           } catch (pe) {
@@ -160,7 +165,7 @@ class AuthService {
         throw AuthException('Sign up failed: $e');
       }
     } else {
-      _currentDemoProfile = _currentDemoProfile.copyWith(fullName: fullName.trim());
+      _currentDemoProfile = _currentDemoProfile.copyWith(fullName: sanitizedName);
       _isDemoLoggedIn = true;
       _mockAuthStreamController.add(
         AuthState(AuthChangeEvent.signedIn, currentSession),
@@ -171,7 +176,8 @@ class AuthService {
 
   /// Update user full name in public.profiles and auth user metadata
   Future<UserProfile> updateUserProfile({required String fullName}) async {
-    final trimmedName = fullName.trim();
+    final sanitizedName = Validators.sanitizeText(fullName, maxLength: Validators.maxFullNameLength);
+
     if (isLiveUser && _supabase != null) {
       final user = currentUser;
       if (user == null) {
@@ -181,13 +187,13 @@ class AuthService {
       try {
         final response = await _supabase!
             .from('profiles')
-            .update({'full_name': trimmedName})
+            .update({'full_name': sanitizedName})
             .eq('id', user.id)
             .select()
             .single();
 
         await _supabase!.auth.updateUser(
-          UserAttributes(data: {'full_name': trimmedName}),
+          UserAttributes(data: {'full_name': sanitizedName}),
         );
 
         return UserProfile.fromJson(response);
@@ -197,14 +203,17 @@ class AuthService {
         throw Exception('Failed to update profile: $e');
       }
     } else {
-      _currentDemoProfile = _currentDemoProfile.copyWith(fullName: trimmedName);
+      _currentDemoProfile = _currentDemoProfile.copyWith(fullName: sanitizedName);
       return _currentDemoProfile;
     }
   }
 
-  /// Sign out the current user and purge local session tokens
+  /// Sign out the current user, purge local session tokens, and clear data caches
   Future<void> signOut() async {
     _isDemoLoggedIn = false;
+    // Invalidate local in-memory availability caches to prevent cross-account cache leakage
+    BookingService.instance.invalidateAvailabilityCache();
+
     if (isSupabaseReady && _supabase != null) {
       try {
         await _supabase!.auth.signOut(scope: SignOutScope.local);

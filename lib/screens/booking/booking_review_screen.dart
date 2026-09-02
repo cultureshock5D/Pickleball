@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/snackbar_helper.dart';
+import '../../core/utils/validators.dart';
 import '../../models/court_model.dart';
 import '../../services/booking_service.dart';
 import '../../services/calendar_link_service.dart';
@@ -55,10 +56,6 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       'isDefault': false,
     },
   ];
-
-  String _formatTime(DateTime dt) {
-    return DateFormat('h:mm a').format(dt);
-  }
 
   String _formatDateFull(DateTime dt) {
     return DateFormat('EEEE, MMMM d, y').format(dt);
@@ -341,7 +338,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '${widget.durationHours}h · ${widget.playerCount} Players',
+                  '${widget.durationHours.toString().replaceAll('.0', '')}h Court Match Slot',
                   style: GoogleFonts.inter(
                     color: colors.neonGreen,
                     fontSize: 11.5,
@@ -381,7 +378,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                   children: [
                     Text('Time Window', style: GoogleFonts.inter(color: colors.textMuted, fontSize: 13)),
                     Text(
-                      '${_formatTime(widget.startTime)} – ${_formatTime(widget.endTime)}',
+                      Validators.formatTimeSlotRange(widget.startTime, widget.endTime),
                       style: GoogleFonts.inter(
                         color: colors.neonLime,
                         fontSize: 13.5,

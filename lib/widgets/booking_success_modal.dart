@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/validators.dart';
 import '../models/booking_model.dart';
 import '../services/calendar_link_service.dart';
 
@@ -73,9 +74,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
   }
 
   String _formatTimeSlot(DateTime start, DateTime end) {
-    final startStr = DateFormat('h:mm a').format(start);
-    final endStr = DateFormat('h:mm a').format(end);
-    return '$startStr - $endStr';
+    return Validators.formatTimeSlotRange(start, end);
   }
 
   Future<void> _handleAddCalendar() async {

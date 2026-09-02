@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/utils/snackbar_helper.dart';
+import '../core/utils/validators.dart';
 import '../models/booking_model.dart';
 
 /// Zero-Auth, Zero-API Deep Link Service for Google Calendar integration.
@@ -32,6 +33,7 @@ class CalendarLinkService {
 
   /// Constructs the standard Google Calendar deep link [Uri].
   ///
+  /// Enforces parameter sanitization and safe length boundaries to prevent URL overflow.
   /// Format:
   /// `https://calendar.google.com/calendar/render?action=TEMPLATE&text=[Title]&dates=[StartUTC]/[EndUTC]&details=[Details]&location=[Venue]`
   static Uri buildGoogleCalendarUri({
@@ -45,12 +47,20 @@ class CalendarLinkService {
     final endUtc = formatUtcDateTime(endTime);
     final dates = '$startUtc/$endUtc';
 
+    final cleanTitle = Validators.sanitizeText(title, maxLength: 120);
+    final cleanDetails = details != null && details.trim().isNotEmpty
+        ? (details.trim().length > 1000 ? details.trim().substring(0, 1000) : details.trim())
+        : null;
+    final cleanLocation = location != null && location.trim().isNotEmpty
+        ? Validators.sanitizeText(location, maxLength: 200)
+        : null;
+
     final queryParameters = <String, String>{
       'action': 'TEMPLATE',
-      'text': title,
+      'text': cleanTitle,
       'dates': dates,
-      if (details != null && details.trim().isNotEmpty) 'details': details.trim(),
-      if (location != null && location.trim().isNotEmpty) 'location': location.trim(),
+      if (cleanDetails != null) 'details': cleanDetails,
+      if (cleanLocation != null) 'location': cleanLocation,
     };
 
     return Uri.parse(_calendarBaseUrl).replace(queryParameters: queryParameters);
@@ -143,9 +153,8 @@ class CalendarLinkService {
     final venue = venueName ?? 'SmashCourt Arena • $court';
 
     final dateFormat = DateFormat('EEEE, MMMM d, y');
-    final timeFormat = DateFormat('h:mm a');
     final formattedDate = dateFormat.format(booking.startTime);
-    final formattedTime = '${timeFormat.format(booking.startTime)} - ${timeFormat.format(booking.endTime)}';
+    final formattedTime = Validators.formatTimeSlotRange(booking.startTime, booking.endTime);
 
     final details = StringBuffer()
       ..writeln('🏓 SmashCourt Court Reservation')

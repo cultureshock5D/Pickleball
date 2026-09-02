@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/validators.dart';
 import '../models/booking_model.dart';
 import '../services/calendar_link_service.dart';
 import 'booking_success_modal.dart';
@@ -32,7 +33,6 @@ class _ReservationCardState extends State<ReservationCard>
   // Memoized formatters (zero allocation per frame)
   static final DateFormat _monthDayYearFormat = DateFormat('MMMM d, y');
   static final DateFormat _fullDayFormat = DateFormat('EEEE, MMMM d, y');
-  static final DateFormat _timeFormat = DateFormat('h:mm a');
 
   @override
   void initState() {
@@ -71,9 +71,7 @@ class _ReservationCardState extends State<ReservationCard>
   }
 
   String _formatTimeSlot(DateTime start, DateTime end) {
-    final startStr = _timeFormat.format(start);
-    final endStr = _timeFormat.format(end);
-    return '$startStr - $endStr';
+    return Validators.formatTimeSlotRange(start, end);
   }
 
   Future<void> _handleAddToCalendar() async {

@@ -12,6 +12,9 @@ class CustomTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final TextInputAction textInputAction;
   final void Function(String)? onFieldSubmitted;
+  final Iterable<String>? autofillHints;
+  final bool? autocorrect;
+  final bool? enableSuggestions;
 
   const CustomTextField({
     super.key,
@@ -24,6 +27,9 @@ class CustomTextField extends StatefulWidget {
     this.validator,
     this.textInputAction = TextInputAction.next,
     this.onFieldSubmitted,
+    this.autofillHints,
+    this.autocorrect,
+    this.enableSuggestions,
   });
 
   @override
@@ -91,6 +97,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
             textInputAction: widget.textInputAction,
             onFieldSubmitted: widget.onFieldSubmitted,
             validator: widget.validator,
+            autofillHints: widget.autofillHints ??
+                (widget.isPassword ? const [AutofillHints.password] : null),
+            autocorrect: widget.autocorrect ?? !widget.isPassword,
+            enableSuggestions: widget.enableSuggestions ?? !widget.isPassword,
             style: GoogleFonts.inter(
               color: colors.textPrimary,
               fontSize: 15,
@@ -108,6 +118,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   : null,
               suffixIcon: widget.isPassword
                   ? IconButton(
+                      tooltip: _obscureText ? 'Show password' : 'Hide password',
                       icon: Icon(
                         _obscureText
                             ? Icons.visibility_outlined
