@@ -181,8 +181,13 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     return _courts[_selectedCourtIndex];
   }
 
+  TimeOfDay get _selectedTime => _allStartTimes[_selectedTimeSlotIndex];
+  bool get _isSelectedSlotPeak => _currentCourt?.isPeakHour(_selectedTime.hour) ?? false;
+  double get _currentRate => _isSelectedSlotPeak
+      ? (_currentCourt?.peakHourlyRate ?? 180.0)
+      : (_currentCourt?.hourlyRate ?? 120.0);
   double get _baseRate => _currentCourt?.hourlyRate ?? 120.0;
-  double get _subtotal => _baseRate * _standardSlotDuration;
+  double get _subtotal => _currentRate * _standardSlotDuration;
   double get _totalAmount => _subtotal;
 
   DateTime get _calculatedStartDateTime {
@@ -271,7 +276,10 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       availableTimes: _allStartTimes,
       initialTimeSlotIndex: _selectedTimeSlotIndex,
       initialDuration: _standardSlotDuration,
-      hourlyRate: _baseRate,
+      hourlyRate: _currentCourt?.hourlyRate ?? 120.0,
+      peakHourlyRate: _currentCourt?.peakHourlyRate ?? 180.0,
+      peakStartHour: _currentCourt?.peakStartHour ?? 17,
+      peakEndHour: _currentCourt?.peakEndHour ?? 22,
       isSlotDisabled: (index) => _isSlotBooked(index),
     );
 

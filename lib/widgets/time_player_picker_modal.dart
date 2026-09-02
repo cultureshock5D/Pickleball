@@ -35,6 +35,9 @@ class TimePlayerPickerModal extends StatefulWidget {
   final double initialDuration;
   final int initialPlayerCount;
   final double hourlyRate;
+  final double peakHourlyRate;
+  final int peakStartHour;
+  final int peakEndHour;
   final bool Function(int slotIndex)? isSlotDisabled;
   final ValueChanged<MatchTimeSelection> onSelectionConfirmed;
 
@@ -45,6 +48,9 @@ class TimePlayerPickerModal extends StatefulWidget {
     this.initialDuration = 1.0,
     this.initialPlayerCount = 4,
     this.hourlyRate = 120.0,
+    this.peakHourlyRate = 180.0,
+    this.peakStartHour = 17,
+    this.peakEndHour = 22,
     this.isSlotDisabled,
     required this.onSelectionConfirmed,
   });
@@ -56,6 +62,9 @@ class TimePlayerPickerModal extends StatefulWidget {
     double initialDuration = 1.0,
     int initialPlayerCount = 4,
     double hourlyRate = 120.0,
+    double peakHourlyRate = 180.0,
+    int peakStartHour = 17,
+    int peakEndHour = 22,
     bool Function(int slotIndex)? isSlotDisabled,
   }) {
     return showModalBottomSheet<MatchTimeSelection>(
@@ -68,6 +77,9 @@ class TimePlayerPickerModal extends StatefulWidget {
         initialDuration: initialDuration,
         initialPlayerCount: initialPlayerCount,
         hourlyRate: hourlyRate,
+        peakHourlyRate: peakHourlyRate,
+        peakStartHour: peakStartHour,
+        peakEndHour: peakEndHour,
         isSlotDisabled: isSlotDisabled,
         onSelectionConfirmed: (sel) => Navigator.of(ctx).pop(sel),
       ),
@@ -89,6 +101,14 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
     _selectedSlotIndex = widget.initialTimeSlotIndex.clamp(0, widget.availableTimes.length - 1);
   }
 
+  bool _isPeak(TimeOfDay time) {
+    return time.hour >= widget.peakStartHour && time.hour < widget.peakEndHour;
+  }
+
+  double _slotRate(TimeOfDay time) {
+    return _isPeak(time) ? widget.peakHourlyRate : widget.hourlyRate;
+  }
+
   TimeOfDay _computeEndTime(TimeOfDay start, double durationHours) {
     final totalMinutes = start.hour * 60 + start.minute + (durationHours * 60).round();
     final endHour = (totalMinutes ~/ 60) % 24;
@@ -104,7 +124,8 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
 
     final selectedStartTime = widget.availableTimes[_selectedSlotIndex];
     final selectedEndTime = _computeEndTime(selectedStartTime, _standardSlotDuration);
-    final autoComputedPrice = widget.hourlyRate * _standardSlotDuration;
+    final isSelectedPeak = _isPeak(selectedStartTime);
+    final autoComputedPrice = _slotRate(selectedStartTime) * _standardSlotDuration;
 
     return Container(
       constraints: BoxConstraints(
@@ -217,6 +238,8 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                       final endTime = _computeEndTime(time, _standardSlotDuration);
                       final isBooked = widget.isSlotDisabled?.call(index) ?? false;
                       final slotLabel = Validators.formatTimeOfDaySlotRange(time, endTime);
+                      final slotIsPeak = _isPeak(time);
+                      final slotPrice = _slotRate(time) * _standardSlotDuration;
 
                       return GestureDetector(
                         onTap: isBooked
@@ -230,23 +253,27 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                           opacity: isBooked ? 0.45 : 1.0,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
                               color: isBooked
                                   ? colors.surfaceHighlight.withAlpha(80)
                                   : isSelected
-                                      ? colors.neonGreenAlpha18
+                                      ? (slotIsPeak ? Colors.amber.withAlpha(35) : colors.neonGreenAlpha18)
                                       : colors.surfaceElevated,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isBooked
                                     ? colors.borderSubtle
                                     : isSelected
-                                        ? colors.neonGreen
-                                        : colors.borderSubtle,
+                                        ? (slotIsPeak ? Colors.amber : colors.neonGreen)
+                                        : (slotIsPeak ? Colors.amber.withAlpha(60) : colors.borderSubtle),
                                 width: isSelected ? 1.8 : 1,
                               ),
-                              boxShadow: (isSelected && !isBooked) ? colors.neonGlow : const [],
+                              boxShadow: (isSelected && !isBooked)
+                                  ? (slotIsPeak
+                                      ? [BoxShadow(color: Colors.amber.withAlpha(70), blurRadius: 10)]
+                                      : colors.neonGlow)
+                                  : const [],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +289,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                                           color: isBooked
                                               ? colors.textMuted
                                               : isSelected
-                                                  ? colors.neonLime
+                                                  ? (slotIsPeak ? Colors.amberAccent : colors.neonLime)
                                                   : colors.textPrimary,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
@@ -288,6 +315,23 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                                             fontWeight: FontWeight.w800,
                                           ),
                                         ),
+                                      )
+                                    else if (slotIsPeak)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber.withAlpha(30),
+                                          borderRadius: BorderRadius.circular(5),
+                                          border: Border.all(color: Colors.amber.withAlpha(80)),
+                                        ),
+                                        child: Text(
+                                          'PEAK',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.amber,
+                                            fontSize: 8.5,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
                                       ),
                                   ],
                                 ),
@@ -295,20 +339,24 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      isBooked ? 'Unavailable' : '1 Hour Slot',
+                                      isBooked
+                                          ? 'Unavailable'
+                                          : (slotIsPeak ? 'Peak Hour' : 'Off-Peak'),
                                       style: GoogleFonts.inter(
-                                        color: colors.textMuted,
+                                        color: isBooked
+                                            ? colors.textMuted
+                                            : (slotIsPeak ? Colors.amber.withAlpha(200) : colors.textMuted),
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                     Text(
-                                      '₱${autoComputedPrice.toStringAsFixed(0)}',
+                                      '₱${slotPrice.toStringAsFixed(0)}',
                                       style: GoogleFonts.inter(
                                         color: isBooked
                                             ? colors.textMuted
                                             : isSelected
-                                                ? colors.neonLime
+                                                ? (slotIsPeak ? Colors.amberAccent : colors.neonLime)
                                                 : colors.textSecondary,
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w700,
@@ -336,53 +384,100 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
             decoration: BoxDecoration(
               gradient: colors.cardGradient,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: colors.borderSubtle),
+              border: Border.all(
+                color: isSelectedPeak ? Colors.amber.withAlpha(120) : colors.borderSubtle,
+              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'SELECTED TIME SLOT',
-                      style: GoogleFonts.inter(
-                        color: colors.textMuted,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'SELECTED TIME SLOT',
+                              style: GoogleFonts.inter(
+                                color: colors.textMuted,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: isSelectedPeak
+                                    ? Colors.amber.withAlpha(30)
+                                    : colors.neonLimeAlpha15,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                isSelectedPeak ? 'PEAK' : 'OFF-PEAK',
+                                style: GoogleFonts.inter(
+                                  color: isSelectedPeak ? Colors.amber : colors.neonLime,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          Validators.formatTimeOfDaySlotRange(selectedStartTime, selectedEndTime),
+                          style: GoogleFonts.inter(
+                            color: colors.textPrimary,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      Validators.formatTimeOfDaySlotRange(selectedStartTime, selectedEndTime),
-                      style: GoogleFonts.inter(
-                        color: colors.textPrimary,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'AUTO-COMPUTED FEE',
+                          style: GoogleFonts.inter(
+                            color: isSelectedPeak ? Colors.amber : colors.neonGreen,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '₱${autoComputedPrice.toStringAsFixed(2)}',
+                          style: GoogleFonts.inter(
+                            color: isSelectedPeak ? Colors.amberAccent : colors.neonLime,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                const SizedBox(height: 6),
+                Row(
                   children: [
-                    Text(
-                      'AUTO-COMPUTED FEE',
-                      style: GoogleFonts.inter(
-                        color: colors.neonGreen,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
+                    Icon(
+                      Icons.lock_clock_rounded,
+                      size: 13,
+                      color: colors.neonLime.withAlpha(200),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(width: 5),
                     Text(
-                      '₱${autoComputedPrice.toStringAsFixed(2)}',
+                      '5-minute transient lock applied upon confirmation',
                       style: GoogleFonts.inter(
-                        color: colors.neonLime,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                        color: colors.textMuted,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

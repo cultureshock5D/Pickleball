@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -25,10 +26,15 @@ class CheckInQrModal extends StatefulWidget {
   State<CheckInQrModal> createState() => _CheckInQrModalState();
 }
 
-class _CheckInQrModalState extends State<CheckInQrModal> {
+class _CheckInQrModalState extends State<CheckInQrModal>
+    with SingleTickerProviderStateMixin {
   late String _checkInStatus;
   late DateTime? _checkInTime;
   late DateTime? _checkOutTime;
+  Timer? _timer;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+  DateTime _now = DateTime.now();
 
   @override
   void initState() {
@@ -36,6 +42,30 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
     _checkInStatus = widget.booking.status.toLowerCase() == 'checked_in'
         ? 'checked_in'
         : (widget.booking.status.toLowerCase() == 'completed' ? 'completed' : 'upcoming');
+    _checkInTime = _checkInStatus == 'checked_in' ? DateTime.now() : null;
+    _checkOutTime = _checkInStatus == 'completed' ? DateTime.now() : null;
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() => _now = DateTime.now());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pulseController.dispose();
+    super.dispose();
   }
 
   void _toggleCheckInState() {
@@ -54,6 +84,41 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
     });
   }
 
+  String _formatCountdown() {
+    final booking = widget.booking;
+    if (_checkInStatus == 'checked_in') {
+      final diff = booking.endTime.difference(_now);
+      if (diff.isNegative) {
+        final overtime = _now.difference(booking.endTime);
+        return 'Overtime: +${overtime.inMinutes}m ${overtime.inSeconds % 60}s';
+      }
+      final mins = diff.inMinutes;
+      final secs = diff.inSeconds % 60;
+      return 'Session Ends in: ${mins}m ${secs}s';
+    } else if (_checkInStatus == 'upcoming') {
+      final diff = booking.startTime.difference(_now);
+      if (diff.isNegative) {
+        return 'Session Ready • Gate Scanning Open';
+      }
+      final hours = diff.inHours;
+      final mins = diff.inMinutes % 60;
+      final secs = diff.inSeconds % 60;
+      if (hours > 0) {
+        return 'Starts in: ${hours}h ${mins}m';
+      }
+      return 'Starts in: ${mins}m ${secs}s';
+    }
+    return 'Court Session Concluded';
+  }
+
+  String _generateRollingToken() {
+    final seed = (_now.millisecondsSinceEpoch ~/ 30000).toRadixString(16).toUpperCase();
+    final idPart = widget.booking.id.length >= 6
+        ? widget.booking.id.substring(0, 6).toUpperCase()
+        : widget.booking.id.toUpperCase();
+    return 'PKL-$idPart-$seed';
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -62,15 +127,18 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
     final timeFormat = DateFormat('h:mm a');
 
     Color statusColor = colors.neonGreen;
-    String statusText = 'UPCOMING - READY FOR CHECK-IN';
+    String statusText = 'UPCOMING • READY FOR GATE';
 
     if (_checkInStatus == 'checked_in') {
-      statusColor = colors.neonYellow;
-      statusText = 'CHECKED IN • SESSION IN PROGRESS';
+      statusColor = Colors.amber;
+      statusText = 'CHECKED IN • SESSION ACTIVE';
     } else if (_checkInStatus == 'completed') {
       statusColor = colors.textMuted;
-      statusText = 'CHECKED OUT • SESSION COMPLETED';
+      statusText = 'CHECKED OUT • CONCLUDED';
     }
+
+    final countdownText = _formatCountdown();
+    final rollingToken = _generateRollingToken();
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -92,7 +160,7 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
           // Header Title
           Text(
@@ -112,45 +180,85 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // Status Badge
+          // Live Animated Status Badge
+          AnimatedBuilder(
+            animation: _pulseAnimation,
+            builder: (context, child) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusColor.withAlpha((25 * _pulseAnimation.value).toInt()),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: statusColor.withAlpha((180 * _pulseAnimation.value).toInt()),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(_pulseAnimation.value),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: statusColor.withOpacity(0.6 * _pulseAnimation.value),
+                            blurRadius: 6,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      statusText,
+                      style: GoogleFonts.inter(
+                        color: statusColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+
+          // Countdown Timer Strip
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: statusColor.withAlpha(25),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: statusColor.withAlpha(80)),
+              color: colors.surfaceHighlight.withAlpha(120),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: colors.borderSubtle),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
+                Icon(Icons.timer_outlined, size: 14, color: colors.neonLime),
+                const SizedBox(width: 6),
                 Text(
-                  statusText,
-                  style: GoogleFonts.inter(
-                    color: statusColor,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+                  countdownText,
+                  style: GoogleFonts.robotoMono(
+                    color: colors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Visual Dynamic QR Display
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -166,8 +274,8 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
               children: [
                 // Simulated QR Graphic
                 Container(
-                  width: 180,
-                  height: 180,
+                  width: 170,
+                  height: 170,
                   decoration: BoxDecoration(
                     color: Colors.black,
                     borderRadius: BorderRadius.circular(12),
@@ -179,24 +287,41 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
                         const Icon(
                           Icons.qr_code_2_rounded,
                           color: Colors.white,
-                          size: 130,
+                          size: 120,
                         ),
                         Text(
-                          'PASS CODE: ${booking.id.substring(0, booking.id.length > 8 ? 8 : booking.id.length).toUpperCase()}',
+                          rollingToken,
                           style: GoogleFonts.robotoMono(
                             color: Colors.white70,
-                            fontSize: 9,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.lock_rounded, size: 10, color: Colors.black54),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Auto-refreshes every 30s • Offline Cached',
+                      style: GoogleFonts.inter(
+                        color: Colors.black54,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // Booking Slot Details
           Row(
@@ -230,7 +355,7 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
                   Text(
                     _checkInStatus.replaceAll('_', ' ').toUpperCase(),
                     style: GoogleFonts.inter(
-                      color: colors.neonGreen,
+                      color: statusColor,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -239,7 +364,7 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Interactive Check-In/Check-Out Action Toggle
           SizedBox(
@@ -270,7 +395,7 @@ class _CheckInQrModalState extends State<CheckInQrModal> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
         ],
       ),
     );
