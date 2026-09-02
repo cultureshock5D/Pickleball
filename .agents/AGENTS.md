@@ -1,110 +1,142 @@
-# Dart-Code VS Code Extension Agent Guide
+# Pickleball Flutter Application Agent Guide
 
-This document provides the operational protocols, architectural rules, and context for Google Antigravity AI assistants working on the Dart-Code repository.
+This document provides the operational protocols, architectural rules, safety boundaries, and detailed folder-by-folder contexts for AI assistants and autonomous multi-agent systems working on the **Pickleball** repository (`cultureshock5D/Pickleball`).
 
-The files "layout.tsx" and "Project.sql" are reference only.
----
-## Safety & File Modification Constraints
-
-### Directory Protection & Non-Destructive Edits (MANDATORY)
-- **Zero Whole-Folder Operations:** NEVER execute destructive shell commands (`rm -rf`, `rmdir`, `del /s /q`) on workspace root folders or core directories (e.g., `lib/`, `android/`, `ios/`, `test/`).
-- **Targeted File Updates Only:** Never replace entire directories or broad modules to make single-feature additions. Modify or create target files explicitly one at a time.
-- **Incremental Merging:** When integrating features into existing screens (e.g., adding calendar deep links into `MyBookingsScreen` or `BookingConfirmationDialog`), append or refactor only the relevant widget sub-tree. Preserve all existing business logic, styles, and imports.
-## 3-Layer Architecture Protocol
-
-All agent operations must strictly adhere to this execution hierarchy:
-
-### 1. Directive Layer (Rules, Boundaries & Guardrails)
-- **Scope & Identity:** The target project is the Dart-Code VS Code extension (`Dart-Code/Dart-Code`).
-- **Immutability Boundaries:**
-  - Do **NOT** modify or delete files inside `src/debug/` (legacy debug adapters).
-  - Do **NOT** read, edit, or commit files in `out/` (compiled output).
-  - Do **NOT** delete existing test files or fixtures inside `src/test/test_projects/`.
-  - Do **NOT** run destructive terminal commands (`git reset --hard`, `git clean -f`).
-- **Architectural Isolation:** Code in `src/extension/` must never be imported outside of that directory.
-- **Cross-Platform Requirement:** All path manipulation and process spawning must remain compatible across Windows, macOS, and Linux (e.g., use `path.join()`).
-
-### 2. Orchestration Layer (Planning & Workflow Strategy)
-- **Task Analysis:** Before editing, assess whether the target functionality belongs to core extension logic (`src/extension/`), shared utilities (`src/shared/`), or daemon interfaces.
-- **Test Planning:** Identify the specific targeted test glob in `src/test/` to run for verification before modifying files.
-- **Sequential Validation:** Enforce an order of execution:
-  1. File modifications
-  2. Targeted file linting (`npm run lint <file>`)
-  3. Scoped unit/grammar tests (`npm run test <glob>`)
-
-### 3. Execution Layer (Tool Operations & Implementation)
-- Perform atomic edits adhering directly to the project's formatting and styling rules.
-- Invoke standard terminal commands via `npm` without altering runtime build targets.
+The files `referenceonly/layout.tsx` and `referenceonly/Project.sql` are strictly for reference only.
 
 ---
 
-## Project Overview
+## 1. Project Overview & Tech Stack
 
-This project is the source code for the **Dart** and **Flutter** Visual Studio Code extensions, which provides rich support for the [Dart](https://dart.dev) and [Flutter](https://flutter.dev) frameworks.
-
-The extension is written in **TypeScript** and interacts with the Dart SDK and Flutter SDK tools to provide features to the user.
-
-The owner and repository name are both **Dart-Code** with the repository hosted at `https://github.com/Dart-Code/Dart-Code/`. These values should be used when interacting with GitHub unless another repository is specifically given.
-
----
-
-## Project Structure
-
-- `src/extension/`: Contains the main extension logic.
-- `src/extension/extension.ts`: The main entry point to the extension (`activate()`).
-- `src/debug/`: Legacy debug adapters that should not be modified. DAP debug adapters now live inside the Dart and Flutter SDKs.
-- `src/shared/`: Contains code that may be shared between the extension code, legacy debug adapters and tests. Any code that uses the VS Code APIs must be inside a `vscode` sub-folder.
-- `src/test/`: Contains automated tests for the extension, shared into tests for different areas.
-- `src/test/test_projects/`: Sample Dart/Flutter projects that are used by the automated tests.
-- `out/`: Compiled TypeScript output that should not be examined or modified.
+* **Repository:** `cultureshock5D/Pickleball`
+* **Application:** Luxury Dark-Themed Pickleball Court Reservation & Club Management Mobile App
+* **Tech Stack:**
+  * **Frontend / Framework:** Flutter (Dart 3, null-safety)
+  * **Backend / Database:** Supabase (Postgres, Supabase Auth, Realtime Channels, Edge Functions)
+  * **Payments & Integrations:** PayMongo (GCash, Maya, GrabPay, Cards), Dynamic Calendar Deep Links (Google, Apple, Outlook, iCal)
+  * **Typography & Design:** Google Fonts (`Inter`, `Plus Jakarta Sans`), Luxury Dark Theme with Electric Lime (`#CCFF00`) neon accents and dark slate backgrounds (`#0A0F0D`, `#121A16`, `#1B2620`).
 
 ---
 
-## Rules
+## 2. Safety & File Modification Constraints (MANDATORY)
 
-### General Project Rules
-
-- All code must be cross-platform, working on Windows, macOS and Linux. This means using things like `path.join()` and taking care when spawning processes.
-- Code in `src/extension/` must not be imported outside of that folder (enforced by lints).
-- All extension settings use the format `dart.*` or `dart.flutter*` and are accessed through a wrapper in `src/extension/config.ts`.
-
-### Code Style
-
-- Use double quotes for strings.
-- No trailing spaces.
-- Include full stops on comment sentences.
-- Avoid braces for simple one-line if/else blocks.
+### Directory Protection & Non-Destructive Operations
+* **Zero Whole-Folder Operations:** NEVER execute destructive shell commands (`rm -rf`, `rmdir`, `del /s /q`) on workspace root folders or core directories (`lib/`, `test/`, `android/`, `ios/`, etc.).
+* **Targeted File Updates Only:** Never replace entire directories or broad modules to make single-feature additions. Modify or create target files explicitly one at a time.
+* **Incremental Merging:** When integrating features into existing screens or widgets (e.g., adding calendar deep links into `MyBookingsScreen` or `BookingConfirmationDialog`), append or refactor only the relevant widget sub-tree. Preserve all existing business logic, styles, and imports.
+* **Immutability Boundaries:**
+  * Files in `referenceonly/` (e.g., `layout.tsx`, `Project.sql`) are strictly **reference only** — do not delete or modify unless explicitly instructed.
+  * Do **NOT** run destructive git commands (`git reset --hard`, `git clean -f`).
 
 ---
 
-## Existing Errors / Warnings
+## 3. Comprehensive Folder-by-Folder Context
 
-There are some existing lint warnings that are expected and should be ignored:
-
-- `"Property NOTE is not allowed."`: This is a note about the following item.
-- `"Property id is not allowed."`: This is for backwards compatibility with older versions of VS Code.
+```
+Pickleball/
+├── .agents/               # Agent configuration, guidelines, and skills
+├── android/               # Android native configuration and Gradle files
+├── assets/                # Asset manifests, images, and .env configuration
+├── ios/                   # iOS Xcode workspace and Runner configuration
+├── lib/                   # Main Flutter application source code
+│   ├── core/              # Core foundational infrastructure (constants, theme, services, utils)
+│   ├── data/              # Static data sources and offline mock datasets
+│   ├── models/            # Data models and JSON serialization/deserialization
+│   ├── screens/           # UI Page Screens grouped by domain feature
+│   │   ├── auth/          # Authentication (Login, Signup, Forgot Password)
+│   │   ├── booking/       # Court reservation and booking review flow
+│   │   ├── home/          # Main root navigation shell and home tab
+│   │   ├── insights/      # Analytics, play stats, and player progress
+│   │   └── profile/       # User profile, preferences, and theme toggle
+│   ├── services/          # Business logic, Supabase API client, and external services
+│   ├── widgets/           # Reusable UI components, cards, modals, and buttons
+│   └── main.dart          # Application bootstrap and root entry point
+├── referenceonly/         # Reference UI mocks and Postgres SQL schemas
+├── test/                  # Unit, widget, and feature test suites
+└── web/                   # Web platform runner and HTML entry points
+```
 
 ---
 
-## Components
+### Detailed Folder Responsibilities
 
-- **LSP**: The Language Server Protocol. A lot of language functionality is provided by an LSP server that lives in the Dart SDK.
-- **DAP**: The Debug Adapter Protocol. Debugging functionality is provided by Debug Adapters that live in the Dart and Flutter SDKs. A legacy TypeScript version of these debug adapters lives in `src/debug/` for older versions of the SDKs.
-- **DTD** or **The Dart Tooling Daemon**: A daemon spawned by the extension to communicate (in both directions) with some other Dart tools.
-- **Flutter Device Daemon**: A daemon spawned by the extension to get updates about available target devices and emulators for Flutter applications.
-- **Pub**: The package manager for Dart, used to manage dependencies.
+#### `lib/` (Root App Logic)
+* **`lib/main.dart`**: The app entrypoint. Initializes `.env` via `flutter_dotenv`, system orientations, Supabase client initialization (with safe offline fallback), system navigation bar styling, and launches `AuthGate` within `MaterialApp`.
+
+#### `lib/core/` (Foundational Infrastructure)
+* **`lib/core/constants/`**:
+  * `supabase_config.dart`: Manages Supabase URL and anon key resolution from `.env` variables (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) with fallback validation.
+* **`lib/core/services/`**:
+  * `theme_service.dart`: Singleton `ChangeNotifier` controlling `ThemeMode` (dark, light, system) across the app.
+* **`lib/core/theme/`**:
+  * `app_theme.dart`: Central design system defining color palettes (Electric Lime `#CCFF00`, Dark Slate `#0A0F0D`, Emerald `#00E599`), typography (`GoogleFonts.inter`, `GoogleFonts.plusJakartaSans`), custom input decorations, card themes, and button styles.
+* **`lib/core/utils/`**:
+  * `snackbar_helper.dart`: Unified feedback system providing styled success, warning, error, and info snackbars.
+  * `validators.dart`: Robust validation suite for email, password strength, full name formatting, phone numbers, and booking time intervals.
+
+#### `lib/data/` (Data Sources & Mock Fallbacks)
+* **`lib/data/mock_data.dart`**: Comprehensive mock database containing sample venues, court listings, mock reservations, and user stats. Used when running offline, in test mode, or when Supabase credentials are not configured.
+
+#### `lib/models/` (Domain Entities)
+* **`lib/models/court_model.dart`**: Court entity (`CourtModel`) holding court ID, venue ID, court number, surface type (indoor/outdoor/cushioned acrylic), hourly rates (standard vs. peak), and available amenities.
+* **`lib/models/booking_model.dart`**: Reservation entity (`BookingModel`) capturing booking ID, court ID, user ID, start/end timestamps, total amount (PHP), status (`confirmed`, `pending`, `cancelled`), and payment reference.
+* **`lib/models/user_profile.dart`**: User profile representation (`UserProfile`) with skill rating (DUPR), membership tier, match count, avatar URL, and contact details.
+* **`lib/models/venue_model.dart`**: Club/venue entity (`VenueModel`) representing physical locations, addresses, court counts, and operating hours.
+
+#### `lib/screens/` (UI Feature Screens)
+* **`lib/screens/auth/`**:
+  * `login_screen.dart`: Authentication screen supporting email/password login, biometric trigger, validation, and navigation to signup.
+  * `signup_screen.dart`: Account registration screen with real-time password strength indicators, full name validation, and skill level picker.
+* **`lib/screens/booking/`**:
+  * `court_reservation.dart`: Interactive court selection screen with venue selector, date/time slot browser, and court filtering.
+  * `booking_review_screen.dart`: Checkout overview screen detailing pricing breakdown (base + peak surcharge + tax), payment method selection (PayMongo GCash/Maya/Cards), and booking confirmation trigger.
+* **`lib/screens/home/`**:
+  * `main_navigation_screen.dart`: Root scaffold containing the persistent floating `CustomBottomNavBar` and index switching between Home, Courts, Bookings, Insights, and Profile.
+* **`lib/screens/insights/`**:
+  * `insights.dart`: Performance analytics dashboard showing court utilization, match statistics, win rates, and weekly activity charts.
+* **`lib/screens/profile/`**:
+  * `profile_screen.dart`: Player profile overview, membership perks, dark/light theme switcher, past booking history link, and account sign-out.
+
+#### `lib/services/` (Data Access & Integrations)
+* **`lib/services/auth_service.dart`**: Encapsulates Supabase Auth operations (`signUp`, `signInWithPassword`, `signOut`, `currentUser`, and `authStateChanges` streams).
+* **`lib/services/booking_service.dart`**: Orchestrates court availability checks, booking insertions, cancellation mutations, and Supabase Realtime channel event listeners.
+* **`lib/services/calendar_link_service.dart`**: Generates RFC 5545 compliant calendar export links and deep URLs for Google Calendar, Apple Calendar, Outlook, and downloadable `.ics` files.
+
+#### `lib/widgets/` (Reusable Components & Modals)
+* **`auth_gate.dart`**: Reactive auth state wrapper directing authenticated users to `MainNavigationScreen` and unauthenticated users to `LoginScreen`.
+* **`neon_button.dart`**: Primary brand button featuring electric lime gradient, high-contrast typography, and loading spinner states.
+* **`custom_text_field.dart`**: Themed text form field with prefix/suffix icons, obscure text toggles, and validation styling.
+* **`custom_top_app_bar.dart`**: Standardized luxury top app bar with notification bell and profile triggers.
+* **`custom_bottom_nav_bar.dart`**: Floating glassmorphic bottom navigation bar with active glow indicators.
+* **`quick_booking_card.dart`**: Quick-action card for favorite and recently booked courts.
+* **`reservation_card.dart`**: Interactive card displaying active/past bookings with QR check-in and calendar triggers.
+* **`time_player_picker_modal.dart`**: Interactive time-slot grid and player count selector modal.
+* **`date_range_picker_modal.dart`**: Themed bottom sheet for date range selection.
+* **`venue_picker_modal.dart`**: Searchable modal for selecting club locations.
+* **`check_in_qr_modal.dart`**: Dynamic high-contrast QR code display with live countdown timer for court kiosk entry.
+* **`booking_success_modal.dart`**: Post-checkout confirmation modal with calendar sync and receipt download buttons.
+* **`downloadable_receipt_modal.dart`**: Itemized transaction receipt modal with PDF/image sharing options.
+
+#### `test/` (Automated Verification)
+* **`test/calendar_link_service_test.dart`**: Unit tests verifying calendar deep links (Google, Apple, Outlook format and encoding).
+* **`test/validators_test.dart` & `test/core/utils/validators_test.dart`**: Comprehensive unit tests covering all form and booking validator permutations.
+* **`test/supabase_config_test.dart`**: Unit tests for configuration and environment fallback logic.
+* **`test/features_test.dart` & `test/widget_test.dart`**: Widget and integration tests verifying UI rendering, interaction, and state flows.
+
+#### `referenceonly/` (Reference Material)
+* **`referenceonly/Project.sql`**: Complete Postgres database schema including `profiles`, `venues`, `courts`, `bookings` tables, RLS policies, indexes, and triggers.
+* **`referenceonly/layout.tsx`**: UI structure reference mockup for screen composition and styling.
 
 ---
 
-## Useful Commands
+## 4. Multi-Agent Collaboration Protocol
 
-Here are the commands to use during execution:
-
-- `npm install`: Installs dependencies. This may need to be run if dependencies appear to be missing.
-- `npm run lint`: Run the linter (`eslint`) to ensure code conforms to enabled lints. Pass a relative file path to lint only that file.
-- `npm run lint:fix`: Fixes lints that can be fixed automatically.
-- `npm run build`: Builds the extension.
-- `npm run test <...test-file-globs>`: Runs tests for the given glob (or file path). This should be used while working on an individual feature because it is faster than running all tests.
-- `npm run test`: Runs _all_ automatic tests for _all_ bots. This can be run with the `BOT` env variable set (as defined in `test_all.ts`, for example to `"dart"`) to run only a single bot's tests. The test suite is large and this can be slow.
-- `npm run test-grammar`: Runs snapshot tests for the textmate grammar.
-- `npm run update-grammar-snapshots`: Updates the textmate grammar snapshots.
+1. **Role Partitioning:**
+   * **UI/UX Agent:** Edits only in `lib/screens/` and `lib/widgets/`. Preserves existing layouts and uses design tokens from `AppTheme`.
+   * **Backend/Data Agent:** Focuses on `lib/services/`, `lib/models/`, and Supabase schema/functions.
+   * **QA/Testing Agent:** Author unit tests in `test/` verifying validators, services, and widget trees.
+2. **Quality Verification Gates:**
+   * Run static analysis: `dart analyze` (Ensure 0 compilation errors/warnings).
+   * Run targeted test suites: `flutter test test/<test_file>.dart` or `dart test`.
+3. **Commit & Pull Requests:**
+   * Ensure commit messages follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`).
