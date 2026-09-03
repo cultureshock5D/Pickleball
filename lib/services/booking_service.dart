@@ -99,6 +99,26 @@ class BookingService {
     return courts;
   }
 
+  /// Check real-time availability for a specific court and time window
+  Future<bool> checkSlotAvailability({
+    required String courtId,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
+    // Invalidate cache for fresh live check
+    invalidateAvailabilityCache(courtId: courtId, date: startTime);
+    final existingBookings = await fetchCourtBookingsForDate(courtId, startTime);
+
+    for (final b in existingBookings) {
+      if (b.status.toLowerCase() == 'cancelled') continue;
+      // Overlap condition: proposed start < existing end AND proposed end > existing start
+      if (startTime.isBefore(b.endTime) && endTime.isAfter(b.startTime)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// Create a new booking in public.bookings
   Future<BookingModel> createBooking({
     required String courtId,
@@ -106,6 +126,19 @@ class BookingService {
     required DateTime endTime,
     required double totalAmount,
   }) async {
+    // Perform real-time first-come first-paid availability verification
+    final isAvailable = await checkSlotAvailability(
+      courtId: courtId,
+      startTime: startTime,
+      endTime: endTime,
+    );
+
+    if (!isAvailable) {
+      throw Exception(
+        'Slot No Longer Available: This court slot was just booked by another player who completed payment first. Please re-select a time.',
+      );
+    }
+
     final isLive = _authService.isLiveUser;
 
     if (isLive && _supabase != null) {

@@ -198,7 +198,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                         ),
                       ),
                       Text(
-                        '${_selectedDuration.toString().replaceAll('.0', '')} hr match',
+                        '${_selectedDuration.toInt()} ${_selectedDuration == 1.0 ? "hr" : "hrs"} match',
                         style: GoogleFonts.inter(
                           color: colors.neonLime,
                           fontSize: 12.5,
@@ -236,7 +236,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                             child: Column(
                               children: [
                                 Text(
-                                  '${duration.toString().replaceAll('.0', '')} hrs',
+                                  '${duration.toInt()} ${duration == 1.0 ? "hr" : "hrs"}',
                                   style: GoogleFonts.inter(
                                     color: isSelected
                                         ? colors.textPrimary
@@ -476,7 +476,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                   ],
                 ),
                 Text(
-                  '${_formatTimeOfDay(selectedTime)} · ${_selectedDuration}h · ${_selectedPlayerCount}p',
+                  '${_formatTimeOfDay(selectedTime)} · ${_selectedDuration.toInt()}h · ${_selectedPlayerCount}p',
                   style: GoogleFonts.inter(
                     color: colors.textSecondary,
                     fontSize: 12,
