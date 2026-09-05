@@ -69,7 +69,7 @@ class QuickBookingCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF141418) : Colors.white,
+        color: isDark ? colors.surfaceElevated : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: colors.neonGreen,
@@ -79,7 +79,6 @@ class QuickBookingCard extends StatelessWidget {
           BoxShadow(
             color: colors.neonGreenAlpha30,
             blurRadius: 18,
-            spreadRadius: 0,
             offset: const Offset(0, 4),
           ),
           ...colors.cardShadow,
@@ -89,6 +88,58 @@ class QuickBookingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(19.8),
         child: Column(
           children: [
+            // Live Telemetry Header Strip
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7.5),
+              decoration: BoxDecoration(
+                color: colors.surfaceHighlight.withValues(alpha: 0.5),
+                border: Border(bottom: BorderSide(color: colors.borderSubtle)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: colors.neonLime,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors.neonLimeAlpha35,
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'FAST RESERVATION HUB',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: colors.neonLime,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    'INSTANT CONFIRMATION',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: colors.textMuted,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             // Row 1: Venue / Location (Reference: Barcelona)
             _buildSelectionRow(
               context: context,
@@ -106,10 +157,10 @@ class QuickBookingCard extends StatelessWidget {
                       ),
                       child: Text(
                         '${selectedVenue!.rating} ★',
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.plusJakartaSans(
                           color: colors.neonLime,
                           fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     )
@@ -152,7 +203,7 @@ class QuickBookingCard extends StatelessWidget {
                 ),
                 child: Text(
                   '₱${totalAmount.toStringAsFixed(0)}',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.plusJakartaSans(
                     color: colors.neonLime,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
@@ -203,7 +254,7 @@ class QuickBookingCard extends StatelessWidget {
                               const SizedBox(width: 8),
                               Text(
                                 actionButtonText,
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.plusJakartaSans(
                                   color: Colors.white,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
@@ -235,14 +286,18 @@ class QuickBookingCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
+      child: Semantics(
+        button: true,
+        label: '$title, $subtitle',
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
             children: [
               Container(
                 width: 36,
@@ -264,7 +319,7 @@ class QuickBookingCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: colors.textPrimary,
                         fontSize: 14.5,
                         fontWeight: FontWeight.w700,
@@ -300,8 +355,9 @@ class QuickBookingCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDivider(AppPalette colors) {
     return Container(

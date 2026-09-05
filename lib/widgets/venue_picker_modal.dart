@@ -61,19 +61,18 @@ class _VenuePickerModalState extends State<VenuePickerModal> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = context.isDark;
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
 
     return Container(
       constraints: BoxConstraints(
         maxHeight: size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF131317) : Colors.white,
+        color: isDark ? colors.surfaceElevated : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         border: Border(
           top: BorderSide(
             color: colors.borderSubtle,
-            width: 1,
           ),
         ),
         boxShadow: colors.cardShadow,
@@ -210,12 +209,17 @@ class _VenuePickerModalState extends State<VenuePickerModal> {
                   final venue = _filteredVenues[index];
                   final isSelected = widget.selectedVenue?.id == venue.id;
 
-                  return GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      widget.onVenueSelected(venue);
-                    },
-                    child: AnimatedContainer(
+                  return Semantics(
+                    button: true,
+                    selected: isSelected,
+                    label: '${venue.name}, ${venue.address}',
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        widget.onVenueSelected(venue);
+                      },
+                      child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -386,7 +390,8 @@ class _VenuePickerModalState extends State<VenuePickerModal> {
                         ],
                       ),
                     ),
-                  );
+                  ),
+                );
                 },
               ),
             ),

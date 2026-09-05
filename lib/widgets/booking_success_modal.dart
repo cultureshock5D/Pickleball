@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';
@@ -42,10 +43,13 @@ class BookingSuccessModal extends StatefulWidget {
 }
 
 class _BookingSuccessModalState extends State<BookingSuccessModal>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   bool _isLaunchingCalendar = false;
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
+  late AnimationController _entranceController;
+  late Animation<double> _entranceScale;
+  late Animation<double> _entranceFade;
 
   @override
   void initState() {
@@ -54,17 +58,30 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
       vsync: this,
       duration: const Duration(milliseconds: 150),
       lowerBound: 0.96,
-      upperBound: 1.0,
       value: 1.0,
     );
     _scaleAnimation = CurvedAnimation(
       parent: _animController,
       curve: Curves.easeInOut,
     );
+
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    )..forward();
+    _entranceScale = CurvedAnimation(
+      parent: _entranceController,
+      curve: Curves.easeOutBack,
+    );
+    _entranceFade = CurvedAnimation(
+      parent: _entranceController,
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   void dispose() {
+    _entranceController.dispose();
     _animController.dispose();
     super.dispose();
   }
@@ -78,6 +95,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
   }
 
   Future<void> _handleAddCalendar() async {
+    HapticFeedback.lightImpact();
     _animController.forward(from: 0.96);
     setState(() => _isLaunchingCalendar = true);
 
@@ -110,54 +128,63 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
         top: 16,
         left: 20,
         right: 20,
-        bottom: MediaQuery.of(context).padding.bottom + 20,
+        bottom: MediaQuery.paddingOf(context).bottom + 20,
       ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF131317) : Colors.white,
+        color: colors.surfaceElevated,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         border: Border(
           top: BorderSide(color: colors.borderSubtle, width: 1.5),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Drag Handle
-          Container(
-            width: 42,
-            height: 4,
-            decoration: BoxDecoration(
-              color: colors.borderSubtle,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Glowing Success Badge Header
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: colors.neonGreenAlpha14,
-              border: Border.all(color: colors.neonGreen, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.neonGreenAlpha35,
-                  blurRadius: 24,
-                  spreadRadius: 2,
+      child: FadeTransition(
+        opacity: _entranceFade,
+        child: ScaleTransition(
+          scale: _entranceScale,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+              // Drag Handle
+              Container(
+                width: 42,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.borderSubtle,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-              ],
-            ),
-            child: Center(
-              child: Icon(
-                Icons.check_circle_rounded,
-                color: colors.neonGreen,
-                size: 40,
               ),
-            ),
-          ),
+              const SizedBox(height: 20),
+
+              // Glowing Success Badge Header with Electric Lime #CCFF00 Glow
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.neonGreenAlpha14,
+                  border: Border.all(color: const Color(0xFFCCFF00), width: 2.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFCCFF00).withAlpha(100),
+                      blurRadius: 26,
+                      spreadRadius: 3,
+                    ),
+                    BoxShadow(
+                      color: colors.neonGreenAlpha35,
+                      blurRadius: 14,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFFCCFF00),
+                    size: 42,
+                  ),
+                ),
+              ),
           const SizedBox(height: 16),
 
           Text(
@@ -382,6 +409,67 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
               ),
             ),
           ),
+          const SizedBox(height: 10),
+
+          // Multi-Calendar Direct Sync Actions (Apple, Outlook, .ics)
+          Row(
+            children: [
+              Expanded(
+                child: _buildCalendarQuickAction(
+                  context,
+                  label: 'Apple',
+                  icon: Icons.apple,
+                  onTap: () async {
+                    HapticFeedback.lightImpact();
+                    final url = CalendarLinkService.buildAppleCalendarUrl(
+                      title: 'Pickleball @ $courtName',
+                      startTime: booking.startTime,
+                      endTime: booking.endTime,
+                      location: venue,
+                    );
+                    await CalendarLinkService.launchCalendarLink(url, context: context);
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildCalendarQuickAction(
+                  context,
+                  label: 'Outlook',
+                  icon: Icons.mail_outline_rounded,
+                  onTap: () async {
+                    HapticFeedback.lightImpact();
+                    final url = CalendarLinkService.buildOutlookCalendarUrl(
+                      title: 'Pickleball @ $courtName',
+                      startTime: booking.startTime,
+                      endTime: booking.endTime,
+                      location: venue,
+                    );
+                    await CalendarLinkService.launchCalendarLink(url, context: context);
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildCalendarQuickAction(
+                  context,
+                  label: 'iCal (.ics)',
+                  icon: Icons.file_download_outlined,
+                  onTap: () async {
+                    HapticFeedback.lightImpact();
+                    final ics = CalendarLinkService.buildIcsCalendarData(
+                      title: 'Pickleball @ $courtName',
+                      startTime: booking.startTime,
+                      endTime: booking.endTime,
+                      location: venue,
+                    );
+                    final url = 'data:text/calendar;charset=utf8,${Uri.encodeComponent(ics)}';
+                    await CalendarLinkService.launchCalendarLink(url, context: context);
+                  },
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 12),
 
           // Secondary CTA: Done / View My Bookings
@@ -390,6 +478,7 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
             height: 50,
             child: OutlinedButton(
               onPressed: () {
+                HapticFeedback.lightImpact();
                 Navigator.of(context).pop();
                 if (widget.onViewBookings != null) {
                   widget.onViewBookings!();
@@ -412,6 +501,52 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
             ),
           ),
         ],
+      ),
+    ),
+    ),
+    ),
+  );
+}
+
+  Widget _buildCalendarQuickAction(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    final colors = context.colors;
+    return SizedBox(
+      height: 48,
+      child: Semantics(
+        button: true,
+        label: 'Sync to $label',
+        child: OutlinedButton(
+          onPressed: onTap,
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            side: BorderSide(color: colors.borderSubtle),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 15, color: colors.textSecondary),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    color: colors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -51,27 +51,39 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: Row(
           children: [
             // Left Action Icon (+)
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                onQuickAddPressed?.call();
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colors.surfaceElevated,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colors.borderSubtle),
-                ),
-                child: Icon(
-                  Icons.add_rounded,
-                  color: colors.textPrimary,
-                  size: 22,
+            Semantics(
+              button: true,
+              label: 'Quick add reservation',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onQuickAddPressed?.call();
+                },
+                child: Container(
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceElevated,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: colors.borderSubtle),
+                    ),
+                    child: Icon(
+                      Icons.add_rounded,
+                      color: colors.textPrimary,
+                      size: 22,
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 10),
 
             // Header Title / Subtitle
             Expanded(
@@ -110,45 +122,22 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // 1. Theme Mode Switcher (Moon / Sun)
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-                    ThemeService.instance.toggleTheme();
-                  },
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: colors.surfaceElevated,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colors.borderSubtle),
-                    ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      transitionBuilder: (child, anim) => RotationTransition(
-                        turns: anim,
-                        child: ScaleTransition(scale: anim, child: child),
+                Semantics(
+                  button: true,
+                  label: isDark ? 'Switch to light mode' : 'Switch to dark mode',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      ThemeService.instance.toggleTheme();
+                    },
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 48,
                       ),
-                      child: Icon(
-                        isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
-                        key: ValueKey(isDark),
-                        color: isDark ? const Color(0xFFFACC15) : colors.neonGreenDark,
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // 2. Notifications Bell with neon badge
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    onNotificationPressed?.call();
-                  },
-                  child: Stack(
-                    children: [
-                      Container(
+                      alignment: Alignment.center,
+                      child: Container(
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
@@ -156,60 +145,118 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
                           shape: BoxShape.circle,
                           border: Border.all(color: colors.borderSubtle),
                         ),
-                        child: Icon(
-                          Icons.notifications_none_rounded,
-                          color: colors.textPrimary,
-                          size: 19,
-                        ),
-                      ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: colors.neonGreen,
-                            shape: BoxShape.circle,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          transitionBuilder: (child, anim) => RotationTransition(
+                            turns: anim,
+                            child: ScaleTransition(scale: anim, child: child),
+                          ),
+                          child: Icon(
+                            isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                            key: ValueKey(isDark),
+                            color: isDark ? const Color(0xFFFACC15) : colors.neonGreenDark,
+                            size: 18,
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 4),
+
+                // 2. Notifications Bell with neon badge
+                Semantics(
+                  button: true,
+                  label: 'Notifications',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onNotificationPressed?.call();
+                    },
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 48,
+                      ),
+                      alignment: Alignment.center,
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: colors.surfaceElevated,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: colors.borderSubtle),
+                            ),
+                            child: Icon(
+                              Icons.notifications_none_rounded,
+                              color: colors.textPrimary,
+                              size: 19,
+                            ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: colors.neonGreen,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
 
                 // 3. User Avatar / Initials Badge with neon ring
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    onProfilePressed?.call();
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: colors.surfaceHighlight,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: colors.neonGreen,
-                        width: 1.8,
+                Semantics(
+                  button: true,
+                  label: 'Profile: $displayName',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      onProfilePressed?.call();
+                    },
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 48,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.neonGreenAlpha30,
-                          blurRadius: 8,
-                          spreadRadius: 0,
+                      alignment: Alignment.center,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceHighlight,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: colors.neonGreen,
+                            width: 1.8,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors.neonGreenAlpha30,
+                              blurRadius: 8,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        initial,
-                        style: GoogleFonts.inter(
-                          color: isDark ? Colors.white : colors.neonGreenDark,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                        child: Center(
+                          child: Text(
+                            initial,
+                            style: GoogleFonts.inter(
+                              color: isDark ? Colors.white : colors.neonGreenDark,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ),
                     ),

@@ -216,7 +216,7 @@ class AuthService {
 
     if (isSupabaseReady && _supabase != null) {
       try {
-        await _supabase!.auth.signOut(scope: SignOutScope.local);
+        await _supabase!.auth.signOut();
       } on AuthException {
         rethrow;
       } catch (e) {
@@ -261,7 +261,6 @@ class AuthService {
       return UserProfile(
         id: userId,
         fullName: displayName,
-        role: 'customer',
       );
     }
 

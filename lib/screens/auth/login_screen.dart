@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -79,8 +79,8 @@ class _LoginScreenState extends State<LoginScreen> {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               minHeight: size.height -
-                  MediaQuery.of(context).padding.top -
-                  MediaQuery.of(context).padding.bottom -
+                  MediaQuery.paddingOf(context).top -
+                  MediaQuery.paddingOf(context).bottom -
                   32,
             ),
             child: AutofillGroup(
@@ -315,20 +315,36 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontSize: 13.5,
                               ),
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const SignUpScreen(),
+                            Semantics(
+                              button: true,
+                              label: 'Sign Up',
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const SignUpScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  constraints: const BoxConstraints(
+                                    minHeight: 48,
+                                    minWidth: 48,
                                   ),
-                                );
-                              },
-                              child: Text(
-                                'Sign Up',
-                                style: GoogleFonts.inter(
-                                  color: colors.neonGreen,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w700,
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 12,
+                                  ),
+                                  child: Text(
+                                    'Sign Up',
+                                    style: GoogleFonts.inter(
+                                      color: colors.neonGreen,
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

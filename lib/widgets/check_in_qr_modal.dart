@@ -27,13 +27,13 @@ class CheckInQrModal extends StatefulWidget {
 }
 
 class _CheckInQrModalState extends State<CheckInQrModal>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late String _checkInStatus;
-  late DateTime? _checkInTime;
-  late DateTime? _checkOutTime;
   Timer? _timer;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  late AnimationController _laserController;
+  late Animation<double> _laserAnimation;
   DateTime _now = DateTime.now();
 
   @override
@@ -42,8 +42,6 @@ class _CheckInQrModalState extends State<CheckInQrModal>
     _checkInStatus = widget.booking.status.toLowerCase() == 'checked_in'
         ? 'checked_in'
         : (widget.booking.status.toLowerCase() == 'completed' ? 'completed' : 'upcoming');
-    _checkInTime = _checkInStatus == 'checked_in' ? DateTime.now() : null;
-    _checkOutTime = _checkInStatus == 'completed' ? DateTime.now() : null;
 
     _pulseController = AnimationController(
       vsync: this,
@@ -52,6 +50,15 @@ class _CheckInQrModalState extends State<CheckInQrModal>
 
     _pulseAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _laserController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+
+    _laserAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _laserController, curve: Curves.easeInOut),
     );
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -65,6 +72,7 @@ class _CheckInQrModalState extends State<CheckInQrModal>
   void dispose() {
     _timer?.cancel();
     _pulseController.dispose();
+    _laserController.dispose();
     super.dispose();
   }
 
@@ -72,14 +80,10 @@ class _CheckInQrModalState extends State<CheckInQrModal>
     setState(() {
       if (_checkInStatus == 'upcoming') {
         _checkInStatus = 'checked_in';
-        _checkInTime = DateTime.now();
       } else if (_checkInStatus == 'checked_in') {
         _checkInStatus = 'completed';
-        _checkOutTime = DateTime.now();
       } else {
         _checkInStatus = 'upcoming';
-        _checkInTime = null;
-        _checkOutTime = null;
       }
     });
   }
@@ -149,7 +153,6 @@ class _CheckInQrModalState extends State<CheckInQrModal>
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Drag handle
           Container(
@@ -202,11 +205,11 @@ class _CheckInQrModalState extends State<CheckInQrModal>
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(_pulseAnimation.value),
+                        color: statusColor.withValues(alpha: _pulseAnimation.value),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: statusColor.withOpacity(0.6 * _pulseAnimation.value),
+                            color: statusColor.withValues(alpha: 0.6 * _pulseAnimation.value),
                             blurRadius: 6,
                             spreadRadius: 1,
                           ),
@@ -256,69 +259,111 @@ class _CheckInQrModalState extends State<CheckInQrModal>
           ),
           const SizedBox(height: 16),
 
-          // Visual Dynamic QR Display
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.neonGreen.withAlpha(40),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // Simulated QR Graphic
-                Container(
-                  width: 170,
-                  height: 170,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
+          // Visual Dynamic QR Display with Animated Laser Sweep & RepaintBoundary Optimization
+          RepaintBoundary(
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.neonGreen.withAlpha(40),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Simulated QR Graphic with Laser Sweep Overlay
+                  ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.qr_code_2_rounded,
-                          color: Colors.white,
-                          size: 120,
-                        ),
-                        Text(
-                          rollingToken,
-                          style: GoogleFonts.robotoMono(
-                            color: Colors.white70,
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
+                    child: SizedBox(
+                      width: 170,
+                      height: 170,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Base QR Graphic
+                          Container(
+                            width: 170,
+                            height: 170,
+                            color: Colors.black,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.qr_code_2_rounded,
+                                    color: Colors.white,
+                                    size: 120,
+                                  ),
+                                  Text(
+                                    rollingToken,
+                                    style: GoogleFonts.robotoMono(
+                                      color: Colors.white70,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.lock_rounded, size: 10, color: Colors.black54),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Auto-refreshes every 30s • Offline Cached',
-                      style: GoogleFonts.inter(
-                        color: Colors.black54,
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w600,
+                          // Animated Laser Sweep Overlay with Electric Lime #CCFF00 Glow
+                          AnimatedBuilder(
+                            animation: _laserAnimation,
+                            builder: (context, child) {
+                              return Positioned(
+                                top: _laserAnimation.value * 162,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Colors.transparent,
+                                        Color(0xFFCCFF00),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFCCFF00).withAlpha(210),
+                                        blurRadius: 10,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.lock_rounded, size: 10, color: Colors.black54),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Auto-refreshes every 30s • Offline Cached',
+                        style: GoogleFonts.inter(
+                          color: Colors.black54,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -367,30 +412,38 @@ class _CheckInQrModalState extends State<CheckInQrModal>
           const SizedBox(height: 20),
 
           // Interactive Check-In/Check-Out Action Toggle
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: statusColor,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          Semantics(
+            button: true,
+            label: _checkInStatus == 'upcoming'
+                ? 'Simulate Gate Scan (Check-In)'
+                : (_checkInStatus == 'checked_in'
+                    ? 'Simulate Gate Scan (Check-Out)'
+                    : 'Reset Gate Status'),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: statusColor,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-              ),
-              onPressed: _toggleCheckInState,
-              icon: Icon(
-                _checkInStatus == 'upcoming'
-                    ? Icons.login_rounded
-                    : (_checkInStatus == 'checked_in' ? Icons.logout_rounded : Icons.refresh_rounded),
-              ),
-              label: Text(
-                _checkInStatus == 'upcoming'
-                    ? 'Simulate Gate Scan (Check-In)'
-                    : (_checkInStatus == 'checked_in' ? 'Simulate Gate Scan (Check-Out)' : 'Reset Gate Status'),
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                onPressed: _toggleCheckInState,
+                icon: Icon(
+                  _checkInStatus == 'upcoming'
+                      ? Icons.login_rounded
+                      : (_checkInStatus == 'checked_in' ? Icons.logout_rounded : Icons.refresh_rounded),
+                ),
+                label: Text(
+                  _checkInStatus == 'upcoming'
+                      ? 'Simulate Gate Scan (Check-In)'
+                      : (_checkInStatus == 'checked_in' ? 'Simulate Gate Scan (Check-Out)' : 'Reset Gate Status'),
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),

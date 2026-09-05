@@ -85,52 +85,52 @@ class AppTheme {
   AppTheme._();
 
   // Core Dark Palette Constants (Backwards Compatibility)
-  static const Color background = Color(0xFF070709);
-  static const Color surface = Color(0xFF131316);
-  static const Color surfaceElevated = Color(0xFF1C1C21);
+  static const Color background = Color(0xFF0A0F0D);
+  static const Color surface = Color(0xFF121A16);
+  static const Color surfaceElevated = Color(0xFF1B2620);
   static const Color surfaceHighlight = Color(0xFF26262D);
   static const Color border = Color(0xFF27272A);
   static const Color borderSubtle = Color(0xFF1E1E24);
 
   // Vivid Accents
-  static const Color neonGreen = Color(0xFF10B981);
+  static const Color neonGreen = Color(0xFF00E599);
   static const Color neonGreenLight = Color(0xFF34D399);
   static const Color neonGreenDark = Color(0xFF059669);
-  static const Color neonLime = Color(0xFF84CC16);
+  static const Color neonLime = Color(0xFFCCFF00);
   static const Color neonYellow = Color(0xFFFACC15);
   static const Color errorRed = Color(0xFFEF4444);
 
   // Precomputed Alpha Colors (Dark)
-  static const Color neonGreenAlpha10 = Color(0x1A10B981);
-  static const Color neonGreenAlpha12 = Color(0x1F10B981);
-  static const Color neonGreenAlpha15 = Color(0x2610B981);
-  static const Color neonGreenAlpha18 = Color(0x2E10B981);
-  static const Color neonGreenAlpha20 = Color(0x3310B981);
-  static const Color neonGreenAlpha30 = Color(0x4D10B981);
-  static const Color neonGreenAlpha40 = Color(0x6610B981);
-  static const Color neonGreenAlpha50 = Color(0x8010B981);
-  static const Color neonLimeAlpha14 = Color(0x2484CC16);
-  static const Color neonLimeAlpha15 = Color(0x2684CC16);
-  static const Color neonLimeAlpha20 = Color(0x3384CC16);
-  static const Color neonLimeAlpha35 = Color(0x5984CC16);
+  static const Color neonGreenAlpha10 = Color(0x1A00E599);
+  static const Color neonGreenAlpha12 = Color(0x1F00E599);
+  static const Color neonGreenAlpha15 = Color(0x2600E599);
+  static const Color neonGreenAlpha18 = Color(0x2E00E599);
+  static const Color neonGreenAlpha20 = Color(0x3300E599);
+  static const Color neonGreenAlpha30 = Color(0x4D00E599);
+  static const Color neonGreenAlpha40 = Color(0x6600E599);
+  static const Color neonGreenAlpha50 = Color(0x8000E599);
+  static const Color neonLimeAlpha14 = Color(0x24CCFF00);
+  static const Color neonLimeAlpha15 = Color(0x26CCFF00);
+  static const Color neonLimeAlpha20 = Color(0x33CCFF00);
+  static const Color neonLimeAlpha35 = Color(0x59CCFF00);
   static const Color borderSubtleAlpha30 = Color(0x4D1E1E24);
   static const Color borderSubtleAlpha50 = Color(0x801E1E24);
   static const Color borderSubtleAlpha60 = Color(0x991E1E24);
   static const Color errorRedAlpha12 = Color(0x1FEF4444);
   static const Color errorRedAlpha30 = Color(0x4DEF4444);
-  static const Color neonLimeAlpha12 = Color(0x1F84CC16);
-  static const Color neonLimeAlpha30 = Color(0x4D84CC16);
-  static const Color neonGreenAlpha08 = Color(0x1410B981);
-  static const Color neonGreenAlpha14 = Color(0x2410B981);
-  static const Color neonGreenAlpha22 = Color(0x3810B981);
-  static const Color neonGreenAlpha35 = Color(0x5910B981);
-  static const Color neonGreenAlpha45 = Color(0x7310B981);
+  static const Color neonLimeAlpha12 = Color(0x1FCCFF00);
+  static const Color neonLimeAlpha30 = Color(0x4DCCFF00);
+  static const Color neonGreenAlpha08 = Color(0x1400E599);
+  static const Color neonGreenAlpha14 = Color(0x2400E599);
+  static const Color neonGreenAlpha22 = Color(0x3800E599);
+  static const Color neonGreenAlpha35 = Color(0x5900E599);
+  static const Color neonGreenAlpha45 = Color(0x7300E599);
   static const Color neonYellowAlpha14 = Color(0x24FACC15);
   static const Color neonYellowAlpha28 = Color(0x47FACC15);
   static const Color blackAlpha35 = Color(0x59000000);
   static const Color blackAlpha50 = Color(0x80000000);
   static const Color blackAlpha75 = Color(0xBF000000);
-  static const Color surfaceElevatedAlpha60 = Color(0x991C1C21);
+  static const Color surfaceElevatedAlpha60 = Color(0x991B2620);
 
   // Aliases for backwards compatibility
   static const Color neonMagenta = neonGreen;
@@ -144,17 +144,18 @@ class AppTheme {
   static const Color textDark = Color(0xFF09090B);
 
   // Pre-instantiated Text Styles
-  static final TextStyle fontHeaderLarge = GoogleFonts.inter(
+  static final TextStyle fontHeaderLarge = GoogleFonts.plusJakartaSans(
     color: textPrimary,
     fontSize: 20,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.4,
   );
 
-  static final TextStyle fontSectionTitle = GoogleFonts.inter(
+  static final TextStyle fontSectionTitle = GoogleFonts.plusJakartaSans(
     color: textPrimary,
     fontSize: 14.5,
     fontWeight: FontWeight.w700,
+    letterSpacing: -0.2,
   );
 
   static final TextStyle fontCardTitle = GoogleFonts.inter(
@@ -175,17 +176,51 @@ class AppTheme {
     fontWeight: FontWeight.w500,
   );
 
-  static final TextStyle fontPriceHero = GoogleFonts.inter(
+  static final TextStyle fontPriceHero = GoogleFonts.plusJakartaSans(
     color: neonLime,
     fontSize: 19,
     fontWeight: FontWeight.w800,
     letterSpacing: -0.3,
   );
 
-  static final TextStyle fontBadge = GoogleFonts.inter(
+  static final TextStyle fontBadge = GoogleFonts.plusJakartaSans(
     fontSize: 10,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.3,
+  );
+
+  // Athletic Sports-Tech Telemetry Typography (Playtomic / Strava benchmark)
+  static final TextStyle fontTelemetryHero = GoogleFonts.plusJakartaSans(
+    color: textPrimary,
+    fontSize: 38,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -1.2,
+  );
+
+  static final TextStyle fontTelemetryValue = GoogleFonts.plusJakartaSans(
+    color: textPrimary,
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.5,
+  );
+
+  static final TextStyle fontTelemetryLabel = GoogleFonts.plusJakartaSans(
+    color: textMuted,
+    fontSize: 10.5,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.0,
+  );
+
+  static final TextStyle fontSportsBadge = GoogleFonts.plusJakartaSans(
+    fontSize: 10,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 0.5,
+  );
+
+  static final TextStyle fontMonospaceValue = GoogleFonts.robotoMono(
+    color: neonLime,
+    fontSize: 13,
+    fontWeight: FontWeight.w700,
   );
 
   // Gradients
@@ -240,36 +275,36 @@ class AppTheme {
   // -------------------------------------------------------------
   static const AppPalette darkPalette = AppPalette(
     brightness: Brightness.dark,
-    background: Color(0xFF070709),
-    surface: Color(0xFF131316),
-    surfaceElevated: Color(0xFF1C1C21),
+    background: Color(0xFF0A0F0D),
+    surface: Color(0xFF121A16),
+    surfaceElevated: Color(0xFF1B2620),
     surfaceHighlight: Color(0xFF26262D),
     border: Color(0xFF27272A),
     borderSubtle: Color(0xFF1E1E24),
     textPrimary: Color(0xFFFFFFFF),
     textSecondary: Color(0xFFA1A1AA),
     textMuted: Color(0xFF71717A),
-    neonGreen: Color(0xFF10B981),
+    neonGreen: Color(0xFF00E599),
     neonGreenLight: Color(0xFF34D399),
     neonGreenDark: Color(0xFF059669),
-    neonLime: Color(0xFF84CC16),
+    neonLime: Color(0xFFCCFF00),
     neonYellow: Color(0xFFFACC15),
     errorRed: Color(0xFFEF4444),
     cardGradient: LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [Color(0xFF1F1F24), Color(0xFF121215)],
+      colors: [Color(0xFF1B2620), Color(0xFF121A16)],
     ),
     elevatedCardGradient: LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [Color(0xFF27272E), Color(0xFF17171C)],
+      colors: [Color(0xFF23322B), Color(0xFF1B2620)],
     ),
     cardShadow: [
       BoxShadow(color: Color(0x80000000), blurRadius: 16, offset: Offset(0, 8)),
     ],
     neonGlow: [
-      BoxShadow(color: Color(0x7310B981), blurRadius: 20, offset: Offset(0, 4)),
+      BoxShadow(color: Color(0x7300E599), blurRadius: 20, offset: Offset(0, 4)),
     ],
   );
 
@@ -329,33 +364,31 @@ class AppTheme {
         primary: neonGreen,
         onPrimary: Colors.white,
         secondary: neonLime,
-        onSecondary: Colors.black,
         surface: surface,
-        onSurface: textPrimary,
         error: errorRed,
         onError: Colors.white,
       ),
       textTheme: GoogleFonts.interTextTheme(
         ThemeData.dark().textTheme,
       ).copyWith(
-        displayLarge: GoogleFonts.inter(
+        displayLarge: GoogleFonts.plusJakartaSans(
           color: textPrimary,
           fontSize: 36,
           fontWeight: FontWeight.w700,
           letterSpacing: -1.0,
         ),
-        displayMedium: GoogleFonts.inter(
+        displayMedium: GoogleFonts.plusJakartaSans(
           color: textPrimary,
           fontSize: 28,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
-        titleLarge: GoogleFonts.inter(
+        titleLarge: GoogleFonts.plusJakartaSans(
           color: textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
-        titleMedium: GoogleFonts.inter(
+        titleMedium: GoogleFonts.plusJakartaSans(
           color: textPrimary,
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -393,11 +426,11 @@ class AppTheme {
         suffixIconColor: textMuted,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: borderSubtle, width: 1),
+          borderSide: const BorderSide(color: borderSubtle),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: borderSubtle, width: 1),
+          borderSide: const BorderSide(color: borderSubtle),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -417,11 +450,11 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: borderSubtle, width: 1),
+          side: const BorderSide(color: borderSubtle),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFF0B0B0E),
+        backgroundColor: surface,
         selectedItemColor: neonGreen,
         unselectedItemColor: textMuted,
         type: BottomNavigationBarType.fixed,
@@ -431,42 +464,40 @@ class AppTheme {
   }
 
   static ThemeData _buildLightTheme() {
-    final p = lightPalette;
+    const p = lightPalette;
 
     return ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: p.background,
       colorScheme: ColorScheme.light(
         primary: p.neonGreen,
-        onPrimary: Colors.white,
         secondary: p.neonLime,
         onSecondary: Colors.white,
         surface: p.surface,
         onSurface: p.textPrimary,
         error: p.errorRed,
-        onError: Colors.white,
       ),
       textTheme: GoogleFonts.interTextTheme(
         ThemeData.light().textTheme,
       ).copyWith(
-        displayLarge: GoogleFonts.inter(
+        displayLarge: GoogleFonts.plusJakartaSans(
           color: p.textPrimary,
           fontSize: 36,
           fontWeight: FontWeight.w700,
           letterSpacing: -1.0,
         ),
-        displayMedium: GoogleFonts.inter(
+        displayMedium: GoogleFonts.plusJakartaSans(
           color: p.textPrimary,
           fontSize: 28,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
-        titleLarge: GoogleFonts.inter(
+        titleLarge: GoogleFonts.plusJakartaSans(
           color: p.textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
-        titleMedium: GoogleFonts.inter(
+        titleMedium: GoogleFonts.plusJakartaSans(
           color: p.textPrimary,
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -504,11 +535,11 @@ class AppTheme {
         suffixIconColor: p.textMuted,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: p.border, width: 1),
+          borderSide: BorderSide(color: p.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: p.border, width: 1),
+          borderSide: BorderSide(color: p.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -528,7 +559,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: p.border, width: 1),
+          side: BorderSide(color: p.border),
         ),
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(

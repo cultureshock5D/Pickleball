@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
@@ -44,15 +45,33 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
 
   final List<Map<String, dynamic>> _paymentMethods = [
     {
-      'title': 'Apple Pay / Google Pay',
-      'subtitle': 'Instant 1-Tap Secure Checkout',
-      'icon': Icons.payment_rounded,
+      'title': 'GCash via PayMongo',
+      'subtitle': 'Instant Mobile Wallet Checkout',
+      'icon': Icons.account_balance_wallet_rounded,
       'isDefault': true,
+    },
+    {
+      'title': 'Maya via PayMongo',
+      'subtitle': 'Maya Digital Card & Wallet',
+      'icon': Icons.wallet_rounded,
+      'isDefault': false,
+    },
+    {
+      'title': 'GrabPay via PayMongo',
+      'subtitle': 'Instant GrabPay Gateway',
+      'icon': Icons.send_to_mobile_rounded,
+      'isDefault': false,
+    },
+    {
+      'title': 'Credit / Debit Card via PayMongo',
+      'subtitle': 'Visa, Mastercard & JCB',
+      'icon': Icons.credit_card_rounded,
+      'isDefault': false,
     },
     {
       'title': 'Club Membership Card',
       'subtitle': 'Prepaid Luxury Account Balance',
-      'icon': Icons.credit_card_rounded,
+      'icon': Icons.card_membership_rounded,
       'isDefault': false,
     },
   ];
@@ -397,7 +416,12 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
 
   Widget _buildPricingBreakdownCard() {
     final colors = context.colors;
-    final subtotal = widget.court.hourlyRate * widget.durationHours;
+    final baseCourtRate = widget.court.hourlyRate;
+    final baseSubtotal = baseCourtRate * widget.durationHours;
+    final isPeak = widget.court.isPeakHour(widget.startTime.hour);
+    final peakSurcharge = (widget.totalAmount > baseSubtotal)
+        ? (widget.totalAmount - baseSubtotal)
+        : 0.0;
 
     return Container(
       width: double.infinity,
@@ -405,14 +429,21 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       decoration: BoxDecoration(
         color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: colors.borderSubtle),
+        border: Border.all(
+          color: isPeak ? Colors.amber.withAlpha(90) : colors.borderSubtle,
+        ),
+        boxShadow: colors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.receipt_long_rounded, color: colors.neonLime, size: 18),
+              const Icon(
+                Icons.receipt_long_rounded,
+                color: Color(0xFFCCFF00),
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Price Breakdown',
@@ -422,26 +453,52 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
+              const Spacer(),
+              if (isPeak)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withAlpha(30),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.amber.withAlpha(90)),
+                  ),
+                  child: Text(
+                    'PEAK RATE ACTIVE',
+                    style: GoogleFonts.inter(
+                      color: Colors.amber,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 14),
           _buildPriceRow(
-            'Court Rate (${widget.court.name})',
-            '₱${widget.court.hourlyRate.toStringAsFixed(2)} / hr',
+            'Base Court Rate (${widget.court.name})',
+            '₱${baseCourtRate.toStringAsFixed(2)} / hr',
           ),
           const SizedBox(height: 8),
           _buildPriceRow(
             'Duration Multiplier',
-            '${widget.durationHours} hrs',
+            '${widget.durationHours.toString().replaceAll('.0', '')} hrs',
           ),
           const SizedBox(height: 8),
           _buildPriceRow(
-            'Subtotal',
-            '₱${subtotal.toStringAsFixed(2)}',
+            'Base Court Subtotal',
+            '₱${baseSubtotal.toStringAsFixed(2)}',
           ),
           const SizedBox(height: 8),
           _buildPriceRow(
-            'Club Service & Booking Fee',
+            'Peak Hour Surcharge',
+            peakSurcharge > 0
+                ? '+₱${peakSurcharge.toStringAsFixed(2)}'
+                : '₱0.00 (Off-Peak)',
+            valueColor: peakSurcharge > 0 ? Colors.amber : colors.neonGreen,
+          ),
+          const SizedBox(height: 8),
+          _buildPriceRow(
+            'Club Service & Facility Fee',
             'FREE (₱0.00)',
             valueColor: colors.neonGreen,
           ),
@@ -460,8 +517,8 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               Text(
                 '₱${widget.totalAmount.toStringAsFixed(2)}',
                 style: GoogleFonts.inter(
-                  color: colors.neonLime,
-                  fontSize: 19,
+                  color: const Color(0xFFCCFF00),
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -478,7 +535,15 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: GoogleFonts.inter(color: colors.textMuted, fontSize: 13)),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(color: colors.textMuted, fontSize: 13),
+          ),
+        ),
+        const SizedBox(width: 8),
         Text(
           value,
           style: GoogleFonts.inter(
@@ -522,7 +587,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '1-Tap Google Calendar Sync',
+                  '1-Tap Auto-Sync Calendar',
                   style: GoogleFonts.inter(
                     color: colors.textPrimary,
                     fontSize: 13.5,
@@ -530,7 +595,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                   ),
                 ),
                 Text(
-                  'Auto-generate calendar event with zero auth',
+                  'Auto-generate calendar event with zero auth (Google, Apple & Outlook)',
                   style: GoogleFonts.inter(color: colors.textMuted, fontSize: 11.5),
                 ),
               ],
@@ -539,7 +604,11 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
           Switch.adaptive(
             value: _autoLaunchCalendar,
             activeTrackColor: colors.neonGreen,
-            onChanged: (val) => setState(() => _autoLaunchCalendar = val),
+            activeThumbColor: const Color(0xFFCCFF00),
+            onChanged: (val) {
+              HapticFeedback.lightImpact();
+              setState(() => _autoLaunchCalendar = val);
+            },
           ),
         ],
       ),
@@ -565,59 +634,77 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
           final method = _paymentMethods[index];
           final isSelected = _selectedPaymentMethodIndex == index;
 
-          return GestureDetector(
-            onTap: () => setState(() => _selectedPaymentMethodIndex = index),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? colors.neonGreenAlpha08
-                    : colors.surfaceElevated,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isSelected ? colors.neonGreen : colors.borderSubtle,
-                  width: isSelected ? 1.5 : 1,
+          return Semantics(
+            button: true,
+            selected: isSelected,
+            label: '${method['title']}, ${method['subtitle']}',
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _selectedPaymentMethodIndex = index);
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(14),
+                constraints: const BoxConstraints(minHeight: 48),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? colors.neonGreenAlpha08
+                      : colors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFFCCFF00) : colors.borderSubtle,
+                    width: isSelected ? 1.8 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFCCFF00).withAlpha(40),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : const [],
                 ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    method['icon'] as IconData,
-                    color: isSelected ? colors.neonGreen : colors.textMuted,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          method['title'] as String,
-                          style: GoogleFonts.inter(
-                            color: colors.textPrimary,
-                            fontSize: 13.5,
-                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          method['subtitle'] as String,
-                          style: GoogleFonts.inter(
-                            color: colors.textMuted,
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ],
+                child: Row(
+                  children: [
+                    Icon(
+                      method['icon'] as IconData,
+                      color: isSelected ? const Color(0xFFCCFF00) : colors.textMuted,
+                      size: 20,
                     ),
-                  ),
-                  Icon(
-                    isSelected
-                        ? Icons.radio_button_checked_rounded
-                        : Icons.radio_button_off_rounded,
-                    color: isSelected ? colors.neonGreen : colors.textMuted,
-                    size: 20,
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            method['title'] as String,
+                            style: GoogleFonts.inter(
+                              color: colors.textPrimary,
+                              fontSize: 13.5,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            method['subtitle'] as String,
+                            style: GoogleFonts.inter(
+                              color: colors.textMuted,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      isSelected
+                          ? Icons.radio_button_checked_rounded
+                          : Icons.radio_button_off_rounded,
+                      color: isSelected ? const Color(0xFFCCFF00) : colors.textMuted,
+                      size: 20,
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -676,9 +763,14 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
     final isDark = context.isDark;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        14,
+        20,
+        MediaQuery.paddingOf(context).bottom + 16,
+      ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111115) : Colors.white,
+        color: isDark ? colors.surfaceElevated : Colors.white,
         border: Border(top: BorderSide(color: colors.borderSubtle)),
         boxShadow: colors.cardShadow,
       ),
@@ -703,7 +795,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                   Text(
                     '₱${widget.totalAmount.toStringAsFixed(2)}',
                     style: GoogleFonts.inter(
-                      color: colors.neonLime,
+                      color: const Color(0xFFCCFF00),
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                     ),

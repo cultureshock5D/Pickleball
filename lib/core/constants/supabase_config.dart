@@ -50,6 +50,9 @@ class SupabaseConfig {
     return _defaultAnonKey;
   }
 
+  /// Supabase publishable key alias for anonKey
+  static String get publishableKey => anonKey;
+
   /// Whether Supabase configuration is present and valid
   static bool get isConfigured {
     final currentUrl = url;

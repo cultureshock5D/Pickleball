@@ -25,6 +25,8 @@ class BookingModel {
     String? courtName;
     if (json['courts'] != null && json['courts'] is Map) {
       courtName = json['courts']['name'] as String?;
+    } else if (json['court_name'] != null) {
+      courtName = json['court_name'] as String?;
     }
 
     return BookingModel(

@@ -21,6 +21,8 @@ The files `referenceonly/layout.tsx` and `referenceonly/Project.sql` are strictl
 ## 2. Safety & File Modification Constraints (MANDATORY)
 
 ### Directory Protection & Non-Destructive Operations
+* **Strict Workspace Containment:** NEVER create, edit, overwrite, or delete files outside the project root directory (`C:\Users\koi\Documents\repositories\Pickleball`).
+* **Zero External Destruction:** NEVER execute destructive shell commands (`del`, `rmdir`, `rm -rf`, `Remove-Item`) on parent, sibling, system, or home directories (`C:\`, `C:\flutter`, `C:\Users\koi`, `~`). External SDKs are strictly READ-ONLY.
 * **Zero Whole-Folder Operations:** NEVER execute destructive shell commands (`rm -rf`, `rmdir`, `del /s /q`) on workspace root folders or core directories (`lib/`, `test/`, `android/`, `ios/`, etc.).
 * **Targeted File Updates Only:** Never replace entire directories or broad modules to make single-feature additions. Modify or create target files explicitly one at a time.
 * **Incremental Merging:** When integrating features into existing screens or widgets (e.g., adding calendar deep links into `MyBookingsScreen` or `BookingConfirmationDialog`), append or refactor only the relevant widget sub-tree. Preserve all existing business logic, styles, and imports.
@@ -129,14 +131,60 @@ Pickleball/
 
 ---
 
-## 4. Multi-Agent Collaboration Protocol
+## 4. Multi-Agent Collaboration Protocol & Domain Specialization Matrix
 
-1. **Role Partitioning:**
-   * **UI/UX Agent:** Edits only in `lib/screens/` and `lib/widgets/`. Preserves existing layouts and uses design tokens from `AppTheme`.
-   * **Backend/Data Agent:** Focuses on `lib/services/`, `lib/models/`, and Supabase schema/functions.
-   * **QA/Testing Agent:** Author unit tests in `test/` verifying validators, services, and widget trees.
-2. **Quality Verification Gates:**
-   * Run static analysis: `dart analyze` (Ensure 0 compilation errors/warnings).
-   * Run targeted test suites: `flutter test test/<test_file>.dart` or `dart test`.
-3. **Commit & Pull Requests:**
-   * Ensure commit messages follow Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`).
+To maximize parallelism and prevent merge conflicts or regression, agents operate across 9 distinct domain specializations with strict directory boundaries:
+
+### Expanded Domain Subagents Roster
+
+1. **🎨 UI/UX & Design System Specialist**
+   * **Scope:** `lib/screens/`, `lib/widgets/`, `lib/core/theme/app_theme.dart`
+   * **Responsibilities:** Screen layouts, micro-animations (`ScaleTransition`), dark theme tokens (`#0A0F0D`, `#CCFF00`, `#121A16`), glassmorphism, responsive viewports.
+   * **Rule:** Never alter database schemas or network service layer directly.
+
+2. **🗄️ Supabase & Database Specialist**
+   * **Scope:** `lib/services/booking_service.dart`, `lib/models/`, `referenceonly/Project.sql`
+   * **Responsibilities:** PostgREST relational queries, RPC joins (`courts(*, venues(name))`), Realtime subscriptions, database RLS policies, offline fallback to `MockData`.
+   * **Rule:** Maintain sync with `referenceonly/Project.sql` schema definitions.
+
+3. **🛡️ Security, Auth & NIST Hardening Specialist**
+   * **Scope:** `lib/core/utils/validators.dart`, `lib/services/auth_service.dart`, `lib/core/constants/supabase_config.dart`
+   * **Responsibilities:** Regex input sanitization (`^...$`), NIST SP 800-63B password bounds (8–128 chars), Trojan Source control character defense, token lifecycle, and session cache invalidation.
+   * **Rule:** Zero hardcoded API secrets. Enforce `dotenv` and `--dart-define` resolution.
+
+4. **💳 Payments, Checkout & External Integrations Specialist**
+   * **Scope:** `lib/services/calendar_link_service.dart`, `lib/widgets/check_in_qr_modal.dart`, PayMongo integration
+   * **Responsibilities:** PayMongo webhook & checkout APIs (GCash, Maya, GrabPay), RFC 5545 calendar deep links (Google, Apple, Outlook, `.ics`), dynamic gate pass QR generation.
+   * **Rule:** Isolate payment credentials and validate interval times before link construction.
+
+5. **⚡ Performance & Memory Profiling Specialist**
+   * **Scope:** Repository-wide audit (`lib/`)
+   * **Responsibilities:** Eliminating unnecessary widget rebuilds, ensuring clean `StreamSubscription` disposals, enforcing `const` constructor allocations, optimizing image asset caching.
+   * **Rule:** Measure before and after refactoring using zero-allocation data structures.
+
+6. **♿ Accessibility (A11y) & WCAG Compliance Specialist**
+   * **Scope:** `lib/screens/`, `lib/widgets/` (using `flutter_a11y_agent` and `wcag-audit-patterns`)
+   * **Responsibilities:** Minimum 48x48dp touch targets, semantic screen reader traits (`Semantics(button: true, label: ...)`), WCAG AAA neon lime (`#CCFF00`) contrast validation (≥ 16:1 on dark background).
+   * **Rule:** Never remove visual design aesthetics; wrap existing widgets cleanly.
+
+7. **📊 Analytics, Insights & Player Statistics Specialist**
+   * **Scope:** `lib/screens/insights/insights.dart`, `lib/models/user_profile.dart`
+   * **Responsibilities:** DUPR rating computation, court utilization metrics, match win/loss rates, historical period horizon filtering (Weekly/Monthly/Yearly).
+   * **Rule:** Compute stats defensively without blocking the UI main thread.
+
+8. **🚀 DevOps, GitHub Actions & CI/CD Specialist**
+   * **Scope:** `.github/workflows/`, `scripts/`
+   * **Responsibilities:** Free GitHub Actions automated CI matrix, PowerShell verification scripts (`scripts/verify.ps1`), pre-commit hooks.
+   * **Rule:** Ensure CI runs `dart analyze --fatal-infos` and `flutter test --coverage` on all PRs.
+
+9. **🧪 QA, Automated Testing & Self-Healing Orchestrator**
+   * **Scope:** `test/` (Unit, Widget, Feature & A11y tests)
+   * **Responsibilities:** Author test fixtures, run `dart analyze` & `flutter test`, read compiler and assertion stack traces, and coordinate surgical auto-repairs across domains until 100% pass.
+   * **Rule:** Target only failing lines during repairs without scope creep.
+
+---
+
+### Quality Verification Gates
+* **Static Analysis:** `dart analyze` (Must achieve 0 errors, 0 warnings).
+* **Automated Test Suite:** `flutter test` (100% passing test assertions).
+* **Conventional Commits:** Follow `feat:`, `fix:`, `refactor:`, `test:`, `perf:`, `ci:`.

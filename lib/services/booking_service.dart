@@ -72,31 +72,37 @@ class BookingService {
 
   /// Query active courts from public.courts
   Future<List<CourtModel>> fetchActiveCourts({String? venueId}) async {
-    List<CourtModel> courts = MockData.courts;
-
     if (isSupabaseReady && _supabase != null) {
       try {
-        final response = await _supabase!
-            .from('courts')
-            .select()
-            .eq('status', 'active');
+        final dynamic response;
+        if (venueId != null && venueId.isNotEmpty) {
+          response = await _supabase!
+              .from('courts')
+              .select('*, venues(name)')
+              .eq('status', 'active')
+              .eq('venue_id', venueId);
+        } else {
+          response = await _supabase!
+              .from('courts')
+              .select('*, venues(name)')
+              .eq('status', 'active');
+        }
 
         final list = (response as List<dynamic>)
             .map((json) => CourtModel.fromJson(json as Map<String, dynamic>))
             .toList();
 
-        if (list.isNotEmpty) courts = list;
+        if (list.isNotEmpty) return list;
       } catch (e) {
         debugPrint('Notice: Error fetching active courts from Supabase: $e');
       }
     }
 
     if (venueId != null && venueId.isNotEmpty) {
-      final filtered = courts.where((c) => c.venueId == venueId).toList();
-      if (filtered.isNotEmpty) return filtered;
+      return MockData.courts.where((c) => c.venueId == venueId).toList();
     }
 
-    return courts;
+    return MockData.courts;
   }
 
   /// Create a new booking in public.bookings
@@ -206,8 +212,8 @@ class BookingService {
     DateTime date,
   ) async {
     final key = _formatCacheKey(courtId, date);
-    final startOfDay = DateTime(date.year, date.month, date.day, 0, 0, 0);
-    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
 
     if (isSupabaseReady && _supabase != null) {
       try {
@@ -234,8 +240,9 @@ class BookingService {
     final list = MockData.bookings.where((b) {
       return b.courtId == courtId &&
           b.status != 'cancelled' &&
-          b.startTime.isAfter(startOfDay) &&
-          b.startTime.isBefore(endOfDay);
+          b.startTime.year == date.year &&
+          b.startTime.month == date.month &&
+          b.startTime.day == date.day;
     }).toList();
 
     _putInCache(key, list);

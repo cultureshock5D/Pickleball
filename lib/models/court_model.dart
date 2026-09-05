@@ -40,21 +40,39 @@ class CourtModel {
     double peakRate = 180.0;
     String surface = 'Pro-Cushion Hardcourt';
     String type = 'Championship Indoor';
-    String vName = json['venue_name'] as String? ?? 'Barcelona Smash Club';
-    String vId = json['venue_id'] as String? ?? 'venue-bcn-1';
+    String defaultVenueName = 'Barcelona Smash Club';
+    String defaultVenueId = 'venue-bcn-1';
 
     if (name.toLowerCase().contains('arena') || name.toLowerCase().contains('2')) {
       rate = 150.0;
       peakRate = 220.0;
       surface = 'Ultra-Fast Acrylic';
       type = 'LED Glow Indoor';
+      defaultVenueName = 'SmashCourt Central Arena';
+      defaultVenueId = 'venue-dtn-2';
     } else if (name.toLowerCase().contains('skyline') || name.toLowerCase().contains('3')) {
       rate = 100.0;
       peakRate = 150.0;
       surface = 'All-Weather Surface';
       type = 'Rooftop Covered';
-      vName = 'Skyline Rooftop Club';
-      vId = 'venue-sky-2';
+      defaultVenueName = 'Skyline Rooftop Club';
+      defaultVenueId = 'venue-sky-3';
+    } else if (name.toLowerCase().contains('green') ||
+        name.toLowerCase().contains('valley') ||
+        name.toLowerCase().contains('forest') ||
+        name.toLowerCase().contains('clubhouse') ||
+        name.toLowerCase().contains('garden')) {
+      rate = 100.0;
+      peakRate = 150.0;
+      surface = 'All-Weather Surface';
+      type = 'Outdoor Lighted';
+      defaultVenueName = 'Green Valley Country Club';
+      defaultVenueId = 'venue-grn-4';
+    }
+
+    String? parsedVenueName = json['venue_name'] as String?;
+    if (parsedVenueName == null && json['venues'] != null && json['venues'] is Map) {
+      parsedVenueName = json['venues']['name'] as String?;
     }
 
     return CourtModel(
@@ -71,8 +89,8 @@ class CourtModel {
       peakEndHour: json['peak_end_hour'] as int? ?? 22,
       surfaceType: json['surface_type'] as String? ?? surface,
       courtType: json['court_type'] as String? ?? type,
-      venueId: vId,
-      venueName: vName,
+      venueId: (json['venue_id'] as String?) ?? defaultVenueId,
+      venueName: parsedVenueName ?? defaultVenueName,
     );
   }
 
@@ -81,6 +99,12 @@ class CourtModel {
       'id': id,
       'name': name,
       'status': status,
+      'hourly_rate': hourlyRate,
+      'peak_hourly_rate': peakHourlyRate,
+      'peak_start_hour': peakStartHour,
+      'peak_end_hour': peakEndHour,
+      'surface_type': surfaceType,
+      'court_type': courtType,
       'venue_id': venueId,
       'venue_name': venueName,
     };

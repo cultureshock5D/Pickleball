@@ -43,7 +43,6 @@ class _ReservationCardState extends State<ReservationCard>
       vsync: this,
       duration: const Duration(milliseconds: 120),
       lowerBound: 0.95,
-      upperBound: 1.0,
       value: 1.0,
     );
     _scaleAnimation = CurvedAnimation(
@@ -113,7 +112,6 @@ class _ReservationCardState extends State<ReservationCard>
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = context.isDark;
     final booking = widget.booking;
     final status = booking.status.toLowerCase();
     final isConfirmed = status == 'confirmed';
@@ -131,23 +129,28 @@ class _ReservationCardState extends State<ReservationCard>
 
     final courtName = booking.courtName ?? 'SmashCourt - Court 1';
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: widget.isUpcoming ? colors.borderSubtle : colors.borderSubtleAlpha50,
-          width: 1.2,
-        ),
-        boxShadow: widget.isUpcoming ? colors.cardShadow : null,
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
           borderRadius: BorderRadius.circular(22),
-          onTap: _openDetailsModal,
-          child: Padding(
+          border: Border.all(
+            color: widget.isUpcoming ? colors.borderSubtle : colors.borderSubtleAlpha50,
+            width: 1.2,
+          ),
+          boxShadow: widget.isUpcoming ? colors.cardShadow : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(22),
+            onTapDown: (_) => _pressController.reverse(),
+            onTapUp: (_) => _pressController.forward(),
+            onTapCancel: () => _pressController.forward(),
+            onTap: _openDetailsModal,
+            child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,22 +177,59 @@ class _ReservationCardState extends State<ReservationCard>
                         ),
                       ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: statusColor.withAlpha(35),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: statusColor.withAlpha(70)),
-                      ),
-                      child: Text(
-                        booking.status.toUpperCase(),
-                        style: GoogleFonts.inter(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.4,
+                    Row(
+                      children: [
+                        if (widget.isUpcoming) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                            decoration: BoxDecoration(
+                              color: colors.neonLimeAlpha15,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 5,
+                                  height: 5,
+                                  decoration: BoxDecoration(
+                                    color: colors.neonLime,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'PASS READY',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: colors.neonLime,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: statusColor.withAlpha(35),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: statusColor.withAlpha(70)),
+                          ),
+                          child: Text(
+                            booking.status.toUpperCase(),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: statusColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -223,10 +263,11 @@ class _ReservationCardState extends State<ReservationCard>
                         children: [
                           Text(
                             courtName,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.plusJakartaSans(
                               color: colors.textPrimary,
                               fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -246,10 +287,10 @@ class _ReservationCardState extends State<ReservationCard>
                       children: [
                         Text(
                           '₱${booking.totalAmount.toStringAsFixed(2)}',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             color: isCompleted ? colors.textMuted : colors.neonLime,
                             fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: -0.3,
                           ),
                         ),
@@ -276,7 +317,8 @@ class _ReservationCardState extends State<ReservationCard>
                     Expanded(
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          minimumSize: const Size(0, 48),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                           side: BorderSide(color: colors.neonGreenAlpha50),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -286,9 +328,9 @@ class _ReservationCardState extends State<ReservationCard>
                         icon: Icon(Icons.qr_code_2_rounded, size: 16, color: colors.neonGreen),
                         label: Text(
                           'Gate Pass',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 11.5,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
                             color: colors.neonGreen,
                           ),
                         ),
@@ -300,7 +342,8 @@ class _ReservationCardState extends State<ReservationCard>
                     Expanded(
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          minimumSize: const Size(0, 48),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                           side: BorderSide(color: colors.borderSubtle),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -310,7 +353,7 @@ class _ReservationCardState extends State<ReservationCard>
                         icon: Icon(Icons.receipt_long_rounded, size: 16, color: colors.textSecondary),
                         label: Text(
                           'Receipt',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
                             color: colors.textSecondary,
@@ -324,6 +367,7 @@ class _ReservationCardState extends State<ReservationCard>
                       // Calendar Action Icon Button
                       IconButton(
                         style: IconButton.styleFrom(
+                          minimumSize: const Size(48, 48),
                           backgroundColor: colors.neonGreenAlpha12,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -351,6 +395,7 @@ class _ReservationCardState extends State<ReservationCard>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

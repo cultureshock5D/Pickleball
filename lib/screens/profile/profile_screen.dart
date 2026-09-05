@@ -71,16 +71,16 @@ class _ProfileScreenState extends State<ProfileScreen>
           builder: (context, setModalState) {
             return Container(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
                 top: 24,
                 left: 24,
                 right: 24,
               ),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF16161B) : Colors.white,
+                color: isDark ? colors.surfaceElevated : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 border: Border(
-                  top: BorderSide(color: colors.borderSubtle, width: 1),
+                  top: BorderSide(color: colors.borderSubtle),
                 ),
               ),
               child: Form(
@@ -484,38 +484,45 @@ class _ProfileScreenState extends State<ProfileScreen>
     final colors = context.colors;
 
     return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          ThemeService.instance.setThemeMode(mode);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? colors.neonGreenAlpha20 : colors.surfaceHighlight,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isSelected ? colors.neonGreen : colors.borderSubtle,
-              width: isSelected ? 1.6 : 1,
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        label: '$title theme',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            ThemeService.instance.setThemeMode(mode);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected ? colors.neonGreenAlpha20 : colors.surfaceHighlight,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected ? colors.neonGreen : colors.borderSubtle,
+                width: isSelected ? 1.6 : 1,
+              ),
             ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? colors.neonGreen : colors.textMuted,
-                size: 20,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  color: isSelected ? colors.textPrimary : colors.textSecondary,
-                  fontSize: 12.5,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            child: Column(
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? colors.neonGreen : colors.textMuted,
+                  size: 20,
                 ),
-              ),
-            ],
+                const SizedBox(height: 6),
+                Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    color: isSelected ? colors.textPrimary : colors.textSecondary,
+                    fontSize: 12.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

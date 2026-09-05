@@ -77,8 +77,6 @@ class MockData {
       address: 'Passeig Marítim 42, Diagonal Mar',
       rating: 4.95,
       reviewCount: 148,
-      courtCount: 4,
-      priceStartingAt: 120.0,
       tag: 'FEATURED',
       courtType: 'Championship Indoor & Glass',
       amenities: [

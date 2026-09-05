@@ -60,7 +60,7 @@ void main() {
       });
 
       test('sanitizeText strips control characters and clamps maximum length', () {
-        final raw = 'Hello\u0000\u001F World\n';
+        const raw = 'Hello\u0000\u001F World\n';
         final sanitized = Validators.sanitizeText(raw);
         expect(sanitized, equals('Hello World'));
 
@@ -135,7 +135,7 @@ void main() {
     });
 
     test('CalendarLinkService truncates excessively long strings for URL safety', () {
-      final now = DateTime.utc(2026, 8, 30, 10, 0);
+      final now = DateTime.utc(2026, 8, 30, 10);
       final hugeDetails = 'D' * 2000;
       final uri = CalendarLinkService.buildGoogleCalendarUri(
         title: 'Title',
@@ -150,16 +150,16 @@ void main() {
 
   group('Time Slot Overlap & Range Formatting Tests', () {
     final slot8to9 = (
-      start: DateTime(2026, 8, 30, 8, 0),
-      end: DateTime(2026, 8, 30, 9, 0),
+      start: DateTime(2026, 8, 30, 8),
+      end: DateTime(2026, 8, 30, 9),
     );
     final slot9to10 = (
-      start: DateTime(2026, 8, 30, 9, 0),
-      end: DateTime(2026, 8, 30, 10, 0),
+      start: DateTime(2026, 8, 30, 9),
+      end: DateTime(2026, 8, 30, 10),
     );
     final slot7to8 = (
-      start: DateTime(2026, 8, 30, 7, 0),
-      end: DateTime(2026, 8, 30, 8, 0),
+      start: DateTime(2026, 8, 30, 7),
+      end: DateTime(2026, 8, 30, 8),
     );
     final slot830to930 = (
       start: DateTime(2026, 8, 30, 8, 30),
@@ -170,8 +170,8 @@ void main() {
       end: DateTime(2026, 8, 30, 8, 45),
     );
     final slot10to11 = (
-      start: DateTime(2026, 8, 30, 10, 0),
-      end: DateTime(2026, 8, 30, 11, 0),
+      start: DateTime(2026, 8, 30, 10),
+      end: DateTime(2026, 8, 30, 11),
     );
 
     test('allows back-to-back adjacent bookings using half-open intervals [start, end)', () {
@@ -234,8 +234,8 @@ void main() {
 
     test('formats time slot range in the exact concise format FROM [START] TO [END]', () {
       final formatted = Validators.formatTimeSlotRange(
-        DateTime(2026, 8, 30, 8, 0),
-        DateTime(2026, 8, 30, 9, 0),
+        DateTime(2026, 8, 30, 8),
+        DateTime(2026, 8, 30, 9),
       );
       expect(formatted, equals('FROM 8:00 AM TO 9:00 AM'));
     });

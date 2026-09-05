@@ -81,12 +81,11 @@ class _DateRangePickerModalState extends State<DateRangePickerModal> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF131317) : Colors.white,
+        color: isDark ? colors.surfaceElevated : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         border: Border(
           top: BorderSide(
             color: colors.borderSubtle,
-            width: 1,
           ),
         ),
         boxShadow: colors.cardShadow,
@@ -95,7 +94,7 @@ class _DateRangePickerModalState extends State<DateRangePickerModal> {
         top: 14,
         left: 20,
         right: 20,
-        bottom: MediaQuery.of(context).padding.bottom + 20,
+        bottom: MediaQuery.paddingOf(context).bottom + 20,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

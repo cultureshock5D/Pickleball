@@ -34,7 +34,7 @@ class CustomBottomNavBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B0B0E) : Colors.white,
+        color: isDark ? colors.surfaceElevated : Colors.white,
         border: Border(
           top: BorderSide(
             color: colors.borderSubtle,
@@ -55,13 +55,17 @@ class CustomBottomNavBar extends StatelessWidget {
               final isSelected = index == currentIndex;
 
               return Expanded(
-                child: InkWell(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    onTap(index);
-                  },
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
+                child: Semantics(
+                  button: true,
+                  selected: isSelected,
+                  label: item.label,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      onTap(index);
+                    },
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeInOut,
@@ -92,26 +96,29 @@ class CustomBottomNavBar extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 3),
-                        Text(
-                          item.label,
-                          style: GoogleFonts.inter(
-                            color: isSelected
-                                ? (isDark ? Colors.white : colors.neonGreenDark)
-                                : colors.textMuted,
-                            fontSize: 11,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            letterSpacing: -0.2,
+                        ExcludeSemantics(
+                          child: Text(
+                            item.label,
+                            style: GoogleFonts.inter(
+                              color: isSelected
+                                  ? (isDark ? Colors.white : colors.neonGreenDark)
+                                  : colors.textMuted,
+                              fontSize: 11,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
                 ),
-              );
+              ),
+            );
             }),
           ),
         ),

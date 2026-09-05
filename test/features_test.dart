@@ -4,6 +4,7 @@ import 'package:pickleball_app/models/booking_model.dart';
 import 'package:pickleball_app/models/court_model.dart';
 import 'package:pickleball_app/widgets/check_in_qr_modal.dart';
 import 'package:pickleball_app/widgets/downloadable_receipt_modal.dart';
+import 'package:pickleball_app/widgets/reservation_card.dart';
 import 'package:pickleball_app/widgets/time_player_picker_modal.dart';
 
 void main() {
@@ -14,7 +15,7 @@ void main() {
     customerId: 'cust-1',
     courtId: 'court-1',
     courtName: 'SmashCourt - Center Arena',
-    startTime: DateTime(2025, 5, 20, 10, 0),
+    startTime: DateTime(2025, 5, 20, 10),
     endTime: DateTime(2025, 5, 20, 11, 30),
     status: 'confirmed',
     totalAmount: 180.00,
@@ -26,10 +27,6 @@ void main() {
       const court = CourtModel(
         id: 'court-1',
         name: 'Championship Arena',
-        hourlyRate: 120.0,
-        peakHourlyRate: 180.0,
-        peakStartHour: 17,
-        peakEndHour: 22,
       );
 
       expect(court.isPeakHour(10), isFalse);
@@ -81,10 +78,6 @@ void main() {
                 TimeOfDay(hour: 18, minute: 0),
               ],
               initialTimeSlotIndex: 0,
-              hourlyRate: 120.0,
-              peakHourlyRate: 180.0,
-              peakStartHour: 17,
-              peakEndHour: 22,
               onSelectionConfirmed: (sel) => selection = sel,
             ),
           ),
@@ -117,6 +110,30 @@ void main() {
       expect(find.text('₱180.00'), findsOneWidget);
       expect(find.text('Download PDF'), findsOneWidget);
       expect(find.text('Share Receipt'), findsOneWidget);
+    });
+
+    testWidgets('ReservationCard renders booking details and actions correctly', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ReservationCard(
+              booking: sampleBooking,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('SmashCourt - Center Arena'), findsOneWidget);
+      expect(find.text('CONFIRMED'), findsOneWidget);
+      expect(find.text('₱180.00'), findsOneWidget);
+      expect(find.text('Gate Pass'), findsOneWidget);
+      expect(find.text('Receipt'), findsOneWidget);
+      expect(find.byIcon(Icons.event_available_rounded), findsOneWidget);
+
+      // Verify tap on ReservationCard scales and responds
+      await tester.tap(find.byType(ReservationCard));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.pumpAndSettle();
     });
   });
 }

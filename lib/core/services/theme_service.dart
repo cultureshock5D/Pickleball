@@ -18,7 +18,7 @@ class ThemeService extends ChangeNotifier {
 
   bool isDarkMode(BuildContext context) {
     if (_themeMode == ThemeMode.system) {
-      return MediaQuery.of(context).platformBrightness == Brightness.dark;
+      return MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     }
     return _themeMode == ThemeMode.dark;
   }
