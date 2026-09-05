@@ -35,8 +35,8 @@ class MockData {
     TimeOfDay(hour: 22, minute: 0),
   ];
 
-  /// Standard Duration Options in Hours
-  static const List<double> standardDurations = [1.0, 1.5, 2.0, 3.0];
+  /// Standard Duration Options in Hours (Strictly 1-hour whole intervals)
+  static const List<double> standardDurations = [1.0, 2.0, 3.0, 4.0];
 
   /// Standard Player Format Options (2 = Singles, 4 = Doubles, 6 = Group)
   static const List<int> standardPlayerCounts = [2, 4, 6];
@@ -48,9 +48,9 @@ class MockData {
       courtId: 'a1111111-1111-1111-1111-111111111111',
       courtName: 'SmashCourt - Center Arena',
       startTime: DateTime.now().add(const Duration(hours: 3)),
-      endTime: DateTime.now().add(const Duration(hours: 4, minutes: 30)),
+      endTime: DateTime.now().add(const Duration(hours: 5)),
       status: 'confirmed',
-      totalAmount: 180.00,
+      totalAmount: 240.00,
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
   ];

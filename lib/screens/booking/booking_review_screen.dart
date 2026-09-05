@@ -111,13 +111,70 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.error(context, e.toString().replaceAll('Exception: ', ''));
+        final errorMsg = e.toString().replaceAll('Exception: ', '');
+        if (errorMsg.contains('Slot No Longer Available')) {
+          _showSlotTakenDialog(errorMsg);
+        } else {
+          AppSnackBar.error(context, errorMsg);
+        }
       }
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  void _showSlotTakenDialog(String message) {
+    final colors = context.colors;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: colors.surfaceElevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.error_outline_rounded, color: colors.errorRed, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Slot Taken!',
+                style: GoogleFonts.inter(
+                  color: colors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.inter(
+            color: colors.textSecondary,
+            fontSize: 13.5,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              'Select Another Time Slot',
+              style: GoogleFonts.inter(
+                color: colors.neonGreen,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

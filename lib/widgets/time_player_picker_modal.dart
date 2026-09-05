@@ -232,6 +232,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),

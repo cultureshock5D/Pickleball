@@ -142,7 +142,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     final court = _currentCourt;
     if (court == null) return;
 
-    final cached = _bookingService.getCachedAvailability(court.id, _selectedDate);
+    final cached =
+        _bookingService.getCachedAvailability(court.id, _selectedDate);
     if (cached != null) {
       setState(() {
         _bookedSlotsForCurrentDay = cached;
@@ -277,12 +278,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   }
 
   int _findFirstAvailableSlotIndex() {
-    for (int i = 0; i < _allStartTimes.length; i++) {
-      if (!_isSlotBooked(i)) {
-        return i;
-      }
-    }
-    return -1;
+    int index = 0;
+    return _allStartTimes.indexWhere((_) => !_isSlotBooked(index++));
   }
 
   Future<void> _openVenuePicker() async {
@@ -472,7 +469,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             if (badgeCount != null && badgeCount > 0) ...[
               const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                 decoration: BoxDecoration(
                   color: isSelected ? colors.neonLime : colors.surfaceHighlight,
                   borderRadius: BorderRadius.circular(10),
@@ -489,7 +487,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             ] else if (badgeText != null && isSelected) ...[
               const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                 decoration: BoxDecoration(
                   color: colors.neonLimeAlpha20,
                   borderRadius: BorderRadius.circular(8),
@@ -1054,9 +1053,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       );
     }
 
-    final bookings = _myReservationsFilterIndex == 0
-        ? _upcomingBookings
-        : _pastBookings;
+    final bookings =
+        _myReservationsFilterIndex == 0 ? _upcomingBookings : _pastBookings;
 
     return Column(
       children: [
