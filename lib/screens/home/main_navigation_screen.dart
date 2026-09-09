@@ -47,7 +47,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 2:
         return 'Account & Profile';
       default:
-        return 'SmashCourt';
+        return 'C&J Pickleball';
     }
   }
 

@@ -117,8 +117,8 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
     final colors = context.colors;
     final isDark = context.isDark;
     final booking = widget.booking;
-    final courtName = booking.courtName ?? 'SmashCourt - Court 1';
-    final venue = widget.venueName ?? 'Barcelona Smash Club';
+    final courtName = booking.courtName ?? 'C&J Pickleball - Court 1';
+    final venue = widget.venueName ?? 'C&J Pickleball Court';
     final isConfirmed = booking.status.toLowerCase() == 'confirmed';
     final statusText = isConfirmed ? 'Confirmed' : booking.status.toUpperCase();
     final statusColor = isConfirmed ? colors.neonGreen : colors.neonLime;

@@ -127,7 +127,7 @@ class _CheckInQrModalState extends State<CheckInQrModal>
   Widget build(BuildContext context) {
     final colors = context.colors;
     final booking = widget.booking;
-    final courtName = booking.courtName ?? 'SmashCourt - Court 1';
+    final courtName = booking.courtName ?? 'C&J Pickleball - Court 1';
     final timeFormat = DateFormat('h:mm a');
 
     Color statusColor = colors.neonGreen;

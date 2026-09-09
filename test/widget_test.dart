@@ -9,7 +9,7 @@ void main() {
 
     // Verify that Login Screen is presented
     expect(find.byType(LoginScreen), findsOneWidget);
-    expect(find.text('Welcome to SmashCourt'), findsOneWidget);
+    expect(find.text('Welcome to C&J Pickleball Court'), findsOneWidget);
     expect(find.text('Sign In to Account'), findsOneWidget);
   });
 }

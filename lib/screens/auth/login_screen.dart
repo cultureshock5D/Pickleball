@@ -149,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         // App Header & Title
                         Text(
-                          'Welcome to SmashCourt',
+                          'Welcome to C&J Pickleball Court',
                           style: GoogleFonts.inter(
                             color: colors.neonGreen,
                             fontSize: 14,
@@ -204,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Championship Club Suite',
+                                          'C&J Pickleball Court Suite',
                                           style: GoogleFonts.inter(
                                             color: colors.textPrimary,
                                             fontSize: 14,
@@ -212,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                         Text(
-                                          'Pickleball Club System',
+                                          'C&J Reservation System',
                                           style: GoogleFonts.inter(
                                             color: colors.textMuted,
                                             fontSize: 11.5,
@@ -225,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'Instant court reservations, performance analytics, and member management powered by Supabase.',
+                                'Instant court reservations, rental add-ons, and secure PayMongo checkout.',
                                 style: GoogleFonts.inter(
                                   color: colors.textSecondary,
                                   fontSize: 12.5,

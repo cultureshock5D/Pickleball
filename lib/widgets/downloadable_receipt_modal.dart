@@ -51,7 +51,7 @@ class DownloadableReceiptModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final courtName = booking.courtName ?? 'SmashCourt - Court 1';
+    final courtName = booking.courtName ?? 'C&J Pickleball - Court 1';
     final dateFormat = DateFormat('MMMM d, yyyy • h:mm a');
     final duration = booking.endTime.difference(booking.startTime).inMinutes / 60.0;
     final baseRate = booking.totalAmount / (duration > 0 ? duration : 1);

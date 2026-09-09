@@ -142,7 +142,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Customer Role',
+                              'Client Account',
                               style: GoogleFonts.inter(
                                 color: colors.textSecondary,
                                 fontSize: 12,
@@ -157,7 +157,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 24),
 
                   Text(
-                    'Join SmashCourt',
+                    'Join C&J Pickleball Court',
                     style: GoogleFonts.inter(
                       color: colors.textSecondary,
                       fontSize: 15,
@@ -176,7 +176,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sign up to book championship courts, view analytics, and access member perks.',
+                    'Sign up to reserve courts, choose rental add-ons, and manage bookings.',
                     style: GoogleFonts.inter(
                       color: colors.textMuted,
                       fontSize: 14,

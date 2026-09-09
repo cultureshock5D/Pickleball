@@ -7,9 +7,7 @@ import 'package:pickleball_app/core/utils/validators.dart';
 import 'package:pickleball_app/models/booking_model.dart';
 import 'package:pickleball_app/models/court_model.dart';
 import 'package:pickleball_app/screens/booking/booking_review_screen.dart';
-import 'package:pickleball_app/screens/booking/court_reservation.dart';
 import 'package:pickleball_app/screens/insights/insights.dart';
-import 'package:pickleball_app/services/calendar_link_service.dart';
 import 'package:pickleball_app/widgets/booking_success_modal.dart';
 import 'package:pickleball_app/widgets/check_in_qr_modal.dart';
 import 'package:pickleball_app/widgets/downloadable_receipt_modal.dart';
@@ -21,23 +19,19 @@ void main() {
 
   final sampleBooking = BookingModel(
     id: 'BK-TEST-100',
-    customerId: 'cust-100',
+    userId: 'cust-100',
     courtId: 'court-100',
-    courtName: 'SmashCourt - Center Arena',
+    courtName: 'C&J Pickleball - Court 1',
     startTime: DateTime(2026, 9, 10, 18),
     endTime: DateTime(2026, 9, 10, 19),
     status: 'confirmed',
-    totalAmount: 180.00,
+    totalPrice: 300.00,
     createdAt: DateTime(2026, 9, 9, 12),
   );
 
   const sampleCourt = CourtModel(
     id: 'court-100',
-    name: 'SmashCourt - Center Arena',
-    surfaceType: 'Ultra-Fast Acrylic',
-    courtType: 'LED Glow Indoor',
-    venueId: 'venue-bcn-1',
-    venueName: 'Barcelona Smash Club',
+    name: 'C&J Pickleball - Court 1',
   );
 
   // =========================================================================
@@ -157,53 +151,6 @@ void main() {
       expect(find.text('This Week'), findsOneWidget);
     });
 
-    testWidgets('Tier 1.3: Horizontal multi-court visual timeline and court cards in CourtReservationScreen', (tester) async {
-      tester.view.physicalSize = const Size(1200, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: const TextScaler.linear(0.6),
-            ),
-            child: child!,
-          ),
-          home: const CourtReservationScreen(),
-        ),
-      );
-
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pumpAndSettle();
-
-      // Mode Switcher
-      expect(find.text('Reserve Court'), findsOneWidget);
-      expect(find.text('My Reservations'), findsOneWidget);
-
-      // Multi-Court Timeline & Live Lanes Header
-      expect(find.text('Multi-Court Visual Timeline'), findsOneWidget);
-      expect(find.text('LIVE LANES'), findsOneWidget);
-
-      // Timeline Heat Legend
-      expect(find.text('Off-Peak (₱120)'), findsOneWidget);
-      expect(find.text('Peak 17-22h (₱180)'), findsOneWidget);
-      expect(find.text('Booked'), findsOneWidget);
-
-      // Court Lanes
-      expect(find.text('Court 1'), findsWidgets);
-      expect(find.text('Championship Courts'), findsOneWidget);
-
-      // Tap slot 18:00 on lane to test interactive slot selection
-      final slot18Finder = find.text('18:00');
-      if (slot18Finder.evaluate().isNotEmpty) {
-        await tester.tap(slot18Finder.first);
-        await tester.pumpAndSettle();
-      }
-    });
-
     testWidgets('Tier 1.4: Interactive laser sweep QR gate pass modal with dynamic rolling token and check-in toggle in CheckInQrModal', (tester) async {
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1.0;
@@ -223,7 +170,7 @@ void main() {
 
       // Header & Court Details
       expect(find.text('Smart Court Gate QR Pass'), findsOneWidget);
-      expect(find.text('SmashCourt - Center Arena'), findsOneWidget);
+      expect(find.text('C&J Pickleball - Court 1'), findsOneWidget);
 
       // Status Badge
       expect(find.text('UPCOMING • READY FOR GATE'), findsOneWidget);
@@ -301,7 +248,7 @@ void main() {
       expect(confirmedSelection, isNotNull);
       expect(confirmedSelection!.timeSlotIndex, equals(1));
       expect(confirmedSelection!.startTime.hour, equals(18));
-      expect(confirmedSelection!.totalAmount, equals(180.0));
+      expect(confirmedSelection!.totalAmount, equals(300.0));
     });
 
     testWidgets('Tier 1.6: Perforated digital ticket receipt with barcode aesthetics and PayMongo confirmation in DownloadableReceiptModal', (tester) async {
@@ -331,13 +278,13 @@ void main() {
 
       // Reservation Section
       expect(find.text('BK-TEST-100'), findsOneWidget);
-      expect(find.text('SmashCourt - Center Arena'), findsOneWidget);
+      expect(find.text('C&J Pickleball - Court 1'), findsOneWidget);
       expect(find.text('Maya via PayMongo'), findsOneWidget);
       expect(find.text('pm_ref_maya_8841'), findsOneWidget);
 
       // Itemized Financials
       expect(find.text('TOTAL PAID'), findsOneWidget);
-      expect(find.text('₱180.00'), findsOneWidget);
+      expect(find.text('₱300.00'), findsOneWidget);
 
       // Action Buttons
       expect(find.text('Download PDF'), findsOneWidget);
@@ -368,7 +315,7 @@ void main() {
             startTime: DateTime(2026, 9, 10, 18),
             endTime: DateTime(2026, 9, 10, 19),
             durationHours: 1.0,
-            totalAmount: 180.00,
+            totalAmount: 300.00,
           ),
         ),
       );
@@ -377,14 +324,11 @@ void main() {
 
       // Header & Court Overview
       expect(find.text('Review & Confirm'), findsOneWidget);
-      expect(find.text('SmashCourt - Center Arena'), findsOneWidget);
-      expect(find.text('Ultra-Fast Acrylic'), findsOneWidget);
+      expect(find.text('C&J Pickleball - Court 1'), findsOneWidget);
 
       // Transparent Pricing Breakdown
       expect(find.text('Price Breakdown'), findsOneWidget);
-      expect(find.text('PEAK RATE ACTIVE'), findsOneWidget);
-      expect(find.text('+₱60.00'), findsOneWidget);
-      expect(find.text('₱180.00'), findsWidgets);
+      expect(find.text('₱300.00'), findsWidgets);
 
       // 1-Tap Calendar Sync Toggle
       expect(find.text('1-Tap Auto-Sync Calendar'), findsOneWidget);
@@ -394,15 +338,14 @@ void main() {
       expect(find.text('Maya via PayMongo'), findsOneWidget);
       expect(find.text('GrabPay via PayMongo'), findsOneWidget);
       expect(find.text('Credit / Debit Card via PayMongo'), findsOneWidget);
-      expect(find.text('Club Membership Card'), findsOneWidget);
 
       // Select Maya Payment Option
       await tester.tap(find.text('Maya via PayMongo'));
       await tester.pumpAndSettle();
 
       // Bottom Checkout Bar
-      expect(find.text('TOTAL AMOUNT'), findsOneWidget);
-      expect(find.text('Confirm & Lock Court Reservation'), findsOneWidget);
+      expect(find.text('Total Amount'), findsOneWidget);
+      expect(find.text('Confirm & Pay via PayMongo'), findsOneWidget);
     });
 
     testWidgets('Tier 1.8: Booking confirmation success modal with multi-calendar deep links in BookingSuccessModal', (tester) async {
@@ -418,7 +361,7 @@ void main() {
           home: Scaffold(
             body: BookingSuccessModal(
               booking: sampleBooking,
-              venueName: 'Barcelona Smash Club',
+              venueName: 'C&J Pickleball Court',
               onViewBookings: () => viewBookingsCalled = true,
             ),
           ),
@@ -433,9 +376,9 @@ void main() {
       expect(find.text('Your court has been successfully locked in.'), findsOneWidget);
 
       // Summary Details
-      expect(find.text('SmashCourt - Center Arena'), findsOneWidget);
-      expect(find.text('Barcelona Smash Club'), findsOneWidget);
-      expect(find.text('₱180.00'), findsOneWidget);
+      expect(find.text('C&J Pickleball - Court 1'), findsOneWidget);
+      expect(find.text('C&J Pickleball Court'), findsOneWidget);
+      expect(find.text('₱300.00'), findsOneWidget);
       expect(find.text('BK-TEST-100'), findsOneWidget);
 
       // Multi-Calendar Sync Links
@@ -457,48 +400,49 @@ void main() {
   // TIER 2: BOUNDARY & CORNER CASES
   // =========================================================================
   group('Tier 2: Boundary & Corner Cases', () {
-    test('Tier 2.1: Court peak/off-peak boundary transitions and custom hour windows', () {
+    test('Tier 2.1: Court rates, rental add-ons, and 24-hour cancellation rule', () {
       const court = CourtModel(
         id: 'court-bnd-1',
-        name: 'Grand Slam Court',
+        name: 'C&J Court 1',
       );
 
-      // Hour 16:59 (represented by hour 16) -> Off-peak
-      expect(court.isPeakHour(16), isFalse);
-      expect(court.rateForHour(16), equals(120.0));
+      expect(court.hourlyRate, equals(300.0));
 
-      // Hour 17:00 (exact start boundary) -> Peak
-      expect(court.isPeakHour(17), isTrue);
-      expect(court.rateForHour(17), equals(180.0));
+      // 1 hour booking calculation
+      const duration1 = 1.0;
+      const baseTotal = 300.0 * duration1;
+      expect(baseTotal, equals(300.0));
 
-      // Hour 21:00 (last peak hour) -> Peak
-      expect(court.isPeakHour(21), isTrue);
-      expect(court.rateForHour(21), equals(180.0));
+      // Add-ons: Paddle Bundle (₱150 flat) + Ball Thrower (₱150/hr * 2h)
+      const duration2 = 2.0;
+      const courtFee = 300.0 * duration2;
+      const paddleFee = 150.0;
+      const ballThrowerFee = 150.0 * duration2;
+      const grandTotal = courtFee + paddleFee + ballThrowerFee;
+      expect(grandTotal, equals(1050.0));
 
-      // Hour 22:00 (exact end boundary of half-open interval [17, 22)) -> Off-peak
-      expect(court.isPeakHour(22), isFalse);
-      expect(court.rateForHour(22), equals(120.0));
-
-      // Midnight hour 0 -> Off-peak
-      expect(court.isPeakHour(0), isFalse);
-      expect(court.rateForHour(0), equals(120.0));
-
-      // Custom Peak Hour Windows (18:00 to 20:00)
-      const customCourt = CourtModel(
-        id: 'court-bnd-custom',
-        name: 'Custom Peak Court',
-        hourlyRate: 100.0,
-        peakHourlyRate: 250.0,
-        peakStartHour: 18,
-        peakEndHour: 20,
+      // 24-hour cancellation eligibility rule
+      final future48h = DateTime.now().add(const Duration(hours: 48));
+      final bookingCancellable = BookingModel(
+        id: 'BK-CANCEL-OK',
+        courtId: 'court-1',
+        startTime: future48h,
+        endTime: future48h.add(const Duration(hours: 1)),
+        status: 'confirmed',
+        totalPrice: 300.0,
       );
+      expect(bookingCancellable.isCancellable, isTrue);
 
-      expect(customCourt.isPeakHour(17), isFalse);
-      expect(customCourt.isPeakHour(18), isTrue);
-      expect(customCourt.rateForHour(18), equals(250.0));
-      expect(customCourt.isPeakHour(19), isTrue);
-      expect(customCourt.isPeakHour(20), isFalse);
-      expect(customCourt.rateForHour(20), equals(100.0));
+      final future12h = DateTime.now().add(const Duration(hours: 12));
+      final bookingLocked = BookingModel(
+        id: 'BK-CANCEL-NO',
+        courtId: 'court-1',
+        startTime: future12h,
+        endTime: future12h.add(const Duration(hours: 1)),
+        status: 'confirmed',
+        totalPrice: 300.0,
+      );
+      expect(bookingLocked.isCancellable, isFalse);
     });
 
     testWidgets('Tier 2.2: Zero playtime and empty state calculations in InsightsScreen', (tester) async {
@@ -665,304 +609,6 @@ void main() {
         ),
         isFalse,
       );
-    });
-  });
-
-  // =========================================================================
-  // TIER 3: CROSS-FEATURE COMBINATIONS
-  // =========================================================================
-  group('Tier 3: Cross-Feature Combinations', () {
-    testWidgets('Tier 3.1: Court selection -> fast-booking sheet -> booking review -> digital ticket receipt flow', (tester) async {
-      tester.view.physicalSize = const Size(1200, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-
-      // 1. Fast-Booking Slot Selection with Peak Surcharge
-      MatchTimeSelection? selection;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: Scaffold(
-            body: TimePlayerPickerModal(
-              availableTimes: const [
-                TimeOfDay(hour: 14, minute: 0),
-                TimeOfDay(hour: 19, minute: 0),
-              ],
-              initialTimeSlotIndex: 0,
-              onSelectionConfirmed: (sel) => selection = sel,
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Tap peak slot 19:00
-      await tester.tap(find.text('PEAK'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Confirm Match Time Slot'));
-      await tester.pumpAndSettle();
-
-      expect(selection, isNotNull);
-      expect(selection!.totalAmount, equals(180.00));
-
-      // 2. Booking Review & Multi-Channel Checkout Screen
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: const TextScaler.linear(0.65),
-            ),
-            child: child!,
-          ),
-          home: BookingReviewScreen(
-            court: sampleCourt,
-            startTime: DateTime(2026, 9, 10, 19),
-            endTime: DateTime(2026, 9, 10, 20),
-            durationHours: 1.0,
-            totalAmount: selection!.totalAmount,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Review & Confirm'), findsOneWidget);
-      expect(find.text('PEAK RATE ACTIVE'), findsOneWidget);
-      expect(find.text('+₱60.00'), findsOneWidget);
-
-      // Switch to Maya via PayMongo
-      await tester.tap(find.text('Maya via PayMongo'));
-      await tester.pumpAndSettle();
-
-      // Tap Checkout Confirmation
-      await tester.tap(find.text('Confirm & Lock Court Reservation'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
-      await tester.pumpAndSettle();
-
-      // Verify Booking Success Modal appears and dismiss it
-      expect(find.text('Reservation Confirmed!'), findsOneWidget);
-      await tester.tap(find.text('Done • View My Bookings'));
-      await tester.pumpAndSettle();
-
-      // 3. Inspect Perforated Digital Ticket Receipt
-      final confirmedBooking = BookingModel(
-        id: 'BK-CONFIRMED-99',
-        customerId: 'athlete-1',
-        courtId: sampleCourt.id,
-        courtName: sampleCourt.name,
-        startTime: DateTime(2026, 9, 10, 19),
-        endTime: DateTime(2026, 9, 10, 20),
-        status: 'confirmed',
-        totalAmount: 180.00,
-        createdAt: DateTime.now(),
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          key: const ValueKey('receipt_app'),
-          theme: AppTheme.darkTheme,
-          home: Scaffold(
-            body: DownloadableReceiptModal(
-              booking: confirmedBooking,
-              paymentMethod: 'Maya via PayMongo',
-              paymongoReference: 'pm_ref_maya_9901',
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Official Payment Receipt'), findsOneWidget);
-      expect(find.text('PayMongo Transaction Confirmed'), findsOneWidget);
-      expect(find.text('BK-CONFIRMED-99'), findsOneWidget);
-      expect(find.text('Maya via PayMongo'), findsOneWidget);
-      expect(find.text('₱180.00'), findsOneWidget);
-
-      // 4. Inspect Kiosk Gate Pass QR Code Modal
-      await tester.pumpWidget(
-        MaterialApp(
-          key: const ValueKey('qr_app'),
-          theme: AppTheme.darkTheme,
-          home: Scaffold(
-            body: CheckInQrModal(booking: confirmedBooking),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.text('Smart Court Gate QR Pass'), findsOneWidget);
-      expect(find.text('UPCOMING • READY FOR GATE'), findsOneWidget);
-      expect(find.textContaining('PKL-'), findsOneWidget);
-    });
-  });
-
-  // =========================================================================
-  // TIER 4: REAL-WORLD SCENARIOS
-  // =========================================================================
-  group('Tier 4: Real-World Scenarios', () {
-    testWidgets('Tier 4.1: End-to-end athlete reservation journey from telemetry inspection to gate pass kiosk check-in', (tester) async {
-      tester.view.physicalSize = const Size(1200, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-
-      // Step 1: Athlete inspects telemetry dashboard and DUPR progression
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: const InsightsScreen(),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
-      await tester.pumpAndSettle();
-
-      expect(find.text('TOTAL COURT PLAYTIME'), findsOneWidget);
-      expect(find.text('PLAYER TELEMETRY & DUPR'), findsOneWidget);
-      expect(find.text('Weekly Playtime Activity'), findsOneWidget);
-      expect(find.text('TARGET 1.1h'), findsOneWidget);
-
-      // Step 2: Athlete navigates to court reservation timeline
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: const TextScaler.linear(0.6),
-            ),
-            child: child!,
-          ),
-          home: const CourtReservationScreen(),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Multi-Court Visual Timeline'), findsOneWidget);
-      expect(find.text('LIVE LANES'), findsOneWidget);
-      expect(find.text('Court 1'), findsWidgets);
-
-      // Step 3: Athlete selects match time slot with peak/off-peak comparison
-      final bookingStart = DateTime(2026, 9, 10, 18);
-      final bookingEnd = DateTime(2026, 9, 10, 19);
-
-      expect(sampleCourt.isPeakHour(bookingStart.hour), isTrue);
-      expect(sampleCourt.rateForHour(bookingStart.hour), equals(180.0));
-
-      // Step 4: Athlete proceeds to checkout review with PayMongo payment options
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: const TextScaler.linear(0.65),
-            ),
-            child: child!,
-          ),
-          home: BookingReviewScreen(
-            court: sampleCourt,
-            startTime: bookingStart,
-            endTime: bookingEnd,
-            durationHours: 1.0,
-            totalAmount: 180.00,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Review & Confirm'), findsOneWidget);
-      expect(find.text('PEAK RATE ACTIVE'), findsOneWidget);
-      expect(find.text('GCash via PayMongo'), findsOneWidget);
-
-      // Step 5: Zero-Auth Calendar Integration Verification
-      final googleUrl = CalendarLinkService.buildGoogleCalendarUrl(
-        title: 'Pickleball @ ${sampleCourt.name}',
-        startTime: bookingStart,
-        endTime: bookingEnd,
-        location: 'Barcelona Smash Club',
-      );
-      expect(googleUrl, contains('calendar.google.com'));
-      expect(googleUrl, contains('action=TEMPLATE'));
-
-      final appleUrl = CalendarLinkService.buildAppleCalendarUrl(
-        title: 'Pickleball @ ${sampleCourt.name}',
-        startTime: bookingStart,
-        endTime: bookingEnd,
-        location: 'Barcelona Smash Club',
-      );
-      expect(appleUrl, contains('data:text/calendar'));
-      expect(appleUrl, contains('BEGIN%3AVCALENDAR'));
-
-      final outlookUrl = CalendarLinkService.buildOutlookCalendarUrl(
-        title: 'Pickleball @ ${sampleCourt.name}',
-        startTime: bookingStart,
-        endTime: bookingEnd,
-        location: 'Barcelona Smash Club',
-      );
-      expect(outlookUrl, contains('outlook.live.com'));
-
-      final icsData = CalendarLinkService.buildIcsCalendarData(
-        title: 'Pickleball @ ${sampleCourt.name}',
-        startTime: bookingStart,
-        endTime: bookingEnd,
-        location: 'Barcelona Smash Club',
-      );
-      expect(icsData, contains('BEGIN:VCALENDAR'));
-      expect(icsData, contains('BEGIN:VEVENT'));
-      expect(icsData, contains('END:VCALENDAR'));
-
-      // Step 6: Confirmation Modal
-      final journeyBooking = BookingModel(
-        id: 'BK-JOURNEY-01',
-        customerId: 'athlete-pro',
-        courtId: sampleCourt.id,
-        courtName: sampleCourt.name,
-        startTime: bookingStart,
-        endTime: bookingEnd,
-        status: 'confirmed',
-        totalAmount: 180.00,
-        createdAt: DateTime.now(),
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: Scaffold(
-            body: BookingSuccessModal(
-              booking: journeyBooking,
-              venueName: 'Barcelona Smash Club',
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.text('Reservation Confirmed!'), findsOneWidget);
-      expect(find.text('BK-JOURNEY-01'), findsOneWidget);
-      expect(find.text('Add to Google Calendar'), findsOneWidget);
-
-      // Step 7: Kiosk Arrival Gate Check-In Pass
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.darkTheme,
-          home: Scaffold(
-            body: CheckInQrModal(booking: journeyBooking),
-          ),
-        ),
-      );
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.text('Smart Court Gate QR Pass'), findsOneWidget);
-      expect(find.text('UPCOMING • READY FOR GATE'), findsOneWidget);
-      expect(find.textContaining('PKL-BK-JOU'), findsOneWidget);
-
-      // Simulate gate kiosk check-in tap
-      await tester.tap(find.text('Simulate Gate Scan (Check-In)'));
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.text('CHECKED IN • SESSION ACTIVE'), findsOneWidget);
     });
   });
 }

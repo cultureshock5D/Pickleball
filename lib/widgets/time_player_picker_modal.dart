@@ -47,8 +47,8 @@ class TimePlayerPickerModal extends StatefulWidget {
     required this.initialTimeSlotIndex,
     this.initialDuration = 1.0,
     this.initialPlayerCount = 4,
-    this.hourlyRate = 120.0,
-    this.peakHourlyRate = 180.0,
+    this.hourlyRate = 300.0,
+    this.peakHourlyRate = 300.0,
     this.peakStartHour = 17,
     this.peakEndHour = 22,
     this.isSlotDisabled,
@@ -61,8 +61,8 @@ class TimePlayerPickerModal extends StatefulWidget {
     required int initialTimeSlotIndex,
     double initialDuration = 1.0,
     int initialPlayerCount = 4,
-    double hourlyRate = 120.0,
-    double peakHourlyRate = 180.0,
+    double hourlyRate = 300.0,
+    double peakHourlyRate = 300.0,
     int peakStartHour = 17,
     int peakEndHour = 22,
     bool Function(int slotIndex)? isSlotDisabled,
@@ -92,13 +92,13 @@ class TimePlayerPickerModal extends StatefulWidget {
 
 class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
   late int _selectedSlotIndex;
-
-  static const double _standardSlotDuration = 1.0; // 1 hour standard court session
+  late int _selectedDurationHours;
 
   @override
   void initState() {
     super.initState();
     _selectedSlotIndex = widget.initialTimeSlotIndex.clamp(0, widget.availableTimes.length - 1);
+    _selectedDurationHours = widget.initialDuration.round().clamp(1, 4);
   }
 
   bool _isPeak(TimeOfDay time) {
@@ -123,9 +123,9 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
     final size = MediaQuery.sizeOf(context);
 
     final selectedStartTime = widget.availableTimes[_selectedSlotIndex];
-    final selectedEndTime = _computeEndTime(selectedStartTime, _standardSlotDuration);
+    final selectedEndTime = _computeEndTime(selectedStartTime, _selectedDurationHours.toDouble());
     final isSelectedPeak = _isPeak(selectedStartTime);
-    final autoComputedPrice = _slotRate(selectedStartTime) * _standardSlotDuration;
+    final autoComputedPrice = _slotRate(selectedStartTime) * _selectedDurationHours;
 
     return Container(
       constraints: BoxConstraints(
@@ -198,7 +198,9 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                             ),
                           ),
                           Text(
-                            'Court Match Duration: 1-hour slot • Auto-computes fee',
+                            _selectedDurationHours == 1
+                                ? 'Court Match Duration: 1-hour slot • Auto-computes fee'
+                                : 'Court Match Duration: $_selectedDurationHours-hour slot • Auto-computes fee',
                             style: GoogleFonts.inter(
                               color: colors.textMuted,
                               fontSize: 11.5,
@@ -223,7 +225,67 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+
+          // Duration Selector Row inside modal
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: colors.surfaceHighlight,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: colors.borderSubtle),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  'Duration:',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [1, 2, 3, 4].map((hrs) {
+                      final isSel = _selectedDurationHours == hrs;
+                      return InkWell(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _selectedDurationHours = hrs;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isSel ? colors.neonGreen : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSel ? colors.neonGreen : colors.borderSubtle,
+                            ),
+                          ),
+                          child: Text(
+                            '$hrs hr${hrs > 1 ? 's' : ''}',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                              color: isSel ? Colors.black : colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
 
           // Time Slots Grid (All Slots directly, no period filter widgets)
           Flexible(
@@ -232,7 +294,6 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -246,11 +307,12 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                     itemBuilder: (context, index) {
                       final time = widget.availableTimes[index];
                       final isSelected = _selectedSlotIndex == index;
-                      final endTime = _computeEndTime(time, _standardSlotDuration);
-                      final isBooked = widget.isSlotDisabled?.call(index) ?? false;
+                      final endTime = _computeEndTime(time, _selectedDurationHours.toDouble());
+                      final exceedsHours = time.hour + _selectedDurationHours > 22;
+                      final isBooked = exceedsHours || (widget.isSlotDisabled?.call(index) ?? false);
                       final slotLabel = Validators.formatTimeOfDaySlotRange(time, endTime);
                       final slotIsPeak = _isPeak(time);
-                      final slotPrice = _slotRate(time) * _standardSlotDuration;
+                      final slotPrice = _slotRate(time) * _selectedDurationHours;
 
                       return Semantics(
                         button: true,
@@ -527,7 +589,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          'Court Match Duration: 1.0 Hour',
+                          'Court Match Duration: $_selectedDurationHours.0 Hour${_selectedDurationHours > 1 ? 's' : ''}',
                           style: GoogleFonts.inter(
                             color: colors.textSecondary,
                             fontSize: 10.5,
@@ -577,6 +639,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                 timeSlotIndex: _selectedSlotIndex,
                 startTime: selectedStartTime,
                 endTime: selectedEndTime,
+                durationHours: _selectedDurationHours.toDouble(),
                 totalAmount: autoComputedPrice,
               );
               widget.onSelectionConfirmed(sel);

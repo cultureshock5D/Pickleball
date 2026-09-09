@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/validators.dart';
-import '../../data/mock_data.dart';
 import '../../models/booking_model.dart';
 import '../../models/court_model.dart';
-import '../../models/venue_model.dart';
 import '../../services/booking_service.dart';
 import '../../widgets/date_range_picker_modal.dart';
-import '../../widgets/quick_booking_card.dart';
 import '../../widgets/reservation_card.dart';
+import '../../widgets/tap_collapse.dart';
 import '../../widgets/time_player_picker_modal.dart';
-import '../../widgets/venue_picker_modal.dart';
 import 'booking_review_screen.dart';
 
 class CourtReservationScreen extends StatefulWidget {
@@ -43,23 +41,40 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   bool _isLoadingBookings = true;
   int _myReservationsFilterIndex = 0; // 0 = Upcoming, 1 = Past
 
-  // Venues & Courts state
-  List<VenueModel> _venues = [];
-  VenueModel? _selectedVenue;
+  // Courts state
   List<CourtModel> _courts = [];
   bool _isLoadingCourts = true;
   int _selectedCourtIndex = 0;
 
   // Booking details state
   DateTime _selectedDate = DateTime.now();
-  int _selectedTimeSlotIndex = 2; // Default 10:00 AM
-  static const double _standardSlotDuration = 1.0; // 1.0 hour standard match slot
+  int _selectedTimeSlotIndex = 2; // Default 8:00 AM (index 2: 0=6am, 1=7am, 2=8am)
+  int _selectedDurationHours = 1; // 1, 2, 3, 4 hours
+  bool _paddleRental = false; // +₱150 flat
+  bool _ballThrowerRental = false; // +₱150/hr
 
   List<BookingModel> _bookedSlotsForCurrentDay = [];
   bool _isLoadingAvailability = false;
 
-  // Operating time slots (8:00 AM to 10:00 PM from centralized data)
-  static List<TimeOfDay> get _allStartTimes => MockData.operatingTimeSlots;
+  /// Operating time slots (6:00 AM to 10:00 PM, hours 6 to 21)
+  static const List<TimeOfDay> _allStartTimes = [
+    TimeOfDay(hour: 6, minute: 0),
+    TimeOfDay(hour: 7, minute: 0),
+    TimeOfDay(hour: 8, minute: 0),
+    TimeOfDay(hour: 9, minute: 0),
+    TimeOfDay(hour: 10, minute: 0),
+    TimeOfDay(hour: 11, minute: 0),
+    TimeOfDay(hour: 12, minute: 0),
+    TimeOfDay(hour: 13, minute: 0),
+    TimeOfDay(hour: 14, minute: 0),
+    TimeOfDay(hour: 15, minute: 0),
+    TimeOfDay(hour: 16, minute: 0),
+    TimeOfDay(hour: 17, minute: 0),
+    TimeOfDay(hour: 18, minute: 0),
+    TimeOfDay(hour: 19, minute: 0),
+    TimeOfDay(hour: 20, minute: 0),
+    TimeOfDay(hour: 21, minute: 0),
+  ];
 
   @override
   void initState() {
@@ -70,39 +85,14 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
   Future<void> _initializeData() async {
     await Future.wait([
-      _loadVenuesAndCourts(),
+      _loadCourts(),
       _loadCustomerBookings(),
     ]);
   }
 
-  Future<void> _loadVenuesAndCourts() async {
+  Future<void> _loadCourts() async {
     setState(() => _isLoadingCourts = true);
-    final venues = await _bookingService.fetchVenues();
-    final defaultVenue = venues.isNotEmpty ? venues.first : null;
-
-    final courts = await _bookingService.fetchActiveCourts(
-      venueId: defaultVenue?.id,
-    );
-
-    if (mounted) {
-      setState(() {
-        _venues = venues;
-        _selectedVenue = defaultVenue;
-        _courts = courts;
-        _selectedCourtIndex = 0;
-        _isLoadingCourts = false;
-      });
-      _loadCourtAvailability();
-    }
-  }
-
-  Future<void> _onVenueSelected(VenueModel venue) async {
-    setState(() {
-      _selectedVenue = venue;
-      _isLoadingCourts = true;
-    });
-
-    final courts = await _bookingService.fetchActiveCourts(venueId: venue.id);
+    final courts = await _bookingService.fetchActiveCourts();
 
     if (mounted) {
       setState(() {
@@ -120,13 +110,15 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     final now = DateTime.now();
 
     final upcoming = bookings.where((b) {
-      return b.endTime.isAfter(now) && b.status.toLowerCase() != 'cancelled';
+      return b.endTime.isAfter(now) &&
+          b.status != 'cancelled' &&
+          b.status != 'expired';
     }).toList(growable: false);
 
     final past = bookings.where((b) {
       return b.endTime.isBefore(now) ||
-          b.status.toLowerCase() == 'completed' ||
-          b.status.toLowerCase() == 'cancelled';
+          b.status == 'cancelled' ||
+          b.status == 'expired';
     }).toList(growable: false);
 
     if (mounted) {
@@ -182,16 +174,26 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     return _courts[_selectedCourtIndex];
   }
 
-  TimeOfDay get _selectedTime => _allStartTimes[_selectedTimeSlotIndex];
-  bool get _isSelectedSlotPeak => _currentCourt?.isPeakHour(_selectedTime.hour) ?? false;
-  double get _currentRate => _isSelectedSlotPeak
-      ? (_currentCourt?.peakHourlyRate ?? 180.0)
-      : (_currentCourt?.hourlyRate ?? 120.0);
-  double get _subtotal => _currentRate * _standardSlotDuration;
-  double get _totalAmount => _subtotal;
+  TimeOfDay get _selectedTime {
+    if (_selectedTimeSlotIndex >= _allStartTimes.length) {
+      return _allStartTimes.first;
+    }
+    return _allStartTimes[_selectedTimeSlotIndex];
+  }
+
+  double get _currentRate => _currentCourt?.hourlyRate ?? 300.0;
+
+  double get _totalAmount {
+    return BookingService.calculateTotalPrice(
+      hourlyRate: _currentRate,
+      durationHours: _selectedDurationHours,
+      paddleRental: _paddleRental,
+      ballThrowerRental: _ballThrowerRental,
+    );
+  }
 
   DateTime get _calculatedStartDateTime {
-    final time = _allStartTimes[_selectedTimeSlotIndex];
+    final time = _selectedTime;
     return DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -203,12 +205,19 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
   DateTime get _calculatedEndDateTime {
     final start = _calculatedStartDateTime;
-    final totalMinutes = (_standardSlotDuration * 60).round();
-    return start.add(Duration(minutes: totalMinutes));
+    return start.add(Duration(hours: _selectedDurationHours));
   }
 
-  bool _isSlotBooked(int slotIndex) {
+  bool _isSlotBooked(int slotIndex, [int? customDuration]) {
+    final dur = customDuration ?? _selectedDurationHours;
+    if (slotIndex >= _allStartTimes.length) return true;
     final time = _allStartTimes[slotIndex];
+
+    // Operating hours boundary: last slot cannot extend past 10:00 PM (hour 22)
+    if (time.hour + dur > 22) {
+      return true;
+    }
+
     final slotStart = DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -216,17 +225,20 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       time.hour,
       time.minute,
     );
-    final slotEnd = slotStart.add(
-      Duration(minutes: (_standardSlotDuration * 60).round()),
-    );
+    final slotEnd = slotStart.add(Duration(hours: dur));
 
     final now = DateTime.now();
-    if (slotEnd.isBefore(now)) {
+    final isToday = _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
+    if (isToday && slotStart.isBefore(now)) {
       return true;
     }
 
     for (final b in _bookedSlotsForCurrentDay) {
-      if (b.status.toLowerCase() == 'cancelled') continue;
+      if (b.status == 'cancelled' || b.status == 'expired') continue;
+      if (b.status == 'pending_payment' && b.isHoldExpired) continue;
+
       if (Validators.hasTimeOverlap(
         newStart: slotStart,
         newEnd: slotEnd,
@@ -239,58 +251,11 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     return false;
   }
 
-  bool _isSlotBookedForCourt(CourtModel court, int slotIndex) {
-    if (court.id == _currentCourt?.id) {
-      return _isSlotBooked(slotIndex);
-    }
-    final time = _allStartTimes[slotIndex];
-    final slotStart = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      time.hour,
-      time.minute,
-    );
-    final slotEnd = slotStart.add(
-      Duration(minutes: (_standardSlotDuration * 60).round()),
-    );
-
-    final now = DateTime.now();
-    if (slotEnd.isBefore(now)) {
-      return true;
-    }
-
-    final cached = _bookingService.getCachedAvailability(court.id, _selectedDate);
-    if (cached != null) {
-      for (final b in cached) {
-        if (b.status.toLowerCase() == 'cancelled') continue;
-        if (Validators.hasTimeOverlap(
-          newStart: slotStart,
-          newEnd: slotEnd,
-          existingStart: b.startTime,
-          existingEnd: b.endTime,
-        )) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   int _findFirstAvailableSlotIndex() {
-    int index = 0;
-    return _allStartTimes.indexWhere((_) => !_isSlotBooked(index++));
-  }
-
-  Future<void> _openVenuePicker() async {
-    final selected = await VenuePickerModal.show(
-      context,
-      venues: _venues,
-      selectedVenue: _selectedVenue,
-    );
-    if (selected != null) {
-      _onVenueSelected(selected);
+    for (int i = 0; i <= _allStartTimes.length - _selectedDurationHours; i++) {
+      if (!_isSlotBooked(i)) return i;
     }
+    return -1;
   }
 
   Future<void> _openDatePicker() async {
@@ -309,16 +274,16 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       context,
       availableTimes: _allStartTimes,
       initialTimeSlotIndex: _selectedTimeSlotIndex,
-      hourlyRate: _currentCourt?.hourlyRate ?? 120.0,
-      peakHourlyRate: _currentCourt?.peakHourlyRate ?? 180.0,
-      peakStartHour: _currentCourt?.peakStartHour ?? 17,
-      peakEndHour: _currentCourt?.peakEndHour ?? 22,
+      initialDuration: _selectedDurationHours.toDouble(),
+      hourlyRate: _currentRate,
+      peakHourlyRate: _currentRate,
       isSlotDisabled: (index) => _isSlotBooked(index),
     );
 
     if (sel != null) {
       setState(() {
         _selectedTimeSlotIndex = sel.timeSlotIndex;
+        _selectedDurationHours = sel.durationHours.round().clamp(1, 4);
       });
       _loadCourtAvailability();
     }
@@ -332,11 +297,12 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       MaterialPageRoute(
         builder: (_) => BookingReviewScreen(
           court: court,
-          venueName: _selectedVenue?.name ?? 'Barcelona Smash Club',
           startTime: _calculatedStartDateTime,
           endTime: _calculatedEndDateTime,
-          durationHours: _standardSlotDuration,
+          durationHours: _selectedDurationHours.toDouble(),
           totalAmount: _totalAmount,
+          paddleRental: _paddleRental,
+          ballThrowerRental: _ballThrowerRental,
           onViewBookings: () {
             _loadCustomerBookings();
             _loadCourtAvailability();
@@ -407,7 +373,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             Expanded(
               child: _buildModeTab(
                 index: 1,
-                label: 'My Reservations',
+                label: 'My Bookings',
                 icon: Icons.calendar_month_rounded,
                 badgeCount: _upcomingBookings.length,
               ),
@@ -451,72 +417,73 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 17,
-              color: isSelected ? colors.neonGreen : colors.textMuted,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                color: isSelected ? colors.textPrimary : colors.textMuted,
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            children: [
+              Icon(
+                icon,
+                size: 17,
+                color: isSelected ? colors.neonGreen : colors.textMuted,
               ),
-            ),
-            if (badgeCount != null && badgeCount > 0) ...[
               const SizedBox(width: 6),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: isSelected ? colors.neonLime : colors.surfaceHighlight,
-                  borderRadius: BorderRadius.circular(10),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: isSelected ? colors.textPrimary : colors.textMuted,
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 ),
-                child: Text(
-                  '$badgeCount',
-                  style: GoogleFonts.inter(
-                    color: isSelected ? Colors.black : colors.textSecondary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
+              ),
+              if (badgeCount != null && badgeCount > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color:
+                        isSelected ? colors.neonLime : colors.surfaceHighlight,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$badgeCount',
+                    style: GoogleFonts.inter(
+                      color: isSelected ? Colors.black : colors.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
-            ] else if (badgeText != null && isSelected) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: colors.neonLimeAlpha20,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  badgeText,
-                  style: GoogleFonts.inter(
-                    color: colors.neonLime,
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w700,
+              ] else if (badgeText != null && isSelected) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: colors.neonLimeAlpha20,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    badgeText,
+                    style: GoogleFonts.inter(
+                      color: colors.neonLime,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // ==========================================
-  // VIEW 1: RESERVE COURT (HERO 3-SELECTION HUB + VENUE OVERVIEW)
+  // VIEW 1: RESERVE COURT
   // ==========================================
   Widget _buildReserveCourtContent() {
     final colors = context.colors;
 
-    if (_isLoadingCourts && _venues.isEmpty) {
+    if (_isLoadingCourts && _courts.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(colors.neonGreen),
@@ -525,7 +492,6 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     }
 
     final isSlotAvailable = !_isSlotBooked(_selectedTimeSlotIndex);
-    final selectedTime = _allStartTimes[_selectedTimeSlotIndex];
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(
@@ -535,341 +501,69 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          QuickBookingCard(
-            selectedVenue: _selectedVenue,
-            selectedDate: _selectedDate,
-            selectedTime: selectedTime,
-            durationHours: _standardSlotDuration,
-            totalAmount: _totalAmount,
-            onSelectVenue: _openVenuePicker,
-            onSelectDate: _openDatePicker,
-            onSelectTimeAndPlayers: _openTimePicker,
-            onSearchOrBook: () {
-              if (isSlotAvailable) {
-                _navigateToReviewScreen();
-              } else {
-                _openTimePicker();
-              }
-            },
-            actionButtonText: isSlotAvailable
-                ? 'Reserve Court • ₱${_totalAmount.toStringAsFixed(0)}'
-                : 'Choose Available Time Slot',
-            isLoading: _isLoadingAvailability,
+          // 1. Court Selector (Clean Side-by-Side Placement for Court 1, Court 2)
+          _buildCourtPickerTabs(colors),
+          const SizedBox(height: 16),
+
+          // 2. Schedule Match Time with Integrated Duration & Interactive 16-Slot Grid
+          _buildScheduleAndMatchTimeCard(colors),
+          const SizedBox(height: 16),
+
+          // 3. Equipment Add-ons
+          _buildAddonsCard(colors),
+          const SizedBox(height: 20),
+
+          // 4. Checkout CTA Button
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isSlotAvailable
+                    ? colors.neonGreen
+                    : colors.surfaceHighlight,
+                foregroundColor: isSlotAvailable ? Colors.black : colors.textMuted,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: isSlotAvailable ? 4 : 0,
+              ),
+              onPressed: isSlotAvailable
+                  ? _navigateToReviewScreen
+                  : () => _openTimePicker(),
+              child: Text(
+                isSlotAvailable
+                    ? 'Reserve Court • ₱${_totalAmount.toStringAsFixed(0)}'
+                    : 'Choose Available Time Slot',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: 18),
-
-          // Horizontal Multi-Court Visual Timeline (Playtomic benchmark)
-          _buildMultiCourtVisualTimeline(colors),
-          const SizedBox(height: 18),
-
-          // Court specification & rate cards (Peak vs Off-Peak distinction)
-          _buildCourtSelectionCards(colors),
           const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _buildMultiCourtVisualTimeline(AppPalette colors) {
-    final displayCourts = _courts.isNotEmpty ? _courts : <CourtModel>[];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.borderSubtle),
-        boxShadow: colors.cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: Title and Live Indicator
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: colors.neonLime,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.neonLimeAlpha35,
-                          blurRadius: 6,
-                          spreadRadius: 1,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Multi-Court Visual Timeline',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: colors.textPrimary,
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                decoration: BoxDecoration(
-                  color: colors.neonGreenAlpha15,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  'LIVE LANES',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: colors.neonGreen,
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Timeline Heat Legend
-          Row(
-            children: [
-              _buildLegendPip(colors.neonGreen, 'Off-Peak (₱120)'),
-              const SizedBox(width: 12),
-              _buildLegendPip(colors.neonYellow, 'Peak 17-22h (₱180)'),
-              const SizedBox(width: 12),
-              _buildLegendPip(colors.textMuted, 'Booked'),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // Court Lanes
-          if (displayCourts.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'No courts available for selected venue.',
-                style: GoogleFonts.inter(color: colors.textMuted, fontSize: 12),
-              ),
-            )
-          else
-            ...List.generate(displayCourts.length, (courtIndex) {
-              final court = displayCourts[courtIndex];
-              final isCourtSelected = courtIndex == _selectedCourtIndex;
-              final courtLabel = 'Court ${courtIndex + 1}';
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Lane Header
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isCourtSelected
-                                ? colors.neonGreenAlpha20
-                                : colors.surfaceHighlight,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: isCourtSelected
-                                  ? colors.neonGreen
-                                  : colors.borderSubtle,
-                              width: isCourtSelected ? 1.2 : 0.8,
-                            ),
-                          ),
-                          child: Text(
-                            courtLabel,
-                            style: GoogleFonts.plusJakartaSans(
-                              color: isCourtSelected
-                                  ? colors.neonGreen
-                                  : colors.textSecondary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            court.name,
-                            style: GoogleFonts.inter(
-                              color: colors.textMuted,
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Text(
-                          '₱${court.hourlyRate.toStringAsFixed(0)} / ₱${court.peakHourlyRate.toStringAsFixed(0)}',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: colors.neonLime,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-
-                    // Horizontal Lane Time Slots Strip
-                    SizedBox(
-                      height: 64,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: _allStartTimes.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 6),
-                        itemBuilder: (context, slotIndex) {
-                          final time = _allStartTimes[slotIndex];
-                          final isBooked = _isSlotBookedForCourt(court, slotIndex);
-                          final isPeak = court.isPeakHour(time.hour);
-                          final isSlotActive = isCourtSelected && slotIndex == _selectedTimeSlotIndex;
-                          final formattedHour = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-                          final rate = isPeak ? court.peakHourlyRate : court.hourlyRate;
-
-                          Color slotBorderColor = isPeak ? colors.neonYellowAlpha28 : colors.neonGreenAlpha14;
-                          Color slotBgColor = isPeak ? colors.neonYellowAlpha14 : colors.neonGreenAlpha08;
-                          if (isBooked) {
-                            slotBorderColor = colors.borderSubtle;
-                            slotBgColor = colors.surfaceHighlight;
-                          } else if (isSlotActive) {
-                            slotBorderColor = colors.neonLime;
-                            slotBgColor = colors.neonLimeAlpha20;
-                          }
-
-                          return Semantics(
-                            button: !isBooked,
-                            label: '$courtLabel at $formattedHour, ${isBooked ? 'Booked' : (isPeak ? 'Peak ₱${rate.toStringAsFixed(0)}' : 'Off-Peak ₱${rate.toStringAsFixed(0)}')}',
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: isBooked
-                                  ? null
-                                  : () {
-                                      HapticFeedback.selectionClick();
-                                      setState(() {
-                                        _selectedCourtIndex = courtIndex;
-                                        _selectedTimeSlotIndex = slotIndex;
-                                      });
-                                      _loadCourtAvailability();
-                                    },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                width: 68,
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: slotBgColor,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: slotBorderColor,
-                                    width: isSlotActive ? 1.8 : 1.0,
-                                  ),
-                                  boxShadow: isSlotActive
-                                      ? [
-                                          BoxShadow(
-                                            color: colors.neonLimeAlpha35,
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        formattedHour,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          color: isBooked
-                                              ? colors.textMuted
-                                              : (isSlotActive ? colors.neonLime : colors.textPrimary),
-                                          fontSize: 11,
-                                          fontWeight: isSlotActive ? FontWeight.w800 : FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Container(
-                                        height: 2.5,
-                                        width: 24,
-                                        decoration: BoxDecoration(
-                                          color: isBooked
-                                              ? colors.borderSubtle
-                                              : (isPeak ? colors.neonYellow : colors.neonGreen),
-                                          borderRadius: BorderRadius.circular(2),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        isBooked ? 'BOOKED' : '₱${rate.toStringAsFixed(0)}',
-                                        style: GoogleFonts.inter(
-                                          color: isBooked
-                                              ? colors.textMuted
-                                              : (isPeak ? colors.neonYellow : colors.neonGreen),
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLegendPip(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
+  Widget _buildCourtPickerTabs(AppPalette colors) {
+    if (_courts.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.borderSubtle),
         ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            color: context.colors.textMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-          ),
+        child: Text(
+          'No active courts found.',
+          style: GoogleFonts.inter(color: colors.textMuted),
         ),
-      ],
-    );
-  }
-
-  Widget _buildCourtSelectionCards(AppPalette colors) {
-    if (_courts.isEmpty) return const SizedBox.shrink();
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -878,169 +572,567 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Championship Courts',
-              style: GoogleFonts.plusJakartaSans(
-                color: colors.textPrimary,
-                fontSize: 14.5,
+              'SELECT COURT',
+              style: GoogleFonts.inter(
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
-                letterSpacing: -0.2,
+                letterSpacing: 1.0,
+                color: colors.textMuted,
               ),
             ),
             Text(
-              '${_courts.length} Available',
+              '${_courts.length} Pro Courts Available',
               style: GoogleFonts.inter(
-                color: colors.textMuted,
-                fontSize: 11.5,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colors.neonGreen,
               ),
             ),
           ],
         ),
         const SizedBox(height: 10),
-        ...List.generate(_courts.length, (index) {
-          final court = _courts[index];
-          final isSelected = index == _selectedCourtIndex;
+        Row(
+          children: _courts.asMap().entries.map((entry) {
+            final index = entry.key;
+            final court = entry.value;
+            final isSel = _selectedCourtIndex == index;
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Semantics(
-              button: true,
-              selected: isSelected,
-              label: '${court.name}, Off-Peak ₱${court.hourlyRate.toStringAsFixed(0)}, Peak ₱${court.peakHourlyRate.toStringAsFixed(0)}',
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedCourtIndex = index);
-                  _loadCourtAvailability();
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isSelected ? colors.surfaceElevated : colors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected ? colors.neonGreen : colors.borderSubtle,
-                      width: isSelected ? 1.8 : 1.0,
-                    ),
-                    boxShadow: isSelected ? colors.cardShadow : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: isSelected ? colors.neonGreenAlpha15 : colors.surfaceHighlight,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isSelected ? colors.neonGreenAlpha40 : colors.borderSubtle,
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.sports_tennis_rounded,
-                          color: isSelected ? colors.neonGreen : colors.textSecondary,
-                          size: 20,
-                        ),
+            // Extract display names
+            String displayName = court.name;
+            String surfaceName = court.type.toUpperCase();
+            if (court.name.contains('—')) {
+              final parts = court.name.split('—');
+              displayName = parts.first.trim();
+              surfaceName = parts.last.replaceAll('(', '').replaceAll(')', '').trim();
+            } else if (court.name.contains('-')) {
+              final parts = court.name.split('-');
+              displayName = parts.first.trim();
+              surfaceName = parts.last.replaceAll('(', '').replaceAll(')', '').trim();
+            }
+
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: index < _courts.length - 1 ? 6 : 0,
+                  left: index > 0 ? 6 : 0,
+                ),
+                child: TapCollapse(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedCourtIndex = index);
+                    _loadCourtAvailability();
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSel ? colors.neonGreenAlpha15 : colors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isSel ? colors.neonGreen : colors.borderSubtle,
+                        width: isSel ? 2.0 : 1.0,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      boxShadow: isSel
+                          ? [
+                              BoxShadow(
+                                color: colors.neonGreenAlpha20,
+                                blurRadius: 12,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    court.name,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      color: colors.textPrimary,
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 7, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: isSel
+                                    ? colors.neonGreen
+                                    : colors.surfaceHighlight,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                court.type.toUpperCase(),
+                                style: GoogleFonts.inter(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  color: isSel ? Colors.black : colors.textMuted,
                                 ),
-                                if (isSelected)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: colors.neonGreenAlpha15,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      'SELECTED',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        color: colors.neonGreen,
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              court.surfaceType ?? 'Pro-Cushion Hardcourt',
-                              style: GoogleFonts.inter(
-                                color: colors.textMuted,
-                                fontSize: 11,
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                  decoration: BoxDecoration(
-                                    color: colors.neonGreenAlpha10,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: colors.neonGreenAlpha22, width: 0.8),
-                                  ),
-                                  child: Text(
-                                    'Off-Peak: ₱${court.hourlyRate.toStringAsFixed(0)}/hr',
-                                    style: GoogleFonts.inter(
-                                      color: colors.neonGreen,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                                  decoration: BoxDecoration(
-                                    color: colors.neonYellowAlpha14,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: colors.neonYellowAlpha28, width: 0.8),
-                                  ),
-                                  child: Text(
-                                    'Peak: ₱${court.peakHourlyRate.toStringAsFixed(0)}/hr',
-                                    style: GoogleFonts.inter(
-                                      color: colors.neonYellow,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              '₱${court.hourlyRate.toStringAsFixed(0)}/hr',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: isSel
+                                    ? colors.neonLime
+                                    : colors.textSecondary,
+                              ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          displayName,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          surfaceName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isSel ? colors.neonGreen : colors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScheduleAndMatchTimeCard(AppPalette colors) {
+    final dateFormat = DateFormat('EEE, MMM d, y');
+    final timeFormat = DateFormat('h:mm a');
+    final time = _selectedTime;
+    final startDt = DateTime(2026, 1, 1, time.hour, time.minute);
+    final endDt = startDt.add(Duration(hours: _selectedDurationHours));
+    final isSlotAvailable = !_isSlotBooked(_selectedTimeSlotIndex);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Header with Court Subtext & Quick Modal Trigger
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'SCHEDULE MATCH TIME',
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: colors.textMuted,
+                    ),
+                  ),
+                  if (_isLoadingAvailability) ...[
+                    const SizedBox(width: 6),
+                    SizedBox(
+                      width: 11,
+                      height: 11,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.8,
+                        valueColor: AlwaysStoppedAnimation<Color>(colors.neonGreen),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              InkWell(
+                onTap: _openTimePicker,
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tune_rounded, size: 12, color: colors.neonGreen),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Time Picker',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: colors.neonGreen,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // 2. Compact Date Selector Bar
+          Container(
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: colors.surfaceHighlight,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: colors.borderSubtle),
             ),
-          );
-        }),
-      ],
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      final prevDay = _selectedDate.subtract(const Duration(days: 1));
+                      final today = DateTime.now();
+                      if (prevDay.isAfter(today.subtract(const Duration(days: 1)))) {
+                        HapticFeedback.selectionClick();
+                        setState(() => _selectedDate = prevDay);
+                        _loadCourtAvailability();
+                      }
+                    },
+                    icon: Icon(Icons.chevron_left_rounded,
+                        size: 18, color: colors.textSecondary),
+                    tooltip: 'Previous Day',
+                  ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: _openDatePicker,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_today_rounded,
+                              size: 13, color: colors.neonGreen),
+                          const SizedBox(width: 6),
+                          Text(
+                            dateFormat.format(_selectedDate),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.arrow_drop_down_rounded,
+                              size: 16, color: colors.textMuted),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _selectedDate = _selectedDate.add(const Duration(days: 1));
+                      });
+                      _loadCourtAvailability();
+                    },
+                    icon: Icon(Icons.chevron_right_rounded,
+                        size: 18, color: colors.textSecondary),
+                    tooltip: 'Next Day',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // 3. Compact Match Duration Row
+          Row(
+            children: [
+              Text(
+                'Duration:',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: colors.textMuted,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Row(
+                  children: [1, 2, 3, 4].map((hrs) {
+                    final isSel = _selectedDurationHours == hrs;
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        child: TapCollapse(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedDurationHours = hrs);
+                            _loadCourtAvailability();
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            height: 28,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isSel ? colors.neonGreen : colors.surfaceHighlight,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSel ? colors.neonGreen : colors.borderSubtle,
+                                width: isSel ? 1.4 : 1.0,
+                              ),
+                            ),
+                            child: Text(
+                              '${hrs}h',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                color: isSel ? Colors.black : colors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // 4. Perfectly Aligned Compact 4x4 Grid (16 Slots)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _allStartTimes.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: 4.5,
+              crossAxisSpacing: 4.5,
+              childAspectRatio: 2.35,
+            ),
+            itemBuilder: (context, idx) {
+              final slotTime = _allStartTimes[idx];
+              final isBooked = _isSlotBooked(idx);
+              final isSel = _selectedTimeSlotIndex == idx;
+
+              Color bg = colors.surfaceHighlight;
+              Color border = colors.borderSubtle;
+              Color textCol = colors.textPrimary;
+
+              if (isBooked) {
+                bg = colors.borderSubtleAlpha50;
+                border = Colors.transparent;
+                textCol = colors.textMuted;
+              } else if (isSel) {
+                bg = colors.neonGreen;
+                border = colors.neonGreen;
+                textCol = Colors.black;
+              }
+
+              final slotDt = DateTime(2026, 1, 1, slotTime.hour, slotTime.minute);
+              final formattedTime = timeFormat.format(slotDt);
+
+              return Semantics(
+                button: true,
+                selected: isSel,
+                enabled: !isBooked,
+                label: '$formattedTime${isBooked ? ", Booked" : ""}',
+                child: TapCollapse(
+                  onTap: isBooked
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedTimeSlotIndex = idx);
+                        },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 140),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: border, width: isSel ? 1.4 : 1.0),
+                      boxShadow: (isSel && !isBooked)
+                          ? [
+                              BoxShadow(
+                                color: colors.neonGreenAlpha20,
+                                blurRadius: 6,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Text(
+                      formattedTime,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                        letterSpacing: -0.3,
+                        color: textCol,
+                        decoration: isBooked ? TextDecoration.lineThrough : null,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+
+          // 5. Slim Selected Slot Summary Strip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: isSlotAvailable
+                  ? colors.neonGreenAlpha15
+                  : Colors.red.withAlpha(25),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSlotAvailable
+                    ? colors.neonGreenAlpha50
+                    : Colors.red.withAlpha(80),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isSlotAvailable
+                          ? Icons.check_circle_rounded
+                          : Icons.cancel_rounded,
+                      size: 14,
+                      color: isSlotAvailable ? colors.neonGreen : Colors.redAccent,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${timeFormat.format(startDt)} – ${timeFormat.format(endDt)} (${_selectedDurationHours}h)',
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  isSlotAvailable
+                      ? '₱${(_currentRate * _selectedDurationHours).toStringAsFixed(0)}'
+                      : 'UNAVAILABLE',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: isSlotAvailable ? colors.neonLime : Colors.redAccent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddonsCard(AppPalette colors) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'EQUIPMENT RENTAL ADD-ONS',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+              color: colors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Rental Add-on Switches inside Material
+          Material(
+            color: Colors.transparent,
+            child: Column(
+              children: [
+                // Paddle bundle switch
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  activeThumbColor: colors.neonGreen,
+                  title: Text(
+                    'Pro Carbon Paddle Bundle (+₱150)',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Includes 2× Pro Paddles + 3× Match Pickleballs (flat fee)',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: colors.textMuted,
+                    ),
+                  ),
+                  value: _paddleRental,
+                  onChanged: (v) => setState(() => _paddleRental = v),
+                ),
+
+                // Ball thrower machine switch
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  activeThumbColor: colors.neonGreen,
+                  title: Text(
+                    'Ball Thrower Machine (+₱150/hr)',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Automated training ball machine for the duration of match',
+                    style: GoogleFonts.inter(
+                      fontSize: 11.5,
+                      color: colors.textMuted,
+                    ),
+                  ),
+                  value: _ballThrowerRental,
+                  onChanged: (v) => setState(() => _ballThrowerRental = v),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   // ==========================================
-  // VIEW 2: MY RESERVATIONS CONTENT
+  // VIEW 2: MY BOOKINGS
   // ==========================================
   Widget _buildMyReservationsContent() {
     final colors = context.colors;
@@ -1058,154 +1150,95 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
     return Column(
       children: [
-        // Sub-filter tabs (Upcoming vs Past)
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              _buildSubFilterTab(0, 'Upcoming (${_upcomingBookings.length})'),
+              Expanded(
+                child: _buildSubTab(
+                  index: 0,
+                  label: 'Upcoming (${_upcomingBookings.length})',
+                  colors: colors,
+                ),
+              ),
               const SizedBox(width: 8),
-              _buildSubFilterTab(1, 'Past History (${_pastBookings.length})'),
+              Expanded(
+                child: _buildSubTab(
+                  index: 1,
+                  label: 'Past / Cancelled (${_pastBookings.length})',
+                  colors: colors,
+                ),
+              ),
             ],
           ),
         ),
-
         Expanded(
           child: bookings.isEmpty
-              ? _buildEmptyBookingsView()
-              : RefreshIndicator(
-                  color: colors.neonGreen,
-                  onRefresh: _loadCustomerBookings,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-                    itemCount: bookings.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      return ReservationCard(
-                        booking: bookings[index],
-                        isUpcoming: _myReservationsFilterIndex == 0,
-                        onRefresh: _loadCustomerBookings,
-                      );
-                    },
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.calendar_month_outlined,
+                          size: 48, color: colors.textMuted),
+                      const SizedBox(height: 12),
+                      Text(
+                        _myReservationsFilterIndex == 0
+                            ? 'No upcoming court reservations'
+                            : 'No past booking records',
+                        style: GoogleFonts.inter(
+                          color: colors.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
+                )
+              : ListView.separated(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  itemCount: bookings.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final b = bookings[index];
+                    return ReservationCard(
+                      booking: b,
+                      isUpcoming: _myReservationsFilterIndex == 0,
+                      onRefresh: _loadCustomerBookings,
+                    );
+                  },
                 ),
         ),
       ],
     );
   }
 
-  Widget _buildSubFilterTab(int index, String label) {
-    final colors = context.colors;
+  Widget _buildSubTab({
+    required int index,
+    required String label,
+    required AppPalette colors,
+  }) {
     final isSelected = _myReservationsFilterIndex == index;
-
-    return Expanded(
-      child: Semantics(
-        button: true,
-        selected: isSelected,
-        label: label,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _myReservationsFilterIndex = index);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            constraints: const BoxConstraints(minHeight: 48),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? colors.neonGreenAlpha20
-                  : colors.surfaceElevated,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? colors.neonGreen : colors.borderSubtle,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                label,
-                style: GoogleFonts.inter(
-                  color: isSelected ? colors.textPrimary : colors.textMuted,
-                  fontSize: 12.5,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ),
+    return InkWell(
+      onTap: () => setState(() => _myReservationsFilterIndex = index),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? colors.neonGreenAlpha15 : colors.surfaceElevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? colors.neonGreen : colors.borderSubtle,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyBookingsView() {
-    final colors = context.colors;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: colors.surfaceElevated,
-                shape: BoxShape.circle,
-                border: Border.all(color: colors.borderSubtle),
-              ),
-              child: Icon(
-                Icons.calendar_today_rounded,
-                color: colors.textMuted,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _myReservationsFilterIndex == 0
-                  ? 'No Upcoming Reservations'
-                  : 'No Past Match History',
-              style: GoogleFonts.inter(
-                color: colors.textPrimary,
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _myReservationsFilterIndex == 0
-                  ? 'Book your next luxury championship court session using the booking hub.'
-                  : 'Your completed bookings will show up here for performance review.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                color: colors.textMuted,
-                fontSize: 13,
-              ),
-            ),
-            if (_myReservationsFilterIndex == 0) ...[
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => setState(() => _activeModeIndex = 0),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.neonGreen,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                ),
-                child: const Text('Reserve a Court Now'),
-              ),
-            ],
-          ],
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? colors.neonGreen : colors.textMuted,
+          ),
         ),
       ),
     );
