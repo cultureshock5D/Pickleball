@@ -50,41 +50,6 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
         bottom: false,
         child: Row(
           children: [
-            // Left Action Icon (+)
-            Semantics(
-              button: true,
-              label: 'Quick add reservation',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  onQuickAddPressed?.call();
-                },
-                child: Container(
-                  constraints: const BoxConstraints(
-                    minWidth: 48,
-                    minHeight: 48,
-                  ),
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: colors.surfaceElevated,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colors.borderSubtle),
-                    ),
-                    child: Icon(
-                      Icons.add_rounded,
-                      color: colors.textPrimary,
-                      size: 22,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-
             // Header Title / Subtitle
             Expanded(
               child: Column(
