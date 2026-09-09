@@ -53,6 +53,10 @@ class AppSnackBar {
     show(context, message: message);
   }
 
+  static void info(BuildContext context, String message) {
+    show(context, message: message, icon: Icons.info_outline_rounded);
+  }
+
   static void error(BuildContext context, String message) {
     show(context, message: message, isError: true);
   }

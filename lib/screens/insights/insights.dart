@@ -793,33 +793,40 @@ class _InsightsScreenState extends State<InsightsScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: colors.neonLimeAlpha15,
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: colors.neonLimeAlpha15,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.military_tech_rounded,
+                        color: colors.neonLime,
+                        size: 14,
+                      ),
                     ),
-                    child: Icon(
-                      Icons.military_tech_rounded,
-                      color: colors.neonLime,
-                      size: 14,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'PLAYER TELEMETRY & DUPR',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: colors.textMuted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'PLAYER TELEMETRY & DUPR',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: colors.textMuted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 8,
@@ -843,32 +850,40 @@ class _InsightsScreenState extends State<InsightsScreen>
           ),
           const SizedBox(height: 12),
 
-          // Rating Hero & Delta
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+          // Rating Hero & Delta (Using Wrap to prevent any mobile viewport overlap)
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              Text(
-                'DUPR $ratingStr',
-                style: GoogleFonts.plusJakartaSans(
-                  color: colors.textPrimary,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    'DUPR $ratingStr',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: colors.textPrimary,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '/ 5.0',
+                    style: GoogleFonts.inter(
+                      color: colors.textMuted,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 6),
-              Text(
-                '/ 5.0',
-                style: GoogleFonts.inter(
-                  color: colors.textMuted,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                 decoration: BoxDecoration(
                   color: colors.neonGreenAlpha15,
                   borderRadius: BorderRadius.circular(6),

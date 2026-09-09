@@ -373,7 +373,7 @@ class BookingService {
         'total_price': totalAmount,
         'total_amount': totalAmount,
         'currency': 'PHP',
-        'status': 'paid',
+        'status': 'pending_payment',
         'payment_method': 'paymongo',
         if (notes != null) 'notes': notes,
         'created_at': DateTime.now().toUtc().toIso8601String(),
@@ -387,6 +387,14 @@ class BookingService {
 
       invalidateAvailabilityCache(courtId: courtId, date: startTime);
       return BookingModel.fromJson(response);
+    } on PostgrestException catch (pe) {
+      debugPrint('PostgrestException creating booking: ${pe.message} (${pe.code})');
+      if (pe.code == '42501') {
+        throw const AuthException(
+          'Booking authorization restricted. Please ensure you are logged in.',
+        );
+      }
+      throw Exception('Booking failed: ${pe.message}');
     } catch (e) {
       debugPrint('Error creating booking via Supabase: $e');
       rethrow;

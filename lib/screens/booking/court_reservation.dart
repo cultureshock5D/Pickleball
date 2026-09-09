@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
 import '../../models/booking_model.dart';
 import '../../models/court_model.dart';
@@ -289,6 +290,19 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       setState(() => _selectedDate = selected);
       _loadCourtAvailability();
     }
+  }
+
+  void _resetBooking() {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _selectedDate = DateTime.now();
+      _selectedCourtIndex = 0;
+      _selectedSlotIndices = {2};
+      _paddleRental = false;
+      _ballThrowerRental = false;
+    });
+    _loadCourtAvailability();
+    AppSnackBar.info(context, 'Booking selection reset.');
   }
 
   Future<void> _openTimePicker() async {
@@ -769,21 +783,21 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                 ],
               ),
               InkWell(
-                onTap: _openTimePicker,
+                onTap: _resetBooking,
                 borderRadius: BorderRadius.circular(6),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.tune_rounded, size: 12, color: colors.textPrimary),
+                      Icon(Icons.restart_alt_rounded, size: 13, color: colors.textSecondary),
                       const SizedBox(width: 3),
                       Text(
-                        'Time Picker',
+                        'Reset Booking',
                         style: GoogleFonts.inter(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
-                          color: colors.textPrimary,
+                          color: colors.textSecondary,
                         ),
                       ),
                     ],
