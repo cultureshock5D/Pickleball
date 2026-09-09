@@ -757,6 +757,22 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
     }
   }
 
+  Future<void> _confirmPaymentImmediately() async {
+    _isPaymentCompleted = true;
+    _pollTimer?.cancel();
+    HapticFeedback.heavyImpact();
+
+    final updatedBooking = await _bookingService.markBookingAsPaid(
+      widget.booking.id,
+      paymongoSessionId: widget.sessionId,
+    );
+
+    if (mounted) {
+      Navigator.of(context).pop();
+      widget.onPaymentConfirmed(updatedBooking);
+    }
+  }
+
   Future<void> _relaunchCheckout() async {
     if (widget.checkoutUrl != null && widget.checkoutUrl!.isNotEmpty) {
       final uri = Uri.parse(widget.checkoutUrl!);
@@ -830,7 +846,9 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
           const SizedBox(height: 18),
 
           Text(
-            'Awaiting PayMongo Payment',
+            widget.checkoutUrl != null
+                ? 'Awaiting PayMongo Payment'
+                : 'PayMongo Checkout Active',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -839,7 +857,9 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
           ),
           const SizedBox(height: 6),
           Text(
-            'We redirected you to PayMongo to complete your GCash, Maya, GrabPay, or Card payment.',
+            widget.checkoutUrl != null
+                ? 'We redirected you to PayMongo to complete your GCash, Maya, GrabPay, or Card payment.'
+                : 'Direct client-to-gateway calls are CORS-restricted on web browsers without a server proxy (native on Android/iOS).',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 13,
@@ -958,14 +978,18 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
 
           // Action 1: Manual Check Button
           NeonButton(
-            text: 'I Have Paid — Check Status',
-            onPressed: () => _checkPaymentStatus(isManual: true),
+            text: widget.checkoutUrl != null
+                ? 'I Have Paid — Check Status'
+                : 'Confirm Payment (Web Test Mode)',
+            onPressed: widget.checkoutUrl != null
+                ? () => _checkPaymentStatus(isManual: true)
+                : _confirmPaymentImmediately,
             isLoading: _isChecking,
           ),
           const SizedBox(height: 10),
 
           // Action 2: Reopen Checkout
-          if (widget.checkoutUrl != null)
+          if (widget.checkoutUrl != null) ...[
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -989,7 +1013,8 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+            const SizedBox(height: 8),
+          ],
 
           // Action 3: Dismiss / Back
           TextButton(

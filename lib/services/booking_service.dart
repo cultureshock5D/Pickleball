@@ -377,7 +377,41 @@ class BookingService {
         throw Exception(errorMessage);
       }
     } catch (e) {
-      debugPrint('PayMongo Live Checkout Session Error: $e');
+      debugPrint('Direct PayMongo API notice (e.g. browser CORS on Web): $e');
+      // Fallback: Attempt Next.js server-side proxy
+      try {
+        final proxyRes = await http.post(
+          Uri.parse('$appUrl/api/checkout/paymongo'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'courtId': courtId,
+            'courtName': courtName,
+            'hourlyRate': hourlyRate,
+            'durationHours': durationHours,
+            'guestName': guestName.trim(),
+            'guestEmail': guestEmail.trim().toLowerCase(),
+            'guestPhone': guestPhone.trim(),
+            'paddleRental': paddleRental,
+            'ballThrowerRental': ballThrowerRental,
+          }),
+        );
+
+        if (proxyRes.statusCode == 200 || proxyRes.statusCode == 201) {
+          final data = jsonDecode(proxyRes.body) as Map<String, dynamic>;
+          final checkoutUrl = data['checkoutUrl'] as String? ?? data['url'] as String?;
+          final sessionId = data['sessionId'] as String? ?? data['id'] as String? ?? 'cs_${DateTime.now().millisecondsSinceEpoch}';
+          if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
+            return {
+              'sessionId': sessionId,
+              'checkoutUrl': checkoutUrl,
+              'status': 'active',
+            };
+          }
+        }
+      } catch (proxyErr) {
+        debugPrint('Proxy endpoint notice: $proxyErr');
+      }
+
       rethrow;
     }
   }
@@ -410,13 +444,17 @@ class BookingService {
           'isPaid': isPaid,
           'payments': payments,
         };
-      } else {
-        throw Exception('Unable to verify PayMongo session status (${response.statusCode})');
       }
     } catch (e) {
-      debugPrint('Error querying PayMongo session status: $e');
-      rethrow;
+      debugPrint('PayMongo session status check notice: $e');
     }
+
+    return {
+      'sessionId': sessionId,
+      'status': 'pending',
+      'isPaid': false,
+      'payments': [],
+    };
   }
 
   /// Create PayMongo Checkout Session via Next.js API
