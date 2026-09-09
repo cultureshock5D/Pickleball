@@ -57,6 +57,30 @@ class AuthService {
   /// Whether a valid session exists
   bool get isAuthenticated => currentSession != null;
 
+  Never _handleAuthError(dynamic e) {
+    final str = e.toString();
+    if (str.contains('SocketException') ||
+        str.contains('Failed host lookup') ||
+        str.contains('ClientException') ||
+        str.contains('errno = 7')) {
+      throw const AuthException(
+        'Unable to reach server. Please check your internet connection.',
+      );
+    }
+    if (e is AuthException) {
+      if (e.message.contains('SocketException') ||
+          e.message.contains('Failed host lookup') ||
+          e.message.contains('ClientException') ||
+          e.message.contains('errno = 7')) {
+        throw const AuthException(
+          'Unable to reach server. Please check your internet connection.',
+        );
+      }
+      throw e;
+    }
+    throw AuthException('Authentication error: ${str.replaceFirst(RegExp(r'^Exception:\s*'), '')}');
+  }
+
   /// Sign in with email and password
   Future<AuthResponse> signIn({
     required String email,
@@ -74,10 +98,8 @@ class AuthService {
         password: password,
       );
       return response;
-    } on AuthException {
-      rethrow;
     } catch (e) {
-      throw AuthException('An unexpected error occurred during sign in: $e');
+      _handleAuthError(e);
     }
   }
 
@@ -122,10 +144,8 @@ class AuthService {
       }
 
       return response;
-    } on AuthException {
-      rethrow;
     } catch (e) {
-      throw AuthException('Sign up failed: $e');
+      _handleAuthError(e);
     }
   }
 
