@@ -6,6 +6,7 @@ import '../../widgets/brand_logo_painter.dart';
 import '../../widgets/court_visualizer.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/tap_collapse.dart';
+import 'rates_and_spec_screen.dart';
 
 class LandingHomeScreen extends StatefulWidget {
   final VoidCallback onBookCourtPressed;
@@ -62,70 +63,12 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
                 color: colors.surface,
                 border: Border(bottom: BorderSide(color: colors.border)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: const Row(
                 children: [
-                  const BrandLogoWidget(
+                  BrandLogoWidget(
                     size: 32,
                     showText: true,
                     withSubtitle: true,
-                  ),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.courtSuccess.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(9999),
-                          border: Border.all(
-                            color: AppColors.courtSuccess.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: AppColors.courtSuccess,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'Courts 1 & 2 Open',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.courtSuccess,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      TapCollapse(
-                        onTap: widget.onBookCourtPressed,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: colors.textPrimary,
-                            borderRadius: BorderRadius.circular(9999),
-                          ),
-                          child: Text(
-                            'Book Court',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: colors.background,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -231,7 +174,13 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
                             Expanded(
                               child: TapCollapse(
                                 onTap: () {
-                                  // Scroll or trigger guidelines
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => RatesAndSpecScreen(
+                                        onBookCourtPressed: widget.onBookCourtPressed,
+                                      ),
+                                    ),
+                                  );
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(vertical: 13),
