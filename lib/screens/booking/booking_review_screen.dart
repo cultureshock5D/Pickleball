@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,7 +11,6 @@ import '../../models/booking_model.dart';
 import '../../models/court_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
-import '../../services/calendar_link_service.dart';
 import '../../widgets/booking_success_modal.dart';
 import '../../widgets/neon_button.dart';
 
@@ -53,7 +53,6 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   final TextEditingController _phoneController = TextEditingController();
 
   bool _isSubmitting = false;
-  bool _autoLaunchCalendar = true;
   int _selectedPaymentMethodIndex = 0;
 
   final List<Map<String, dynamic>> _paymentMethods = [
@@ -141,42 +140,42 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      BookingModel? booking;
+      // 1. Create PayMongo Live Checkout Session directly
+      String? sessionId;
+      String? checkoutUrl;
 
-      // 1. Try server-side PayMongo checkout creation
+      final methodMap = {
+        0: ['gcash'],
+        1: ['paymaya'],
+        2: ['grab_pay'],
+        3: ['card'],
+        4: ['gcash', 'paymaya', 'card'],
+      };
+      final selectedMethods = methodMap[_selectedPaymentMethodIndex] ??
+          ['gcash', 'paymaya', 'grab_pay', 'card'];
+
       try {
-        final checkoutData = await _bookingService.createPayMongoCheckout(
+        final checkoutData = await _bookingService.createPayMongoCheckoutSession(
           courtId: widget.court.id,
-          date: widget.startTime,
-          hour24: widget.startTime.hour,
+          courtName: widget.court.name,
+          hourlyRate: widget.court.hourlyRate,
           durationHours: widget.durationHours.round(),
           guestName: name,
           guestEmail: email,
           guestPhone: phone,
           paddleRental: widget.paddleRental,
           ballThrowerRental: widget.ballThrowerRental,
+          selectedPaymentMethods: selectedMethods,
         );
 
-        final checkoutUrl = checkoutData['checkoutUrl'] as String?;
-        final bookingId = checkoutData['bookingId'] as String?;
-
-        if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
-          final uri = Uri.parse(checkoutUrl);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
-
-          if (bookingId != null) {
-            // Poll for payment confirmation
-            booking = await _bookingService.pollBookingPaidStatus(bookingId, maxAttempts: 5);
-          }
-        }
+        sessionId = checkoutData['sessionId'] as String?;
+        checkoutUrl = checkoutData['checkoutUrl'] as String?;
       } catch (e) {
-        debugPrint('PayMongo API note: $e, executing direct booking fallback');
+        debugPrint('PayMongo Live Checkout API Notice: $e');
       }
 
-      // 2. Direct fallback booking if server-side checkout not configured
-      booking ??= await _bookingService.createBooking(
+      // 2. Create pending booking in Supabase
+      final booking = await _bookingService.createBooking(
         courtId: widget.court.id,
         startTime: widget.startTime,
         endTime: widget.endTime,
@@ -184,28 +183,46 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
         guestName: name,
         guestEmail: email,
         guestPhone: phone,
+        paymongoCheckoutSessionId: sessionId,
         notes: [
           if (widget.paddleRental) 'Paddle Rental (2x Paddles, 3x Balls)',
           if (widget.ballThrowerRental) 'Ball Thrower Machine',
         ].join(', '),
       );
 
-      if (mounted) {
-        if (_autoLaunchCalendar) {
-          CalendarLinkService.addBookingToCalendar(
-            booking,
-            context: context,
-            venueName: widget.venueName,
-          );
+      // 3. Launch PayMongo Checkout URL in external browser first
+      if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
+        final uri = Uri.parse(checkoutUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
         }
+      }
 
-        Navigator.of(context).pop();
-
-        BookingSuccessModal.show(
-          context,
-          booking: booking,
-          onViewBookings: widget.onViewBookings,
-          venueName: widget.venueName,
+      if (mounted) {
+        // 4. Show Awaiting Payment Modal bottom sheet
+        showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          isDismissible: false,
+          enableDrag: false,
+          backgroundColor: Colors.transparent,
+          barrierColor: Colors.black54,
+          builder: (ctx) => _AwaitingPaymentModal(
+            booking: booking,
+            sessionId: sessionId,
+            checkoutUrl: checkoutUrl,
+            venueName: widget.venueName,
+            onViewBookings: widget.onViewBookings,
+            onPaymentConfirmed: (paidBooking) {
+              Navigator.of(context).pop(); // pop ReviewScreen
+              BookingSuccessModal.show(
+                context,
+                booking: paidBooking,
+                onViewBookings: widget.onViewBookings,
+                venueName: widget.venueName,
+              );
+            },
+          ),
         );
       }
     } catch (e) {
@@ -589,49 +606,9 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-
-            // 5. 1-Tap Calendar Sync Toggle
-            Container(
-              decoration: BoxDecoration(
-                color: colors.surfaceElevated,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: colors.borderSubtle),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    activeThumbColor: colors.textPrimary,
-                    activeTrackColor: colors.textPrimary.withValues(alpha: 0.38),
-                    title: Text(
-                      '1-Tap Auto-Sync Calendar',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Add event to Google / Apple / Outlook calendar on booking',
-                      style: GoogleFonts.inter(
-                        fontSize: 11.5,
-                        color: colors.textMuted,
-                      ),
-                    ),
-                    value: _autoLaunchCalendar,
-                    onChanged: (v) => setState(() => _autoLaunchCalendar = v),
-                  ),
-                ),
-              ),
-            ),
             const SizedBox(height: 24),
 
-            // 6. Confirm & Lock Button
+            // 5. Confirm & Lock Button
             NeonButton(
               text: 'Confirm & Pay via PayMongo',
               onPressed: _handleConfirmBooking,
@@ -675,3 +652,362 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
     );
   }
 }
+
+class _AwaitingPaymentModal extends StatefulWidget {
+  final BookingModel booking;
+  final String? sessionId;
+  final String? checkoutUrl;
+  final String venueName;
+  final VoidCallback? onViewBookings;
+  final ValueChanged<BookingModel> onPaymentConfirmed;
+
+  const _AwaitingPaymentModal({
+    required this.booking,
+    this.sessionId,
+    this.checkoutUrl,
+    required this.venueName,
+    this.onViewBookings,
+    required this.onPaymentConfirmed,
+  });
+
+  @override
+  State<_AwaitingPaymentModal> createState() => _AwaitingPaymentModalState();
+}
+
+class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
+  final BookingService _bookingService = BookingService.instance;
+  Timer? _pollTimer;
+  bool _isChecking = false;
+  bool _isPaymentCompleted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Poll every 2.5 seconds for payment reflection
+    _pollTimer = Timer.periodic(
+      const Duration(milliseconds: 2500),
+      (_) => _checkPaymentStatus(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _checkPaymentStatus({bool isManual = false}) async {
+    if (_isPaymentCompleted) return;
+    if (_isChecking) return;
+
+    if (mounted && isManual) {
+      setState(() => _isChecking = true);
+    }
+
+    try {
+      bool isPaid = false;
+
+      // 1. Direct PayMongo REST API check
+      if (widget.sessionId != null && widget.sessionId!.isNotEmpty) {
+        try {
+          final res = await _bookingService.getPayMongoSessionStatus(widget.sessionId!);
+          if (res['isPaid'] == true || res['status'] == 'paid') {
+            isPaid = true;
+          }
+        } catch (e) {
+          debugPrint('Status check error: $e');
+        }
+      }
+
+      // 2. Also check Supabase booking record
+      if (!isPaid) {
+        final polled = await _bookingService.pollBookingPaidStatus(
+          widget.booking.id,
+          maxAttempts: 1,
+        );
+        if (polled != null && (polled.isPaid || polled.isCheckedIn)) {
+          isPaid = true;
+        }
+      }
+
+      if (isPaid && mounted) {
+        _isPaymentCompleted = true;
+        _pollTimer?.cancel();
+        HapticFeedback.heavyImpact();
+
+        final updatedBooking = await _bookingService.markBookingAsPaid(
+          widget.booking.id,
+          paymongoSessionId: widget.sessionId,
+        );
+
+        if (mounted) {
+          Navigator.of(context).pop(); // pop this modal sheet
+          widget.onPaymentConfirmed(updatedBooking);
+        }
+      } else if (isManual && mounted) {
+        AppSnackBar.info(
+          context,
+          'Payment not yet received. Please complete checkout on the PayMongo page.',
+        );
+      }
+    } finally {
+      if (mounted && isManual) {
+        setState(() => _isChecking = false);
+      }
+    }
+  }
+
+  Future<void> _relaunchCheckout() async {
+    if (widget.checkoutUrl != null && widget.checkoutUrl!.isNotEmpty) {
+      final uri = Uri.parse(widget.checkoutUrl!);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } else {
+      AppSnackBar.info(context, 'No active checkout URL found.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Container(
+      padding: EdgeInsets.only(
+        top: 20,
+        left: 20,
+        right: 20,
+        bottom: MediaQuery.paddingOf(context).bottom + 20,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surfaceElevated,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border(
+          top: BorderSide(color: colors.borderSubtle, width: 1.5),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colors.borderSubtle,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Glowing PayMongo Payment Badge
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: colors.neonLime.withValues(alpha: 0.15),
+              border: Border.all(color: colors.neonLime, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.neonLime.withValues(alpha: 0.25),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 34,
+                height: 34,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(colors.neonLime),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          Text(
+            'Awaiting PayMongo Payment',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'We redirected you to PayMongo to complete your GCash, Maya, GrabPay, or Card payment.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: colors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Reservation Summary Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.surfaceHighlight,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.borderSubtle),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Court',
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                    Text(
+                      widget.booking.courtName ?? 'C&J Court',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Amount to Pay',
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                    Text(
+                      '₱${widget.booking.totalAmount.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: colors.neonLime,
+                      ),
+                    ),
+                  ],
+                ),
+                if (widget.sessionId != null) ...[
+                  const SizedBox(height: 8),
+                  Divider(color: colors.borderSubtle, height: 1),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Session ID',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: colors.textMuted,
+                        ),
+                      ),
+                      Text(
+                        widget.sessionId!.length > 18
+                            ? '${widget.sessionId!.substring(0, 18)}...'
+                            : widget.sessionId!,
+                        style: GoogleFonts.robotoMono(
+                          fontSize: 11,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Live Polling indicator
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(colors.neonGreen),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Auto-detecting live payment status...',
+                style: GoogleFonts.inter(
+                  fontSize: 11.5,
+                  color: colors.textMuted,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Action 1: Manual Check Button
+          NeonButton(
+            text: 'I Have Paid — Check Status',
+            onPressed: () => _checkPaymentStatus(isManual: true),
+            isLoading: _isChecking,
+          ),
+          const SizedBox(height: 10),
+
+          // Action 2: Reopen Checkout
+          if (widget.checkoutUrl != null)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: _relaunchCheckout,
+                icon: Icon(Icons.open_in_new_rounded,
+                    size: 16, color: colors.textPrimary),
+                label: Text(
+                  'Reopen PayMongo Checkout',
+                  style: GoogleFonts.inter(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: colors.borderSubtle),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
+
+          // Action 3: Dismiss / Back
+          TextButton(
+            onPressed: () {
+              _pollTimer?.cancel();
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              'Cancel / Finish Later',
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                color: colors.textMuted,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

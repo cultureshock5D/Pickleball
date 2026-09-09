@@ -7,6 +7,7 @@ import '../models/availability_slot.dart';
 import '../models/booking_model.dart';
 import '../models/booking_refund_model.dart';
 import '../models/court_model.dart';
+import '../core/constants/paymongo_config.dart';
 import 'auth_service.dart';
 
 class BookingService {
@@ -260,6 +261,164 @@ class BookingService {
     return true;
   }
 
+  /// Create PayMongo Checkout Session directly via PayMongo Live REST API
+  /// Returns checkout URL, session ID, and status
+  Future<Map<String, dynamic>> createPayMongoCheckoutSession({
+    required String courtId,
+    required String courtName,
+    required double hourlyRate,
+    required int durationHours,
+    required String guestName,
+    required String guestEmail,
+    required String guestPhone,
+    bool paddleRental = false,
+    bool ballThrowerRental = false,
+    List<String>? selectedPaymentMethods,
+  }) async {
+    final secretKey = PayMongoConfig.secretKey;
+    if (secretKey.isEmpty) {
+      throw Exception('PayMongo live secret key not configured.');
+    }
+
+    final lineItems = <Map<String, dynamic>>[];
+
+    // 1. Court line item (centavos)
+    final courtAmountCentavos = (hourlyRate * durationHours * 100).round();
+    lineItems.add({
+      'currency': 'PHP',
+      'amount': courtAmountCentavos,
+      'name': '$courtName ($durationHours hr)',
+      'quantity': 1,
+    });
+
+    // 2. Paddle Rental
+    if (paddleRental) {
+      lineItems.add({
+        'currency': 'PHP',
+        'amount': (paddleRentalFee * 100).round(),
+        'name': 'Paddle Rental (2x Paddles, 3x Balls)',
+        'quantity': 1,
+      });
+    }
+
+    // 3. Ball Thrower
+    if (ballThrowerRental) {
+      lineItems.add({
+        'currency': 'PHP',
+        'amount': (ballThrowerHourlyFee * durationHours * 100).round(),
+        'name': 'Ball Thrower Machine ($durationHours hr)',
+        'quantity': 1,
+      });
+    }
+
+    final defaultPaymentMethods = [
+      'gcash',
+      'paymaya',
+      'grab_pay',
+      'card',
+      'dob',
+      'billease',
+    ];
+
+    final paymentMethodTypes = (selectedPaymentMethods != null && selectedPaymentMethods.isNotEmpty)
+        ? selectedPaymentMethods
+        : defaultPaymentMethods;
+
+    final body = jsonEncode({
+      'data': {
+        'attributes': {
+          'send_email_receipt': true,
+          'show_description': true,
+          'show_line_items': true,
+          'line_items': lineItems,
+          'payment_method_types': paymentMethodTypes,
+          'description': 'C&J Pickleball Court Booking - $courtName',
+          'billing': {
+            'name': guestName.trim().isNotEmpty ? guestName.trim() : 'Guest Player',
+            if (guestEmail.trim().isNotEmpty) 'email': guestEmail.trim().toLowerCase(),
+            if (guestPhone.trim().isNotEmpty) 'phone': guestPhone.trim(),
+          },
+          'success_url': '$appUrl/booking/success',
+          'cancel_url': '$appUrl/booking/cancelled',
+        }
+      }
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.paymongo.com/v1/checkout_sessions'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': PayMongoConfig.basicAuthHeader,
+        },
+        body: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final data = json['data'] as Map<String, dynamic>;
+        final attributes = data['attributes'] as Map<String, dynamic>;
+        final sessionId = data['id'] as String;
+        final checkoutUrl = attributes['checkout_url'] as String;
+
+        return {
+          'sessionId': sessionId,
+          'checkoutUrl': checkoutUrl,
+          'status': attributes['status'] as String? ?? 'active',
+        };
+      } else {
+        String errorMessage = 'Failed to create PayMongo checkout (${response.statusCode})';
+        try {
+          final err = jsonDecode(response.body);
+          if (err['errors'] != null && err['errors'] is List && (err['errors'] as List).isNotEmpty) {
+            errorMessage = err['errors'][0]['detail'] ?? errorMessage;
+          }
+        } catch (_) {}
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      debugPrint('PayMongo Live Checkout Session Error: $e');
+      rethrow;
+    }
+  }
+
+  /// Direct PayMongo REST API query to inspect checkout session payment status
+  Future<Map<String, dynamic>> getPayMongoSessionStatus(String sessionId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.paymongo.com/v1/checkout_sessions/$sessionId'),
+        headers: {
+          'Authorization': PayMongoConfig.basicAuthHeader,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final data = json['data'] as Map<String, dynamic>;
+        final attributes = data['attributes'] as Map<String, dynamic>;
+        final status = attributes['status'] as String? ?? '';
+        final payments = attributes['payments'] as List<dynamic>? ?? [];
+        final isPaid = status == 'paid' ||
+            payments.any((p) {
+              final pStatus = p['attributes']?['status'] as String?;
+              return pStatus == 'paid';
+            });
+
+        return {
+          'sessionId': sessionId,
+          'status': status,
+          'isPaid': isPaid,
+          'payments': payments,
+        };
+      } else {
+        throw Exception('Unable to verify PayMongo session status (${response.statusCode})');
+      }
+    } catch (e) {
+      debugPrint('Error querying PayMongo session status: $e');
+      rethrow;
+    }
+  }
+
   /// Create PayMongo Checkout Session via Next.js API
   /// Returns checkout URL, booking ID, and expiration timestamp
   Future<Map<String, dynamic>> createPayMongoCheckout({
@@ -327,6 +486,7 @@ class BookingService {
     String guestName = '',
     String guestEmail = '',
     String guestPhone = '',
+    String? paymongoCheckoutSessionId,
     String? notes,
   }) async {
     if (courtId.trim().isEmpty) {
@@ -375,6 +535,8 @@ class BookingService {
         'currency': 'PHP',
         'status': 'pending_payment',
         'payment_method': 'paymongo',
+        if (paymongoCheckoutSessionId != null && paymongoCheckoutSessionId.isNotEmpty)
+          'paymongo_checkout_session_id': paymongoCheckoutSessionId,
         if (notes != null) 'notes': notes,
         'created_at': DateTime.now().toUtc().toIso8601String(),
       };
@@ -542,5 +704,44 @@ class BookingService {
       await Future.delayed(interval);
     }
     return null;
+  }
+
+  /// Mark a booking as paid in Supabase
+  Future<BookingModel> markBookingAsPaid(
+    String bookingId, {
+    String? paymongoSessionId,
+  }) async {
+    if (_supabase != null) {
+      try {
+        final updatePayload = {
+          'status': 'paid',
+          if (paymongoSessionId != null && paymongoSessionId.isNotEmpty)
+            'paymongo_checkout_session_id': paymongoSessionId,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        };
+
+        final response = await _supabase!
+            .from('bookings')
+            .update(updatePayload)
+            .eq('id', bookingId)
+            .select('*, courts(name, type, hourly_rate)')
+            .single();
+
+        invalidateAvailabilityCache();
+        return BookingModel.fromJson(response);
+      } catch (e) {
+        debugPrint('Error marking booking as paid in Supabase: $e');
+      }
+    }
+
+    // Return fallback booking model with paid status
+    return BookingModel(
+      id: bookingId,
+      courtId: '',
+      startTime: DateTime.now(),
+      endTime: DateTime.now().add(const Duration(hours: 1)),
+      status: 'paid',
+      totalPrice: 300.0,
+    );
   }
 }

@@ -330,9 +330,6 @@ void main() {
       expect(find.text('Price Breakdown'), findsOneWidget);
       expect(find.text('₱300.00'), findsWidgets);
 
-      // 1-Tap Calendar Sync Toggle
-      expect(find.text('1-Tap Auto-Sync Calendar'), findsOneWidget);
-
       // PayMongo Multi-Channel Payment Options
       expect(find.text('GCash via PayMongo'), findsOneWidget);
       expect(find.text('Maya via PayMongo'), findsOneWidget);
