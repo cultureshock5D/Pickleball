@@ -293,16 +293,16 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   }
 
   void _resetBooking() {
-    HapticFeedback.mediumImpact();
+    HapticFeedback.selectionClick();
     setState(() {
       _selectedDate = DateTime.now();
       _selectedCourtIndex = 0;
-      _selectedSlotIndices = {2};
+      _selectedSlotIndices = {};
       _paddleRental = false;
       _ballThrowerRental = false;
     });
     _loadCourtAvailability();
-    AppSnackBar.info(context, 'Booking selection reset.');
+    AppSnackBar.info(context, 'Booking choices reset.');
   }
 
   Future<void> _openTimePicker() async {
@@ -782,25 +782,28 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                   ],
                 ],
               ),
-              InkWell(
-                onTap: _resetBooking,
-                borderRadius: BorderRadius.circular(6),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.restart_alt_rounded, size: 13, color: colors.textSecondary),
-                      const SizedBox(width: 3),
-                      Text(
-                        'Reset Booking',
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textSecondary,
+              Tooltip(
+                message: 'Reset your court, date, time and rental choices',
+                child: InkWell(
+                  onTap: _resetBooking,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.restart_alt_rounded, size: 13, color: colors.textSecondary),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Reset Choices',
+                          style: GoogleFonts.inter(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
