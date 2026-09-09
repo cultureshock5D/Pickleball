@@ -20,6 +20,7 @@ abstract class AppColors {
   static const Color saleRed = Color(0xFFD30005); // Error / Cancellation red
   static const Color saleDeep = Color(0xFF780700); // Deep alert dark
   static const Color infoBlue = Color(0xFF1151FF); // Info / links
+  static const Color warningAmber = Color(0xFFE65100); // Almost full slot status
 
   // --- Court Surface Colors (Visualizer) ---
   static const Color courtBlue = Color(0xFF1E3A5F); // Court 1 surface

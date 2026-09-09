@@ -106,22 +106,85 @@ class BrandLogoWidget extends StatelessWidget {
   final double size;
   final Color color;
   final bool inverted;
+  final bool withSubtitle;
+  final bool showText;
 
   const BrandLogoWidget({
     super.key,
     this.size = 36.0,
     this.color = AppColors.ink,
     this.inverted = false,
+    this.withSubtitle = false,
+    this.showText = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final primaryColor = inverted ? AppColors.canvas : color;
+    final secondaryColor = inverted ? AppColors.hairline : AppColors.mute;
+
+    final logoPaint = SizedBox(
       width: size,
       height: size,
       child: CustomPaint(
         painter: BrandLogoPainter(color: color, inverted: inverted),
       ),
+    );
+
+    if (!showText && !withSubtitle) {
+      return logoPaint;
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        logoPaint,
+        const SizedBox(width: 10),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  'C&J',
+                  style: TextStyle(
+                    fontFamily: 'BebasNeue',
+                    fontSize: size * 0.7,
+                    letterSpacing: -0.8,
+                    height: 0.9,
+                    color: primaryColor,
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  'COURTS',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: size * 0.5,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                    color: primaryColor,
+                  ),
+                ),
+              ],
+            ),
+            if (withSubtitle)
+              Text(
+                'PICKLEBALL ARENA',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: (size * 0.22).clamp(7, 10),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.8,
+                  color: secondaryColor,
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

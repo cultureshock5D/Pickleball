@@ -223,6 +223,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final isDark = context.isDark;
     final courtSubtotal = widget.court.hourlyRate * widget.durationHours;
     final paddleFee = widget.paddleRental ? BookingService.paddleRentalFee : 0.0;
     final ballThrowerFee = widget.ballThrowerRental
@@ -472,7 +473,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: colors.neonLime,
+                          color: colors.textPrimary,
                         ),
                       ),
                     ],
@@ -524,13 +525,14 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                               horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? colors.neonGreenAlpha15
+                                ? (isDark ? colors.neonGreenAlpha15 : colors.surfaceElevated)
                                 : colors.surfaceHighlight,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
-                                  ? colors.neonGreen
+                                  ? (isDark ? colors.neonGreen : colors.textPrimary)
                                   : colors.borderSubtle,
+                              width: isSelected ? 1.8 : 1.0,
                             ),
                           ),
                           child: Row(
@@ -539,7 +541,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                                 method['icon'] as IconData,
                                 size: 20,
                                 color: isSelected
-                                    ? colors.neonGreen
+                                    ? (isDark ? colors.neonGreen : colors.textPrimary)
                                     : colors.textSecondary,
                               ),
                               const SizedBox(width: 12),
@@ -572,7 +574,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: isSelected
-                                        ? colors.neonGreen
+                                        ? (isDark ? colors.neonGreen : colors.textPrimary)
                                         : colors.borderSubtle,
                                     width: isSelected ? 5.5 : 1.5,
                                   ),
@@ -604,7 +606,8 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    activeThumbColor: colors.neonGreen,
+                    activeThumbColor: colors.textPrimary,
+                    activeTrackColor: colors.textPrimary.withValues(alpha: 0.38),
                     title: Text(
                       '1-Tap Auto-Sync Calendar',
                       style: GoogleFonts.inter(
@@ -655,7 +658,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
             label,
             style: GoogleFonts.inter(
               fontSize: 12.5,
-              color: highlight ? colors.neonGreen : colors.textSecondary,
+              color: highlight ? colors.textPrimary : colors.textSecondary,
               fontWeight: highlight ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
@@ -665,7 +668,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: highlight ? colors.neonGreen : colors.textPrimary,
+            color: highlight ? colors.textPrimary : colors.textPrimary,
           ),
         ),
       ],

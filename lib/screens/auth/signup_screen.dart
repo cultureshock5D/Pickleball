@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/brand_logo_painter.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
 
@@ -100,7 +101,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 8),
-                  // Top Header Row with back button and avatar pill
+                  // Top Header Row with back button and brand monogram
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -120,9 +121,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                         ),
                       ),
+                      const BrandLogoWidget(
+                        size: 32,
+                        showText: true,
+                      ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
+                          horizontal: 12,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
@@ -140,9 +145,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 shape: BoxShape.circle,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             Text(
-                              'Client Account',
+                              'Register',
                               style: GoogleFonts.inter(
                                 color: colors.textSecondary,
                                 fontSize: 12,

@@ -48,8 +48,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
   // Booking details state
   DateTime _selectedDate = DateTime.now();
-  int _selectedTimeSlotIndex = 2; // Default 8:00 AM (index 2: 0=6am, 1=7am, 2=8am)
-  int _selectedDurationHours = 1; // 1, 2, 3, 4 hours
+  Set<int> _selectedSlotIndices = {2}; // Default 8:00 AM (index 2: 0=6am, 1=7am, 2=8am)
   bool _paddleRental = false; // +₱150 flat
   bool _ballThrowerRental = false; // +₱150/hr
 
@@ -160,10 +159,11 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   }
 
   void _autoAdjustSelectedSlot() {
-    if (_isSlotBooked(_selectedTimeSlotIndex)) {
+    _selectedSlotIndices.removeWhere((idx) => _isSlotBooked(idx));
+    if (_selectedSlotIndices.isEmpty) {
       final firstAvail = _findFirstAvailableSlotIndex();
       if (firstAvail != -1) {
-        _selectedTimeSlotIndex = firstAvail;
+        _selectedSlotIndices = {firstAvail};
       }
     }
   }
@@ -174,11 +174,28 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     return _courts[_selectedCourtIndex];
   }
 
-  TimeOfDay get _selectedTime {
-    if (_selectedTimeSlotIndex >= _allStartTimes.length) {
+  int get _selectedDurationHours => _selectedSlotIndices.length;
+
+  int get _earliestSlotIndex {
+    if (_selectedSlotIndices.isEmpty) return 0;
+    return _selectedSlotIndices.reduce((a, b) => a < b ? a : b);
+  }
+
+  int get _latestSlotIndex {
+    if (_selectedSlotIndices.isEmpty) return 0;
+    return _selectedSlotIndices.reduce((a, b) => a > b ? a : b);
+  }
+
+  TimeOfDay get _selectedStartTime {
+    if (_earliestSlotIndex >= _allStartTimes.length) {
       return _allStartTimes.first;
     }
-    return _allStartTimes[_selectedTimeSlotIndex];
+    return _allStartTimes[_earliestSlotIndex];
+  }
+
+  TimeOfDay get _selectedEndTime {
+    final latestStart = _allStartTimes[_latestSlotIndex.clamp(0, _allStartTimes.length - 1)];
+    return TimeOfDay(hour: (latestStart.hour + 1).clamp(0, 23), minute: latestStart.minute);
   }
 
   double get _currentRate => _currentCourt?.hourlyRate ?? 300.0;
@@ -193,7 +210,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   }
 
   DateTime get _calculatedStartDateTime {
-    final time = _selectedTime;
+    final time = _selectedStartTime;
     return DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -204,17 +221,22 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   }
 
   DateTime get _calculatedEndDateTime {
-    final start = _calculatedStartDateTime;
-    return start.add(Duration(hours: _selectedDurationHours));
+    final time = _selectedEndTime;
+    return DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      time.hour,
+      time.minute,
+    );
   }
 
-  bool _isSlotBooked(int slotIndex, [int? customDuration]) {
-    final dur = customDuration ?? _selectedDurationHours;
+  bool _isSlotBooked(int slotIndex) {
     if (slotIndex >= _allStartTimes.length) return true;
     final time = _allStartTimes[slotIndex];
 
     // Operating hours boundary: last slot cannot extend past 10:00 PM (hour 22)
-    if (time.hour + dur > 22) {
+    if (time.hour + 1 > 22) {
       return true;
     }
 
@@ -225,7 +247,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       time.hour,
       time.minute,
     );
-    final slotEnd = slotStart.add(Duration(hours: dur));
+    final slotEnd = slotStart.add(const Duration(hours: 1));
 
     final now = DateTime.now();
     final isToday = _selectedDate.year == now.year &&
@@ -252,7 +274,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   }
 
   int _findFirstAvailableSlotIndex() {
-    for (int i = 0; i <= _allStartTimes.length - _selectedDurationHours; i++) {
+    for (int i = 0; i < _allStartTimes.length; i++) {
       if (!_isSlotBooked(i)) return i;
     }
     return -1;
@@ -273,7 +295,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     final sel = await TimePlayerPickerModal.show(
       context,
       availableTimes: _allStartTimes,
-      initialTimeSlotIndex: _selectedTimeSlotIndex,
+      initialTimeSlotIndex: _earliestSlotIndex,
       initialDuration: _selectedDurationHours.toDouble(),
       hourlyRate: _currentRate,
       peakHourlyRate: _currentRate,
@@ -282,8 +304,10 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
     if (sel != null) {
       setState(() {
-        _selectedTimeSlotIndex = sel.timeSlotIndex;
-        _selectedDurationHours = sel.durationHours.round().clamp(1, 4);
+        _selectedSlotIndices = {
+          for (int i = 0; i < sel.durationHours.round().clamp(1, 16); i++)
+            (sel.timeSlotIndex + i).clamp(0, _allStartTimes.length - 1)
+        };
       });
       _loadCourtAvailability();
     }
@@ -291,7 +315,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
   void _navigateToReviewScreen() {
     final court = _currentCourt;
-    if (court == null) return;
+    if (court == null || _selectedSlotIndices.isEmpty) return;
 
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -409,10 +433,10 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           alignment: Alignment.center,
           constraints: const BoxConstraints(minHeight: 48),
           decoration: BoxDecoration(
-            color: isSelected ? colors.neonGreenAlpha18 : Colors.transparent,
+            color: isSelected ? colors.textPrimary : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? colors.neonGreenAlpha50 : Colors.transparent,
+              color: isSelected ? colors.textPrimary : Colors.transparent,
             ),
           ),
           child: Row(
@@ -421,13 +445,13 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
               Icon(
                 icon,
                 size: 17,
-                color: isSelected ? colors.neonGreen : colors.textMuted,
+                color: isSelected ? colors.background : colors.textMuted,
               ),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: GoogleFonts.inter(
-                  color: isSelected ? colors.textPrimary : colors.textMuted,
+                  color: isSelected ? colors.background : colors.textMuted,
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 ),
@@ -439,13 +463,13 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                   decoration: BoxDecoration(
                     color:
-                        isSelected ? colors.neonLime : colors.surfaceHighlight,
+                        isSelected ? colors.surfaceHighlight : colors.surfaceHighlight,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '$badgeCount',
                     style: GoogleFonts.inter(
-                      color: isSelected ? Colors.black : colors.textSecondary,
+                      color: isSelected ? colors.textPrimary : colors.textSecondary,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                     ),
@@ -457,13 +481,13 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                   decoration: BoxDecoration(
-                    color: colors.neonLimeAlpha20,
+                    color: colors.surfaceHighlight,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     badgeText,
                     style: GoogleFonts.inter(
-                      color: colors.neonLime,
+                      color: colors.textPrimary,
                       fontSize: 9.5,
                       fontWeight: FontWeight.w700,
                     ),
@@ -486,12 +510,13 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     if (_isLoadingCourts && _courts.isEmpty) {
       return Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(colors.neonGreen),
+          valueColor: AlwaysStoppedAnimation<Color>(colors.textPrimary),
         ),
       );
     }
 
-    final isSlotAvailable = !_isSlotBooked(_selectedTimeSlotIndex);
+    final isSlotAvailable = _selectedSlotIndices.isNotEmpty &&
+        _selectedSlotIndices.every((idx) => !_isSlotBooked(idx));
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(
@@ -505,7 +530,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           _buildCourtPickerTabs(colors),
           const SizedBox(height: 16),
 
-          // 2. Schedule Match Time with Integrated Duration & Interactive 16-Slot Grid
+          // 2. Schedule Match Time with Interactive Multi-Slot Grid (Duration 1-4 removed)
           _buildScheduleAndMatchTimeCard(colors),
           const SizedBox(height: 16),
 
@@ -520,13 +545,13 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: isSlotAvailable
-                    ? colors.neonGreen
+                    ? colors.textPrimary
                     : colors.surfaceHighlight,
-                foregroundColor: isSlotAvailable ? Colors.black : colors.textMuted,
+                foregroundColor: isSlotAvailable ? colors.background : colors.textMuted,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
-                elevation: isSlotAvailable ? 4 : 0,
+                elevation: 0,
               ),
               onPressed: isSlotAvailable
                   ? _navigateToReviewScreen
@@ -585,7 +610,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: colors.neonGreen,
+                color: colors.textSecondary,
               ),
             ),
           ],
@@ -626,21 +651,12 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     decoration: BoxDecoration(
-                      color: isSel ? colors.neonGreenAlpha15 : colors.surfaceElevated,
+                      color: isSel ? colors.surfaceElevated : colors.surfaceElevated,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
-                        color: isSel ? colors.neonGreen : colors.borderSubtle,
+                        color: isSel ? colors.textPrimary : colors.borderSubtle,
                         width: isSel ? 2.0 : 1.0,
                       ),
-                      boxShadow: isSel
-                          ? [
-                              BoxShadow(
-                                color: colors.neonGreenAlpha20,
-                                blurRadius: 12,
-                                spreadRadius: 1,
-                              ),
-                            ]
-                          : null,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -653,7 +669,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                                   horizontal: 7, vertical: 2.5),
                               decoration: BoxDecoration(
                                 color: isSel
-                                    ? colors.neonGreen
+                                    ? colors.textPrimary
                                     : colors.surfaceHighlight,
                                 borderRadius: BorderRadius.circular(6),
                               ),
@@ -662,7 +678,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                                 style: GoogleFonts.inter(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w800,
-                                  color: isSel ? Colors.black : colors.textMuted,
+                                  color: isSel ? colors.background : colors.textMuted,
                                 ),
                               ),
                             ),
@@ -671,9 +687,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w800,
-                                color: isSel
-                                    ? colors.neonLime
-                                    : colors.textSecondary,
+                                color: colors.textPrimary,
                               ),
                             ),
                           ],
@@ -695,7 +709,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: isSel ? colors.neonGreen : colors.textMuted,
+                            color: colors.textMuted,
                           ),
                         ),
                       ],
@@ -713,10 +727,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   Widget _buildScheduleAndMatchTimeCard(AppPalette colors) {
     final dateFormat = DateFormat('EEE, MMM d, y');
     final timeFormat = DateFormat('h:mm a');
-    final time = _selectedTime;
-    final startDt = DateTime(2026, 1, 1, time.hour, time.minute);
-    final endDt = startDt.add(Duration(hours: _selectedDurationHours));
-    final isSlotAvailable = !_isSlotBooked(_selectedTimeSlotIndex);
+    final isSlotAvailable = _selectedSlotIndices.isNotEmpty &&
+        _selectedSlotIndices.every((idx) => !_isSlotBooked(idx));
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -750,7 +762,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                       height: 11,
                       child: CircularProgressIndicator(
                         strokeWidth: 1.8,
-                        valueColor: AlwaysStoppedAnimation<Color>(colors.neonGreen),
+                        valueColor: AlwaysStoppedAnimation<Color>(colors.textPrimary),
                       ),
                     ),
                   ],
@@ -764,14 +776,14 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.tune_rounded, size: 12, color: colors.neonGreen),
+                      Icon(Icons.tune_rounded, size: 12, color: colors.textPrimary),
                       const SizedBox(width: 3),
                       Text(
                         'Time Picker',
                         style: GoogleFonts.inter(
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
-                          color: colors.neonGreen,
+                          color: colors.textPrimary,
                         ),
                       ),
                     ],
@@ -822,7 +834,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.calendar_today_rounded,
-                              size: 13, color: colors.neonGreen),
+                              size: 13, color: colors.textPrimary),
                           const SizedBox(width: 6),
                           Text(
                             dateFormat.format(_selectedDate),
@@ -860,79 +872,23 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          // 3. Compact Match Duration Row
-          Row(
-            children: [
-              Text(
-                'Duration:',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textMuted,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Row(
-                  children: [1, 2, 3, 4].map((hrs) {
-                    final isSel = _selectedDurationHours == hrs;
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: TapCollapse(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedDurationHours = hrs);
-                            _loadCourtAvailability();
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            height: 28,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: isSel ? colors.neonGreen : colors.surfaceHighlight,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isSel ? colors.neonGreen : colors.borderSubtle,
-                                width: isSel ? 1.4 : 1.0,
-                              ),
-                            ),
-                            child: Text(
-                              '${hrs}h',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                color: isSel ? Colors.black : colors.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // 4. Perfectly Aligned Compact 4x4 Grid (16 Slots)
+          // 3. Perfectly Aligned Compact 4x4 Grid (16 Slots - Clickable multiple times)
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _allStartTimes.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 4,
-              mainAxisSpacing: 4.5,
-              crossAxisSpacing: 4.5,
+              mainAxisSpacing: 5.0,
+              crossAxisSpacing: 5.0,
               childAspectRatio: 2.35,
             ),
             itemBuilder: (context, idx) {
               final slotTime = _allStartTimes[idx];
               final isBooked = _isSlotBooked(idx);
-              final isSel = _selectedTimeSlotIndex == idx;
+              final isSel = _selectedSlotIndices.contains(idx);
 
               Color bg = colors.surfaceHighlight;
               Color border = colors.borderSubtle;
@@ -943,9 +899,9 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                 border = Colors.transparent;
                 textCol = colors.textMuted;
               } else if (isSel) {
-                bg = colors.neonGreen;
-                border = colors.neonGreen;
-                textCol = Colors.black;
+                bg = colors.textPrimary;
+                border = colors.textPrimary;
+                textCol = colors.background;
               }
 
               final slotDt = DateTime(2026, 1, 1, slotTime.hour, slotTime.minute);
@@ -961,7 +917,15 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                       ? null
                       : () {
                           HapticFeedback.selectionClick();
-                          setState(() => _selectedTimeSlotIndex = idx);
+                          setState(() {
+                            if (_selectedSlotIndices.contains(idx)) {
+                              if (_selectedSlotIndices.length > 1) {
+                                _selectedSlotIndices.remove(idx);
+                              }
+                            } else {
+                              _selectedSlotIndices.add(idx);
+                            }
+                          });
                         },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 140),
@@ -970,14 +934,6 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                       color: bg,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: border, width: isSel ? 1.4 : 1.0),
-                      boxShadow: (isSel && !isBooked)
-                          ? [
-                              BoxShadow(
-                                color: colors.neonGreenAlpha20,
-                                blurRadius: 6,
-                              ),
-                            ]
-                          : null,
                     ),
                     child: Text(
                       formattedTime,
@@ -996,17 +952,17 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           ),
           const SizedBox(height: 10),
 
-          // 5. Slim Selected Slot Summary Strip
+          // 4. Slim Selected Slots Summary Strip (Adds up total price dynamically)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
               color: isSlotAvailable
-                  ? colors.neonGreenAlpha15
+                  ? colors.surfaceHighlight
                   : Colors.red.withAlpha(25),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isSlotAvailable
-                    ? colors.neonGreenAlpha50
+                    ? colors.borderSubtle
                     : Colors.red.withAlpha(80),
               ),
             ),
@@ -1020,11 +976,11 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                           ? Icons.check_circle_rounded
                           : Icons.cancel_rounded,
                       size: 14,
-                      color: isSlotAvailable ? colors.neonGreen : Colors.redAccent,
+                      color: isSlotAvailable ? colors.textPrimary : Colors.redAccent,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      '${timeFormat.format(startDt)} – ${timeFormat.format(endDt)} (${_selectedDurationHours}h)',
+                      '${timeFormat.format(_calculatedStartDateTime)} – ${timeFormat.format(_calculatedEndDateTime)} (${_selectedDurationHours}h)',
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
@@ -1040,7 +996,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
-                    color: isSlotAvailable ? colors.neonLime : Colors.redAccent,
+                    color: isSlotAvailable ? colors.textPrimary : Colors.redAccent,
                   ),
                 ),
               ],
@@ -1081,7 +1037,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                 // Paddle bundle switch
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  activeThumbColor: colors.neonGreen,
+                  activeThumbColor: colors.textPrimary,
+                  activeTrackColor: colors.textPrimary.withValues(alpha: 0.38),
                   title: Text(
                     'Pro Carbon Paddle Bundle (+₱150)',
                     style: GoogleFonts.inter(
@@ -1104,7 +1061,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                 // Ball thrower machine switch
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  activeThumbColor: colors.neonGreen,
+                  activeThumbColor: colors.textPrimary,
+                  activeTrackColor: colors.textPrimary.withValues(alpha: 0.38),
                   title: Text(
                     'Ball Thrower Machine (+₱150/hr)',
                     style: GoogleFonts.inter(
@@ -1140,7 +1098,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     if (_isLoadingBookings) {
       return Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(colors.neonGreen),
+          valueColor: AlwaysStoppedAnimation<Color>(colors.textPrimary),
         ),
       );
     }
@@ -1226,10 +1184,10 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
         padding: const EdgeInsets.symmetric(vertical: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? colors.neonGreenAlpha15 : colors.surfaceElevated,
+          color: isSelected ? colors.textPrimary : colors.surfaceElevated,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? colors.neonGreen : colors.borderSubtle,
+            color: isSelected ? colors.textPrimary : colors.borderSubtle,
           ),
         ),
         child: Text(
@@ -1237,7 +1195,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           style: GoogleFonts.inter(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? colors.neonGreen : colors.textMuted,
+            color: isSelected ? colors.background : colors.textMuted,
           ),
         ),
       ),

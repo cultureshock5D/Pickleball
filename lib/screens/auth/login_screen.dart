@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/brand_logo_painter.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
 import 'signup_screen.dart';
@@ -98,18 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: colors.surfaceElevated,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: colors.borderSubtle),
-                              ),
-                              child: Icon(
-                                Icons.bolt_rounded,
-                                color: colors.textPrimary,
-                                size: 18,
-                              ),
+                            const BrandLogoWidget(
+                              size: 34,
+                              showText: true,
+                              withSubtitle: true,
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(

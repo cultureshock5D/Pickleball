@@ -164,21 +164,21 @@ class _DateRangePickerModalState extends State<DateRangePickerModal> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: colors.neonGreenAlpha12,
+              color: isDark ? colors.neonGreenAlpha12 : colors.surfaceElevated,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colors.neonGreenAlpha35),
+              border: Border.all(color: isDark ? colors.neonGreenAlpha35 : colors.borderSubtle),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: colors.neonGreenAlpha20,
+                    color: isDark ? colors.neonGreenAlpha20 : colors.surfaceHighlight,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.event_available_rounded,
-                    color: colors.neonGreen,
+                    color: colors.textPrimary,
                     size: 20,
                   ),
                 ),
@@ -250,12 +250,12 @@ class _DateRangePickerModalState extends State<DateRangePickerModal> {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? colors.neonGreenAlpha20
+                          ? (isDark ? colors.neonGreenAlpha20 : colors.textPrimary)
                           : colors.surfaceElevated,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected
-                            ? colors.neonGreen
+                            ? (isDark ? colors.neonGreen : colors.textPrimary)
                             : colors.borderSubtle,
                         width: isSelected ? 1.6 : 1,
                       ),
@@ -267,8 +267,8 @@ class _DateRangePickerModalState extends State<DateRangePickerModal> {
                           isToday ? 'TODAY' : _dayOfWeekFormat.format(date).toUpperCase(),
                           style: GoogleFonts.inter(
                             color: isSelected
-                                ? colors.neonGreen
-                                : (isToday ? colors.neonLime : colors.textMuted),
+                                ? (isDark ? colors.neonGreen : colors.background)
+                                : (isToday ? colors.textPrimary : colors.textMuted),
                             fontSize: 10,
                             fontWeight: isSelected || isToday
                                 ? FontWeight.w700
@@ -280,7 +280,7 @@ class _DateRangePickerModalState extends State<DateRangePickerModal> {
                           _dayNumberFormat.format(date),
                           style: GoogleFonts.inter(
                             color: isSelected
-                                ? colors.textPrimary
+                                ? (isDark ? colors.textPrimary : colors.background)
                                 : colors.textSecondary,
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
@@ -310,6 +310,7 @@ class _DateRangePickerModalState extends State<DateRangePickerModal> {
 
   Widget _buildPresetChip(int index, String label) {
     final colors = context.colors;
+    final isDark = context.isDark;
     final isSelected = _selectedPresetIndex == index;
 
     return Padding(
@@ -318,15 +319,19 @@ class _DateRangePickerModalState extends State<DateRangePickerModal> {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => _applyPreset(index),
-        selectedColor: colors.neonGreenAlpha20,
+        selectedColor: isDark ? colors.neonGreenAlpha20 : colors.textPrimary,
         backgroundColor: colors.surfaceElevated,
         labelStyle: GoogleFonts.inter(
-          color: isSelected ? colors.neonGreen : colors.textSecondary,
+          color: isSelected
+              ? (isDark ? colors.neonGreen : colors.background)
+              : colors.textSecondary,
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
         ),
         side: BorderSide(
-          color: isSelected ? colors.neonGreen : colors.borderSubtle,
+          color: isSelected
+              ? (isDark ? colors.neonGreen : colors.textPrimary)
+              : colors.borderSubtle,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         showCheckmark: false,

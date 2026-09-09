@@ -163,24 +163,24 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: colors.neonGreenAlpha14,
-                  border: Border.all(color: const Color(0xFFCCFF00), width: 2.2),
+                  border: Border.all(color: colors.neonGreen, width: 2.2),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFCCFF00).withAlpha(100),
+                      color: colors.neonGreenAlpha35,
                       blurRadius: 26,
                       spreadRadius: 3,
                     ),
                     BoxShadow(
-                      color: colors.neonGreenAlpha35,
+                      color: colors.neonGreenAlpha14,
                       blurRadius: 14,
                       spreadRadius: 1,
                     ),
                   ],
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.check_circle_rounded,
-                    color: Color(0xFFCCFF00),
+                    color: colors.neonGreen,
                     size: 42,
                   ),
                 ),

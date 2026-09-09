@@ -106,20 +106,32 @@ class BookingService {
 
     if (isSupabaseReady && _supabase != null) {
       try {
-        final response = await _supabase!
-            .from('bookings')
-            .select('*, courts(name, type, hourly_rate)')
-            .eq('court_id', courtId)
-            .inFilter('status', [
-              'paid',
-              'confirmed',
-              'checked_in',
-              'walk_in',
-              'pending_payment',
-              'pending',
-            ])
-            .gte('end_time', dayStart.toUtc().toIso8601String())
-            .lte('start_time', dayEnd.toUtc().toIso8601String());
+        dynamic response;
+        try {
+          // Primary query: v_court_availability view (publicly readable court schedules)
+          response = await _supabase!
+              .from('v_court_availability')
+              .select()
+              .eq('court_id', courtId)
+              .gte('end_time', dayStart.toUtc().toIso8601String())
+              .lte('start_time', dayEnd.toUtc().toIso8601String());
+        } catch (_) {
+          // Fallback to bookings table
+          response = await _supabase!
+              .from('bookings')
+              .select('*, courts(name, type, hourly_rate)')
+              .eq('court_id', courtId)
+              .inFilter('status', [
+                'paid',
+                'confirmed',
+                'checked_in',
+                'walk_in',
+                'pending_payment',
+                'pending',
+              ])
+              .gte('end_time', dayStart.toUtc().toIso8601String())
+              .lte('start_time', dayEnd.toUtc().toIso8601String());
+        }
 
         final allBookings = (response as List<dynamic>)
             .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))

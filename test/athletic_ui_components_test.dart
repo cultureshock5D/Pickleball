@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pickleball_app/core/theme/app_colors.dart';
 import 'package:pickleball_app/models/booking_model.dart';
+import 'package:pickleball_app/screens/home/landing_home_screen.dart';
 import 'package:pickleball_app/widgets/brand_logo_painter.dart';
+import 'package:pickleball_app/widgets/court_visualizer.dart';
+import 'package:pickleball_app/widgets/perforated_ticket_divider.dart';
 import 'package:pickleball_app/widgets/refund_request_modal.dart';
 import 'package:pickleball_app/widgets/status_badge.dart';
 import 'package:pickleball_app/widgets/tap_collapse.dart';
@@ -113,6 +116,85 @@ void main() {
       expect(AppColors.canvas, const Color(0xFFFFFFFF));
       expect(AppColors.courtSuccess, const Color(0xFF007D48));
       expect(AppColors.saleRed, const Color(0xFFD30005));
+      expect(AppColors.warningAmber, const Color(0xFFE65100));
+    });
+
+    testWidgets('PerforatedTicketDivider renders custom paint with radius cutouts', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: PerforatedTicketDivider(cutoutRadius: 14.0),
+          ),
+        ),
+      );
+
+      expect(find.byType(PerforatedTicketDivider), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(PerforatedTicketDivider),
+          matching: find.byType(CustomPaint),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('CourtVisualizerWidget renders USAP blueprint and zone switcher', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: CourtVisualizerWidget(courtName: 'C&J Test Court'),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('TECHNICAL BLUEPRINT'), findsOneWidget);
+      expect(find.text("20' × 44' USAP COURT ARCHITECTURE"), findsOneWidget);
+      expect(find.text('C&J Test Court'), findsOneWidget);
+      expect(find.text('The Kitchen (NVZ)'), findsOneWidget);
+      expect(find.text('Right Service Court'), findsOneWidget);
+      expect(find.text('Left Service Court'), findsOneWidget);
+      expect(find.text('Championship Net'), findsOneWidget);
+      expect(find.text('Baseline & 8mm Cushion'), findsOneWidget);
+
+      // Switch to Right Service Court
+      await tester.tap(find.text('Right Service Court'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Right Service Court (Even / Server 1)'), findsOneWidget);
+    });
+
+    testWidgets('LandingHomeScreen renders hero banner, featured courts and FAQs', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 3000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      bool bookPressed = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LandingHomeScreen(
+            onBookCourtPressed: () => bookPressed = true,
+          ),
+        ),
+      );
+
+      expect(find.text('C&J CHAMPIONSHIP ARENA'), findsOneWidget);
+      expect(find.text('SERVE WITH FORCE.\nOWN THE COURT.'), findsOneWidget);
+      expect(find.text('FEATURED TOURNAMENT COURTS'), findsOneWidget);
+      expect(find.text('Court 1 — Pro Cushion'), findsOneWidget);
+      expect(find.text('Court 2 — Tournament Spec'), findsOneWidget);
+      expect(find.text('PRO SHOP ADD-ONS'), findsOneWidget);
+      expect(find.text('THE KITCHEN HAS RULES. PLAY BY THEM.'), findsOneWidget);
+      expect(find.text('POLICIES & VENUE GUIDELINES'), findsOneWidget);
+
+      // Tap Book Court
+      await tester.tap(find.text('Book Court — ₱300/hr'));
+      await tester.pumpAndSettle();
+      expect(bookPressed, isTrue);
     });
   });
 }

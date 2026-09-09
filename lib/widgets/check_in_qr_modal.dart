@@ -323,16 +323,16 @@ class _CheckInQrModalState extends State<CheckInQrModal>
                                 child: Container(
                                   height: 6,
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
+                                    gradient: LinearGradient(
                                       colors: [
                                         Colors.transparent,
-                                        Color(0xFFCCFF00),
+                                        colors.neonGreen,
                                         Colors.transparent,
                                       ],
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFCCFF00).withAlpha(210),
+                                        color: colors.neonGreenAlpha35,
                                         blurRadius: 10,
                                         spreadRadius: 2,
                                       ),

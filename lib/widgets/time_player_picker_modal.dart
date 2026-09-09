@@ -91,14 +91,41 @@ class TimePlayerPickerModal extends StatefulWidget {
 }
 
 class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
-  late int _selectedSlotIndex;
-  late int _selectedDurationHours;
+  late Set<int> _selectedSlotIndices;
 
   @override
   void initState() {
     super.initState();
-    _selectedSlotIndex = widget.initialTimeSlotIndex.clamp(0, widget.availableTimes.length - 1);
-    _selectedDurationHours = widget.initialDuration.round().clamp(1, 4);
+    final initialIdx = widget.initialTimeSlotIndex.clamp(0, widget.availableTimes.length - 1);
+    final dur = widget.initialDuration.round().clamp(1, 16);
+    _selectedSlotIndices = {
+      for (int i = 0; i < dur; i++)
+        (initialIdx + i).clamp(0, widget.availableTimes.length - 1)
+    };
+  }
+
+  int get _selectedDurationHours => _selectedSlotIndices.length;
+
+  int get _earliestSlotIndex {
+    if (_selectedSlotIndices.isEmpty) return 0;
+    return _selectedSlotIndices.reduce((a, b) => a < b ? a : b);
+  }
+
+  int get _latestSlotIndex {
+    if (_selectedSlotIndices.isEmpty) return 0;
+    return _selectedSlotIndices.reduce((a, b) => a > b ? a : b);
+  }
+
+  TimeOfDay get _selectedStartTime {
+    if (_earliestSlotIndex >= widget.availableTimes.length) {
+      return widget.availableTimes.first;
+    }
+    return widget.availableTimes[_earliestSlotIndex];
+  }
+
+  TimeOfDay get _selectedEndTime {
+    final latestStart = widget.availableTimes[_latestSlotIndex.clamp(0, widget.availableTimes.length - 1)];
+    return TimeOfDay(hour: (latestStart.hour + 1).clamp(0, 23), minute: latestStart.minute);
   }
 
   bool _isPeak(TimeOfDay time) {
@@ -109,11 +136,11 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
     return _isPeak(time) ? widget.peakHourlyRate : widget.hourlyRate;
   }
 
-  TimeOfDay _computeEndTime(TimeOfDay start, double durationHours) {
-    final totalMinutes = start.hour * 60 + start.minute + (durationHours * 60).round();
-    final endHour = (totalMinutes ~/ 60) % 24;
-    final endMinute = totalMinutes % 60;
-    return TimeOfDay(hour: endHour, minute: endMinute);
+  double get _autoComputedPrice {
+    return _selectedSlotIndices.fold<double>(
+      0.0,
+      (sum, idx) => sum + _slotRate(widget.availableTimes[idx.clamp(0, widget.availableTimes.length - 1)]),
+    );
   }
 
   @override
@@ -122,10 +149,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
     final isDark = context.isDark;
     final size = MediaQuery.sizeOf(context);
 
-    final selectedStartTime = widget.availableTimes[_selectedSlotIndex];
-    final selectedEndTime = _computeEndTime(selectedStartTime, _selectedDurationHours.toDouble());
-    final isSelectedPeak = _isPeak(selectedStartTime);
-    final autoComputedPrice = _slotRate(selectedStartTime) * _selectedDurationHours;
+    final isSelectedPeak = _isPeak(_selectedStartTime);
 
     return Container(
       constraints: BoxConstraints(
@@ -174,12 +198,12 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: colors.neonGreenAlpha15,
+                        color: isDark ? colors.neonGreenAlpha15 : colors.surfaceHighlight,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.schedule_rounded,
-                        color: colors.neonGreen,
+                        color: colors.textPrimary,
                         size: 20,
                       ),
                     ),
@@ -225,69 +249,9 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Duration Selector Row inside modal
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: colors.surfaceHighlight,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: colors.borderSubtle),
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Duration:',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: colors.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [1, 2, 3, 4].map((hrs) {
-                      final isSel = _selectedDurationHours == hrs;
-                      return InkWell(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() {
-                            _selectedDurationHours = hrs;
-                          });
-                        },
-                        borderRadius: BorderRadius.circular(8),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isSel ? colors.neonGreen : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isSel ? colors.neonGreen : colors.borderSubtle,
-                            ),
-                          ),
-                          child: Text(
-                            '$hrs hr${hrs > 1 ? 's' : ''}',
-                            style: GoogleFonts.inter(
-                              fontSize: 11.5,
-                              fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                              color: isSel ? Colors.black : colors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Time Slots Grid (All Slots directly, no period filter widgets)
+          // Time Slots Grid (All Slots directly clickable multiple times)
           Flexible(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -306,13 +270,42 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                     ),
                     itemBuilder: (context, index) {
                       final time = widget.availableTimes[index];
-                      final isSelected = _selectedSlotIndex == index;
-                      final endTime = _computeEndTime(time, _selectedDurationHours.toDouble());
-                      final exceedsHours = time.hour + _selectedDurationHours > 22;
+                      final isSelected = _selectedSlotIndices.contains(index);
+                      final endTime = TimeOfDay(hour: (time.hour + 1).clamp(0, 23), minute: time.minute);
+                      final exceedsHours = time.hour + 1 > 22;
                       final isBooked = exceedsHours || (widget.isSlotDisabled?.call(index) ?? false);
                       final slotLabel = Validators.formatTimeOfDaySlotRange(time, endTime);
                       final slotIsPeak = _isPeak(time);
-                      final slotPrice = _slotRate(time) * _selectedDurationHours;
+                      final slotPrice = _slotRate(time);
+
+                      Color cardBg;
+                      Color cardBorder;
+                      Color titleColor;
+                      Color subtitleColor;
+
+                      if (isBooked) {
+                        cardBg = colors.surfaceHighlight.withAlpha(80);
+                        cardBorder = colors.borderSubtle;
+                        titleColor = colors.textMuted;
+                        subtitleColor = colors.textMuted;
+                      } else if (isSelected) {
+                        if (isDark) {
+                          cardBg = slotIsPeak ? Colors.amber.withAlpha(45) : const Color(0xFFCCFF00).withAlpha(30);
+                          cardBorder = slotIsPeak ? const Color(0xFFFACC15) : const Color(0xFFCCFF00);
+                          titleColor = slotIsPeak ? Colors.amberAccent : const Color(0xFFCCFF00);
+                          subtitleColor = colors.textPrimary;
+                        } else {
+                          cardBg = colors.textPrimary;
+                          cardBorder = colors.textPrimary;
+                          titleColor = colors.background;
+                          subtitleColor = colors.background.withValues(alpha: 0.85);
+                        }
+                      } else {
+                        cardBg = colors.surfaceElevated;
+                        cardBorder = slotIsPeak ? Colors.amber.withAlpha(80) : colors.borderSubtle;
+                        titleColor = colors.textPrimary;
+                        subtitleColor = slotIsPeak ? Colors.amber.withAlpha(220) : colors.textMuted;
+                      }
 
                       return Semantics(
                         button: true,
@@ -327,7 +320,9 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                                 ? null
                                 : () {
                                     HapticFeedback.selectionClick();
-                                    setState(() => _selectedSlotIndex = index);
+                                    setState(() {
+                                      _selectedSlotIndices = {index};
+                                    });
                                   },
                             child: AnimatedOpacity(
                               duration: const Duration(milliseconds: 180),
@@ -335,34 +330,17 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 180),
                                 decoration: BoxDecoration(
-                                  color: isBooked
-                                      ? colors.surfaceHighlight.withAlpha(80)
-                                      : isSelected
-                                          ? (slotIsPeak ? Colors.amber.withAlpha(45) : const Color(0xFFCCFF00).withAlpha(30))
-                                          : colors.surfaceElevated,
+                                  color: cardBg,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: isBooked
-                                        ? colors.borderSubtle
-                                        : isSelected
-                                            ? (slotIsPeak ? const Color(0xFFFACC15) : const Color(0xFFCCFF00))
-                                            : (slotIsPeak ? Colors.amber.withAlpha(80) : colors.borderSubtle),
+                                    color: cardBorder,
                                     width: isSelected ? 2.0 : 1.0,
                                   ),
-                                  boxShadow: (isSelected && !isBooked)
-                                      ? [
-                                          BoxShadow(
-                                            color: (slotIsPeak ? const Color(0xFFFACC15) : const Color(0xFFCCFF00)).withAlpha(90),
-                                            blurRadius: 12,
-                                            spreadRadius: 1,
-                                          ),
-                                        ]
-                                      : const [],
                                 ),
                                 child: Stack(
                                   children: [
                                     // Top Peak Hour Visual Ribbon Accent Strip
-                                    if (slotIsPeak && !isBooked)
+                                    if (slotIsPeak && !isBooked && !isSelected)
                                       Positioned(
                                         top: 0,
                                         left: 12,
@@ -370,14 +348,8 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                                         child: Container(
                                           height: 2.5,
                                           decoration: BoxDecoration(
-                                            color: isSelected ? Colors.amberAccent : Colors.amber.withAlpha(150),
+                                            color: Colors.amber.withAlpha(150),
                                             borderRadius: const BorderRadius.vertical(bottom: Radius.circular(2)),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.amber.withAlpha(120),
-                                                blurRadius: 4,
-                                              ),
-                                            ],
                                           ),
                                         ),
                                       ),
@@ -394,11 +366,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                                                 child: Text(
                                                   slotLabel,
                                                   style: GoogleFonts.inter(
-                                                    color: isBooked
-                                                        ? colors.textMuted
-                                                        : isSelected
-                                                            ? (slotIsPeak ? Colors.amberAccent : const Color(0xFFCCFF00))
-                                                            : colors.textPrimary,
+                                                    color: titleColor,
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w700,
                                                     letterSpacing: -0.2,
@@ -428,14 +396,20 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                                                 Container(
                                                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.amber.withAlpha(40),
+                                                    color: isSelected && !isDark
+                                                        ? colors.background.withValues(alpha: 0.2)
+                                                        : Colors.amber.withAlpha(40),
                                                     borderRadius: BorderRadius.circular(5),
-                                                    border: Border.all(color: Colors.amber.withAlpha(90)),
+                                                    border: Border.all(
+                                                      color: isSelected && !isDark
+                                                          ? colors.background.withValues(alpha: 0.4)
+                                                          : Colors.amber.withAlpha(90),
+                                                    ),
                                                   ),
                                                   child: Text(
                                                     'PEAK',
                                                     style: GoogleFonts.inter(
-                                                      color: Colors.amber,
+                                                      color: isSelected && !isDark ? colors.background : Colors.amber,
                                                       fontSize: 8.5,
                                                       fontWeight: FontWeight.w800,
                                                     ),
@@ -451,9 +425,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                                                     ? 'Unavailable'
                                                     : (slotIsPeak ? 'Peak Hour' : 'Off-Peak'),
                                                 style: GoogleFonts.inter(
-                                                  color: isBooked
-                                                      ? colors.textMuted
-                                                      : (slotIsPeak ? Colors.amber.withAlpha(220) : colors.textMuted),
+                                                  color: subtitleColor,
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.w500,
                                                 ),
@@ -461,11 +433,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                                               Text(
                                                 '₱${slotPrice.toStringAsFixed(0)}',
                                                 style: GoogleFonts.inter(
-                                                  color: isBooked
-                                                      ? colors.textMuted
-                                                      : isSelected
-                                                          ? (slotIsPeak ? Colors.amberAccent : const Color(0xFFCCFF00))
-                                                          : colors.textSecondary,
+                                                  color: titleColor,
                                                   fontSize: 12.5,
                                                   fontWeight: FontWeight.w700,
                                                 ),
@@ -526,13 +494,13 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                               decoration: BoxDecoration(
                                 color: isSelectedPeak
                                     ? Colors.amber.withAlpha(30)
-                                    : colors.neonLimeAlpha15,
+                                    : colors.surfaceHighlight,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 isSelectedPeak ? 'PEAK' : 'OFF-PEAK',
                                 style: GoogleFonts.inter(
-                                  color: isSelectedPeak ? Colors.amber : colors.neonLime,
+                                  color: isSelectedPeak ? Colors.amber : colors.textPrimary,
                                   fontSize: 9,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -542,7 +510,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          Validators.formatTimeOfDaySlotRange(selectedStartTime, selectedEndTime),
+                          Validators.formatTimeOfDaySlotRange(_selectedStartTime, _selectedEndTime),
                           style: GoogleFonts.inter(
                             color: colors.textPrimary,
                             fontSize: 13.5,
@@ -557,7 +525,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                         Text(
                           'AUTO-COMPUTED FEE',
                           style: GoogleFonts.inter(
-                            color: isSelectedPeak ? Colors.amber : colors.neonGreen,
+                            color: isSelectedPeak ? Colors.amber : colors.textMuted,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.5,
@@ -565,9 +533,9 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '₱${autoComputedPrice.toStringAsFixed(2)}',
+                          '₱${_autoComputedPrice.toStringAsFixed(2)}',
                           style: GoogleFonts.inter(
-                            color: isSelectedPeak ? Colors.amberAccent : colors.neonLime,
+                            color: colors.textPrimary,
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
                           ),
@@ -585,7 +553,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                         Icon(
                           Icons.timelapse_rounded,
                           size: 13,
-                          color: colors.neonLime,
+                          color: colors.textPrimary,
                         ),
                         const SizedBox(width: 5),
                         Text(
@@ -601,7 +569,7 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
                     Text(
                       isSelectedPeak ? 'Peak Hour Rate' : 'Off-Peak Rate',
                       style: GoogleFonts.inter(
-                        color: isSelectedPeak ? Colors.amber : colors.neonGreen,
+                        color: isSelectedPeak ? Colors.amber : colors.textPrimary,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
@@ -636,11 +604,11 @@ class _TimePlayerPickerModalState extends State<TimePlayerPickerModal> {
             icon: Icons.check_circle_outline_rounded,
             onPressed: () {
               final sel = MatchTimeSelection(
-                timeSlotIndex: _selectedSlotIndex,
-                startTime: selectedStartTime,
-                endTime: selectedEndTime,
+                timeSlotIndex: _earliestSlotIndex,
+                startTime: _selectedStartTime,
+                endTime: _selectedEndTime,
                 durationHours: _selectedDurationHours.toDouble(),
-                totalAmount: autoComputedPrice,
+                totalAmount: _autoComputedPrice,
               );
               widget.onSelectionConfirmed(sel);
             },
