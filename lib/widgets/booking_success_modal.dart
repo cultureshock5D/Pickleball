@@ -117,8 +117,8 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
     final colors = context.colors;
     final isDark = context.isDark;
     final booking = widget.booking;
-    final courtName = booking.courtName ?? 'SmashCourt - Court 1';
-    final venue = widget.venueName ?? 'Barcelona Smash Club';
+    final courtName = booking.courtName ?? 'C&J Pickleball - Court 1';
+    final venue = widget.venueName ?? 'C&J Pickleball Court';
     final isConfirmed = booking.status.toLowerCase() == 'confirmed';
     final statusText = isConfirmed ? 'Confirmed' : booking.status.toUpperCase();
     final statusColor = isConfirmed ? colors.neonGreen : colors.neonLime;
@@ -163,24 +163,24 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: colors.neonGreenAlpha14,
-                  border: Border.all(color: const Color(0xFFCCFF00), width: 2.2),
+                  border: Border.all(color: colors.neonGreen, width: 2.2),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFCCFF00).withAlpha(100),
+                      color: colors.neonGreenAlpha35,
                       blurRadius: 26,
                       spreadRadius: 3,
                     ),
                     BoxShadow(
-                      color: colors.neonGreenAlpha35,
+                      color: colors.neonGreenAlpha14,
                       blurRadius: 14,
                       spreadRadius: 1,
                     ),
                   ],
                 ),
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.check_circle_rounded,
-                    color: Color(0xFFCCFF00),
+                    color: colors.neonGreen,
                     size: 42,
                   ),
                 ),

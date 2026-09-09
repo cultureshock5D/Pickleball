@@ -127,7 +127,7 @@ class _CheckInQrModalState extends State<CheckInQrModal>
   Widget build(BuildContext context) {
     final colors = context.colors;
     final booking = widget.booking;
-    final courtName = booking.courtName ?? 'SmashCourt - Court 1';
+    final courtName = booking.courtName ?? 'C&J Pickleball - Court 1';
     final timeFormat = DateFormat('h:mm a');
 
     Color statusColor = colors.neonGreen;
@@ -323,16 +323,16 @@ class _CheckInQrModalState extends State<CheckInQrModal>
                                 child: Container(
                                   height: 6,
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
+                                    gradient: LinearGradient(
                                       colors: [
                                         Colors.transparent,
-                                        Color(0xFFCCFF00),
+                                        colors.neonGreen,
                                         Colors.transparent,
                                       ],
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFCCFF00).withAlpha(210),
+                                        color: colors.neonGreenAlpha35,
                                         blurRadius: 10,
                                         spreadRadius: 2,
                                       ),

@@ -12,34 +12,45 @@ void main() {
 
   final sampleBooking = BookingModel(
     id: 'BK-TEST-100',
-    customerId: 'cust-1',
+    userId: 'cust-1',
     courtId: 'court-1',
-    courtName: 'SmashCourt - Center Arena',
+    courtName: 'C&J Pickleball - Court 1',
     startTime: DateTime(2025, 5, 20, 10),
-    endTime: DateTime(2025, 5, 20, 11, 30),
+    endTime: DateTime(2025, 5, 20, 11),
     status: 'confirmed',
-    totalAmount: 180.00,
+    totalPrice: 300.00,
     createdAt: DateTime.now(),
   );
 
-  group('CourtModel Peak Pricing Logic Tests', () {
-    test('Calculates peak vs off-peak rates accurately', () {
+  group('CourtModel Pricing & Cancellation Logic Tests', () {
+    test('Calculates court rates and cancellation eligibility accurately', () {
       const court = CourtModel(
         id: 'court-1',
-        name: 'Championship Arena',
+        name: 'Court 1',
       );
 
-      expect(court.isPeakHour(10), isFalse);
-      expect(court.rateForHour(10), 120.0);
+      expect(court.hourlyRate, 300.0);
+      expect(court.type, 'indoor');
 
-      expect(court.isPeakHour(17), isTrue);
-      expect(court.rateForHour(17), 180.0);
+      final cancellableBooking = BookingModel(
+        id: 'BK-CANCEL-1',
+        courtId: 'court-1',
+        startTime: DateTime.now().add(const Duration(hours: 48)),
+        endTime: DateTime.now().add(const Duration(hours: 49)),
+        status: 'confirmed',
+        totalPrice: 300.0,
+      );
+      expect(cancellableBooking.isCancellable, isTrue);
 
-      expect(court.isPeakHour(21), isTrue);
-      expect(court.rateForHour(21), 180.0);
-
-      expect(court.isPeakHour(22), isFalse);
-      expect(court.rateForHour(22), 120.0);
+      final nonCancellableBooking = BookingModel(
+        id: 'BK-CANCEL-2',
+        courtId: 'court-1',
+        startTime: DateTime.now().add(const Duration(hours: 12)),
+        endTime: DateTime.now().add(const Duration(hours: 13)),
+        status: 'confirmed',
+        totalPrice: 300.0,
+      );
+      expect(nonCancellableBooking.isCancellable, isFalse);
     });
   });
 
@@ -54,7 +65,7 @@ void main() {
       );
 
       expect(find.text('Smart Court Gate QR Pass'), findsOneWidget);
-      expect(find.text('SmashCourt - Center Arena'), findsOneWidget);
+      expect(find.text('C&J Pickleball - Court 1'), findsOneWidget);
       expect(find.text('UPCOMING • READY FOR GATE'), findsOneWidget);
       expect(find.text('Simulate Gate Scan (Check-In)'), findsOneWidget);
 
@@ -91,7 +102,7 @@ void main() {
 
       await tester.tap(find.text('Confirm Match Time Slot'));
       expect(selection, isNotNull);
-      expect(selection!.totalAmount, 120.0);
+      expect(selection!.totalAmount, 300.0);
     });
 
     testWidgets('DownloadableReceiptModal renders invoice breakdown and download CTA', (WidgetTester tester) async {
@@ -107,7 +118,7 @@ void main() {
       expect(find.text('PayMongo Transaction Confirmed'), findsOneWidget);
       expect(find.text('BK-TEST-100'), findsOneWidget);
       expect(find.text('TOTAL PAID'), findsOneWidget);
-      expect(find.text('₱180.00'), findsOneWidget);
+      expect(find.text('₱300.00'), findsOneWidget);
       expect(find.text('Download PDF'), findsOneWidget);
       expect(find.text('Share Receipt'), findsOneWidget);
     });
@@ -123,9 +134,9 @@ void main() {
         ),
       );
 
-      expect(find.text('SmashCourt - Center Arena'), findsOneWidget);
+      expect(find.text('C&J Pickleball - Court 1'), findsOneWidget);
       expect(find.text('CONFIRMED'), findsOneWidget);
-      expect(find.text('₱180.00'), findsOneWidget);
+      expect(find.text('₱300.00'), findsOneWidget);
       expect(find.text('Gate Pass'), findsOneWidget);
       expect(find.text('Receipt'), findsOneWidget);
       expect(find.byIcon(Icons.event_available_rounded), findsOneWidget);

@@ -51,7 +51,7 @@ class DownloadableReceiptModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final courtName = booking.courtName ?? 'SmashCourt - Court 1';
+    final courtName = booking.courtName ?? 'C&J Pickleball - Court 1';
     final dateFormat = DateFormat('MMMM d, yyyy • h:mm a');
     final duration = booking.endTime.difference(booking.startTime).inMinutes / 60.0;
     final baseRate = booking.totalAmount / (duration > 0 ? duration : 1);
@@ -93,14 +93,14 @@ class DownloadableReceiptModal extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       margin: const EdgeInsets.only(bottom: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFCCFF00).withAlpha(25),
+                        color: colors.neonGreenAlpha14,
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFFCCFF00).withAlpha(80)),
+                        border: Border.all(color: colors.neonGreenAlpha35),
                       ),
                       child: Text(
                         'Official Court Reservation Receipt',
                         style: GoogleFonts.inter(
-                          color: const Color(0xFFCCFF00),
+                          color: colors.textPrimary,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.4,
@@ -218,7 +218,7 @@ class DownloadableReceiptModal extends StatelessWidget {
                             Text(
                               '₱${booking.totalAmount.toStringAsFixed(2)}',
                               style: GoogleFonts.inter(
-                                color: const Color(0xFFCCFF00),
+                                color: colors.textPrimary,
                                 fontSize: 19,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -404,7 +404,7 @@ class DownloadableReceiptModal extends StatelessWidget {
           Text(
             barcodeId,
             style: GoogleFonts.robotoMono(
-              color: const Color(0xFFCCFF00),
+              color: colors.textPrimary,
               fontSize: 9.0,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.5,

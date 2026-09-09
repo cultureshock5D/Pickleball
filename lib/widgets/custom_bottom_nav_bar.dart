@@ -83,7 +83,7 @@ class CustomBottomNavBar extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? colors.neonGreenAlpha15
+                                ? (isDark ? colors.neonGreenAlpha15 : colors.textPrimary)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -91,7 +91,7 @@ class CustomBottomNavBar extends StatelessWidget {
                             isSelected ? item.activeIcon : item.icon,
                             size: 22,
                             color: isSelected
-                                ? colors.neonGreen
+                                ? (isDark ? colors.neonGreen : colors.background)
                                 : colors.textMuted,
                           ),
                         ),
@@ -101,7 +101,7 @@ class CustomBottomNavBar extends StatelessWidget {
                             item.label,
                             style: GoogleFonts.inter(
                               color: isSelected
-                                  ? (isDark ? Colors.white : colors.neonGreenDark)
+                                  ? colors.textPrimary
                                   : colors.textMuted,
                               fontSize: 11,
                               fontWeight: isSelected

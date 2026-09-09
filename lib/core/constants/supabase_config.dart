@@ -10,16 +10,28 @@ class SupabaseConfig {
   static String get url {
     try {
       if (dotenv.isInitialized) {
-        final val = dotenv.maybeGet('SUPABASE_URL');
+        final val = dotenv.maybeGet('SUPABASE_PROJECT_URL') ??
+            dotenv.maybeGet('SUPABASE_URL') ??
+            dotenv.maybeGet('NEXT_PUBLIC_SUPABASE_URL');
         if (val != null && val.trim().isNotEmpty) {
           return val.trim();
         }
       }
     } catch (_) {}
 
+    const projectUrlEnv = String.fromEnvironment('SUPABASE_PROJECT_URL');
+    if (projectUrlEnv.isNotEmpty) {
+      return projectUrlEnv.trim();
+    }
+
     const envVal = String.fromEnvironment('SUPABASE_URL');
     if (envVal.isNotEmpty) {
       return envVal.trim();
+    }
+
+    const nextPublicEnvVal = String.fromEnvironment('NEXT_PUBLIC_SUPABASE_URL');
+    if (nextPublicEnvVal.isNotEmpty) {
+      return nextPublicEnvVal.trim();
     }
 
     return _defaultUrl;
@@ -29,13 +41,20 @@ class SupabaseConfig {
   static String get anonKey {
     try {
       if (dotenv.isInitialized) {
-        final val = dotenv.maybeGet('SUPABASE_PUB_KEY') ??
-            dotenv.maybeGet('SUPABASE_ANON_KEY');
+        final val = dotenv.maybeGet('SUPABASE_PUBLISHABLE_KEY') ??
+            dotenv.maybeGet('SUPABASE_PUB_KEY') ??
+            dotenv.maybeGet('SUPABASE_ANON_KEY') ??
+            dotenv.maybeGet('NEXT_PUBLIC_SUPABASE_ANON_KEY');
         if (val != null && val.trim().isNotEmpty) {
           return val.trim();
         }
       }
     } catch (_) {}
+
+    const envPublishableKey = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+    if (envPublishableKey.isNotEmpty) {
+      return envPublishableKey.trim();
+    }
 
     const envPubKey = String.fromEnvironment('SUPABASE_PUB_KEY');
     if (envPubKey.isNotEmpty) {
@@ -45,6 +64,11 @@ class SupabaseConfig {
     const envAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
     if (envAnonKey.isNotEmpty) {
       return envAnonKey.trim();
+    }
+
+    const nextPublicEnvAnonKey = String.fromEnvironment('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    if (nextPublicEnvAnonKey.isNotEmpty) {
+      return nextPublicEnvAnonKey.trim();
     }
 
     return _defaultAnonKey;

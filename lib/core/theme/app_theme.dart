@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
 
 class AppPalette {
   final Brightness brightness;
@@ -310,37 +311,36 @@ class AppTheme {
 
   static const AppPalette lightPalette = AppPalette(
     brightness: Brightness.light,
-    background: Color(0xFFF8FAFC), // Crisp luxury porcelain
-    surface: Color(0xFFFFFFFF),
-    surfaceElevated: Color(0xFFF1F5F9),
-    surfaceHighlight: Color(0xFFE2E8F0),
-    border: Color(0xFFE2E8F0),
-    borderSubtle: Color(0xFFCBD5E1),
-    textPrimary: Color(0xFF0F172A), // Deep Slate
-    textSecondary: Color(0xFF475569),
-    textMuted: Color(0xFF94A3B8),
-    neonGreen: Color(0xFF059669), // Emerald 600 for crisp light contrast
-    neonGreenLight: Color(0xFF10B981),
-    neonGreenDark: Color(0xFF047857),
-    neonLime: Color(0xFF65A30D), // Lime 600
-    neonYellow: Color(0xFFCA8A04),
-    errorRed: Color(0xFFDC2626),
+    background: AppColors.canvas, // 0xFFFFFFFF
+    surface: AppColors.canvas, // 0xFFFFFFFF
+    surfaceElevated: AppColors.softCloud, // 0xFFF5F5F5
+    surfaceHighlight: AppColors.hairlineSoft, // 0xFFE5E5E5
+    border: AppColors.hairline, // 0xFFCACACB
+    borderSubtle: AppColors.hairlineSoft, // 0xFFE5E5E5
+    textPrimary: AppColors.ink, // 0xFF111111
+    textSecondary: AppColors.charcoal, // 0xFF39393B
+    textMuted: AppColors.mute, // 0xFF707072
+    neonGreen: AppColors.ink, // 0xFF111111 (Black active highlight)
+    neonGreenLight: AppColors.charcoal, // 0xFF39393B
+    neonGreenDark: AppColors.ink, // 0xFF111111
+    neonLime: AppColors.ink, // 0xFF111111 (Black active highlight)
+    neonYellow: AppColors.warningAmber, // 0xFFE65100
+    errorRed: AppColors.saleRed, // 0xFFD30005
     cardGradient: LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
-      colors: [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
+      colors: [AppColors.canvas, AppColors.softCloud],
     ),
     elevatedCardGradient: LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [Color(0xFFFFFFFF), Color(0xFFF1F5F9)],
+      colors: [AppColors.canvas, AppColors.softCloud],
     ),
     cardShadow: [
-      BoxShadow(color: Color(0x0C0F172A), blurRadius: 16, offset: Offset(0, 4)),
-      BoxShadow(color: Color(0x060F172A), blurRadius: 4, offset: Offset(0, 1)),
+      BoxShadow(color: Color(0x0A111111), blurRadius: 8, offset: Offset(0, 2)),
     ],
     neonGlow: [
-      BoxShadow(color: Color(0x33059669), blurRadius: 16, offset: Offset(0, 4)),
+      BoxShadow(color: Color(0x1A111111), blurRadius: 12, offset: Offset(0, 4)),
     ],
   );
 
@@ -356,8 +356,12 @@ class AppTheme {
   static final ThemeData darkTheme = _buildDarkTheme();
   static final ThemeData lightTheme = _buildLightTheme();
 
+  /// Builder for C&J Pickleball official light theme
+  static ThemeData buildAppTheme() => lightTheme;
+
   static ThemeData _buildDarkTheme() {
     return ThemeData(
+      useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: background,
       colorScheme: const ColorScheme.dark(
@@ -371,17 +375,35 @@ class AppTheme {
       textTheme: GoogleFonts.interTextTheme(
         ThemeData.dark().textTheme,
       ).copyWith(
-        displayLarge: GoogleFonts.plusJakartaSans(
+        displayLarge: GoogleFonts.bebasNeue(
+          color: textPrimary,
+          fontSize: 56,
+          letterSpacing: -0.5,
+          height: 0.88,
+        ),
+        displayMedium: GoogleFonts.bebasNeue(
           color: textPrimary,
           fontSize: 36,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -1.0,
-        ),
-        displayMedium: GoogleFonts.plusJakartaSans(
-          color: textPrimary,
-          fontSize: 28,
-          fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
+          height: 0.92,
+        ),
+        displaySmall: GoogleFonts.bebasNeue(
+          color: textPrimary,
+          fontSize: 26,
+          letterSpacing: -0.3,
+          height: 0.95,
+        ),
+        headlineLarge: GoogleFonts.inter(
+          color: textPrimary,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.4,
+        ),
+        headlineMedium: GoogleFonts.inter(
+          color: textPrimary,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.2,
         ),
         titleLarge: GoogleFonts.plusJakartaSans(
           color: textPrimary,
@@ -395,12 +417,12 @@ class AppTheme {
         ),
         bodyLarge: GoogleFonts.inter(
           color: textPrimary,
-          fontSize: 15,
+          fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
         bodyMedium: GoogleFonts.inter(
           color: textSecondary,
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
         labelLarge: GoogleFonts.inter(
@@ -408,14 +430,20 @@ class AppTheme {
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
+        labelSmall: GoogleFonts.inter(
+          color: textMuted,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surfaceElevated,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         hintStyle: GoogleFonts.inter(
           color: textMuted,
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: FontWeight.w400,
         ),
         labelStyle: GoogleFonts.inter(
@@ -425,37 +453,63 @@ class AppTheme {
         prefixIconColor: textMuted,
         suffixIconColor: textMuted,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: borderSubtle),
+          borderRadius: BorderRadius.circular(9999),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: borderSubtle),
+          borderRadius: BorderRadius.circular(9999),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: neonGreen, width: 1.5),
+          borderRadius: BorderRadius.circular(9999),
+          borderSide: const BorderSide(color: neonLime, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(9999),
           borderSide: const BorderSide(color: errorRed, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(9999),
           borderSide: const BorderSide(color: errorRed, width: 2),
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: const CardThemeData(
         color: surface,
         elevation: 0,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: borderSubtle),
+          side: BorderSide(color: border),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: neonLime,
+          foregroundColor: const Color(0xFF111111),
+          elevation: 0,
+          minimumSize: const Size.fromHeight(48),
+          shape: const StadiumBorder(),
+          textStyle: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(48),
+          side: const BorderSide(color: border),
+          shape: const StadiumBorder(),
+          textStyle: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: surface,
-        selectedItemColor: neonGreen,
+        selectedItemColor: neonLime,
         unselectedItemColor: textMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
@@ -464,108 +518,157 @@ class AppTheme {
   }
 
   static ThemeData _buildLightTheme() {
-    const p = lightPalette;
-
     return ThemeData(
+      useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: p.background,
-      colorScheme: ColorScheme.light(
-        primary: p.neonGreen,
-        secondary: p.neonLime,
-        onSecondary: Colors.white,
-        surface: p.surface,
-        onSurface: p.textPrimary,
-        error: p.errorRed,
+      scaffoldBackgroundColor: AppColors.canvas,
+      colorScheme: const ColorScheme.light(
+        primary: AppColors.ink,
+        secondary: AppColors.softCloud,
+        onSecondary: AppColors.ink,
+        onSurface: AppColors.ink,
+        error: AppColors.saleRed,
+        outline: AppColors.hairline,
       ),
       textTheme: GoogleFonts.interTextTheme(
         ThemeData.light().textTheme,
       ).copyWith(
-        displayLarge: GoogleFonts.plusJakartaSans(
-          color: p.textPrimary,
-          fontSize: 36,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -1.0,
-        ),
-        displayMedium: GoogleFonts.plusJakartaSans(
-          color: p.textPrimary,
-          fontSize: 28,
-          fontWeight: FontWeight.w600,
+        displayLarge: GoogleFonts.bebasNeue(
+          color: AppColors.ink,
+          fontSize: 56,
           letterSpacing: -0.5,
+          height: 0.88,
+        ),
+        displayMedium: GoogleFonts.bebasNeue(
+          color: AppColors.ink,
+          fontSize: 36,
+          letterSpacing: -0.5,
+          height: 0.92,
+        ),
+        displaySmall: GoogleFonts.bebasNeue(
+          color: AppColors.ink,
+          fontSize: 26,
+          letterSpacing: -0.3,
+          height: 0.95,
+        ),
+        headlineLarge: GoogleFonts.inter(
+          color: AppColors.ink,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.4,
+        ),
+        headlineMedium: GoogleFonts.inter(
+          color: AppColors.ink,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.2,
         ),
         titleLarge: GoogleFonts.plusJakartaSans(
-          color: p.textPrimary,
+          color: AppColors.ink,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
         titleMedium: GoogleFonts.plusJakartaSans(
-          color: p.textPrimary,
+          color: AppColors.ink,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
         bodyLarge: GoogleFonts.inter(
-          color: p.textPrimary,
-          fontSize: 15,
+          color: AppColors.ink,
+          fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
         bodyMedium: GoogleFonts.inter(
-          color: p.textSecondary,
-          fontSize: 14,
+          color: AppColors.mute,
+          fontSize: 12,
           fontWeight: FontWeight.w400,
         ),
         labelLarge: GoogleFonts.inter(
-          color: p.textPrimary,
+          color: AppColors.ink,
           fontSize: 14,
           fontWeight: FontWeight.w600,
+        ),
+        labelSmall: GoogleFonts.inter(
+          color: AppColors.mute,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: p.surfaceElevated,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        fillColor: AppColors.softCloud,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         hintStyle: GoogleFonts.inter(
-          color: p.textMuted,
-          fontSize: 14,
+          color: AppColors.stone,
+          fontSize: 13,
           fontWeight: FontWeight.w400,
         ),
         labelStyle: GoogleFonts.inter(
-          color: p.textSecondary,
+          color: AppColors.charcoal,
           fontSize: 14,
         ),
-        prefixIconColor: p.textMuted,
-        suffixIconColor: p.textMuted,
+        prefixIconColor: AppColors.mute,
+        suffixIconColor: AppColors.mute,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: p.border),
+          borderRadius: BorderRadius.circular(9999),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: p.border),
+          borderRadius: BorderRadius.circular(9999),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: p.neonGreen, width: 1.5),
+          borderRadius: BorderRadius.circular(9999),
+          borderSide: const BorderSide(color: AppColors.ink, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: p.errorRed, width: 1.5),
+          borderRadius: BorderRadius.circular(9999),
+          borderSide: const BorderSide(color: AppColors.saleRed),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: p.errorRed, width: 2),
+          borderRadius: BorderRadius.circular(9999),
+          borderSide: const BorderSide(color: AppColors.saleRed, width: 2),
         ),
       ),
-      cardTheme: CardThemeData(
-        color: p.surface,
+      cardTheme: const CardThemeData(
+        color: AppColors.canvas,
         elevation: 0,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: BorderSide(color: p.border),
+          side: BorderSide(color: AppColors.hairline),
         ),
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: p.surface,
-        selectedItemColor: p.neonGreen,
-        unselectedItemColor: p.textMuted,
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.ink,
+          foregroundColor: AppColors.canvas,
+          elevation: 0,
+          minimumSize: const Size.fromHeight(48),
+          shape: const StadiumBorder(),
+          textStyle: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.ink,
+          minimumSize: const Size.fromHeight(48),
+          side: const BorderSide(color: AppColors.hairline),
+          shape: const StadiumBorder(),
+          textStyle: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.canvas,
+        selectedItemColor: AppColors.ink,
+        unselectedItemColor: AppColors.mute,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),

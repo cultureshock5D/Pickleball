@@ -1,96 +1,65 @@
 class CourtModel {
   final String id;
   final String name;
-  final String status;
+  final String type; // 'indoor' | 'outdoor'
+  final String status; // 'active' | 'maintenance' | 'inactive'
   final double hourlyRate;
-  final double peakHourlyRate;
-  final int peakStartHour;
-  final int peakEndHour;
-  final String? surfaceType;
-  final String? courtType;
-  final String? venueId;
-  final String? venueName;
+  final bool isActive;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const CourtModel({
     required this.id,
     required this.name,
+    this.type = 'indoor',
     this.status = 'active',
-    this.hourlyRate = 120.0,
-    this.peakHourlyRate = 180.0,
-    this.peakStartHour = 17,
-    this.peakEndHour = 22,
-    this.surfaceType,
-    this.courtType,
-    this.venueId,
-    this.venueName,
+    this.hourlyRate = 300.0,
+    this.isActive = true,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  bool isPeakHour(int hour) {
-    return hour >= peakStartHour && hour < peakEndHour;
+  /// Whether this court is indoor
+  bool get isIndoor => type.toLowerCase() == 'indoor';
+
+  /// Whether this court is outdoor
+  bool get isOutdoor => type.toLowerCase() == 'outdoor';
+
+  /// Whether this court is available for reservations
+  bool get isAvailableForBooking => status.toLowerCase() == 'active';
+
+  /// Returns surface/feature description badge based on type/name
+  String get surfaceDescription {
+    if (name.contains('Pro Cushion')) return 'Pro Cushion Surface';
+    if (isIndoor) return 'Pro Cushion Hardcourt';
+    return 'All-Weather Acrylic';
   }
 
-  double rateForHour(int hour) {
-    return isPeakHour(hour) ? peakHourlyRate : hourlyRate;
+  /// Returns lighting / court badge
+  String get courtBadge {
+    if (isIndoor) return 'Indoor Championship';
+    return 'Outdoor Lighted';
   }
 
   factory CourtModel.fromJson(Map<String, dynamic> json) {
-    // Determine custom visual metadata based on court name if not present in DB schema
-    final name = json['name'] as String? ?? 'Court';
-    double rate = 120.0;
-    double peakRate = 180.0;
-    String surface = 'Pro-Cushion Hardcourt';
-    String type = 'Championship Indoor';
-    String defaultVenueName = 'Barcelona Smash Club';
-    String defaultVenueId = 'venue-bcn-1';
-
-    if (name.toLowerCase().contains('arena') || name.toLowerCase().contains('2')) {
-      rate = 150.0;
-      peakRate = 220.0;
-      surface = 'Ultra-Fast Acrylic';
-      type = 'LED Glow Indoor';
-      defaultVenueName = 'SmashCourt Central Arena';
-      defaultVenueId = 'venue-dtn-2';
-    } else if (name.toLowerCase().contains('skyline') || name.toLowerCase().contains('3')) {
-      rate = 100.0;
-      peakRate = 150.0;
-      surface = 'All-Weather Surface';
-      type = 'Rooftop Covered';
-      defaultVenueName = 'Skyline Rooftop Club';
-      defaultVenueId = 'venue-sky-3';
-    } else if (name.toLowerCase().contains('green') ||
-        name.toLowerCase().contains('valley') ||
-        name.toLowerCase().contains('forest') ||
-        name.toLowerCase().contains('clubhouse') ||
-        name.toLowerCase().contains('garden')) {
-      rate = 100.0;
-      peakRate = 150.0;
-      surface = 'All-Weather Surface';
-      type = 'Outdoor Lighted';
-      defaultVenueName = 'Green Valley Country Club';
-      defaultVenueId = 'venue-grn-4';
-    }
-
-    String? parsedVenueName = json['venue_name'] as String?;
-    if (parsedVenueName == null && json['venues'] != null && json['venues'] is Map) {
-      parsedVenueName = json['venues']['name'] as String?;
-    }
+    final statusVal = (json['status'] as String?)?.toLowerCase() ?? 'active';
+    final generatedActive = json['is_active'] as bool? ?? (statusVal == 'active');
 
     return CourtModel(
-      id: json['id'] as String,
-      name: name,
-      status: json['status'] as String? ?? 'active',
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? 'Court',
+      type: json['type'] as String? ?? 'indoor',
+      status: statusVal,
       hourlyRate: (json['hourly_rate'] != null)
           ? (json['hourly_rate'] as num).toDouble()
-          : rate,
-      peakHourlyRate: (json['peak_hourly_rate'] != null)
-          ? (json['peak_hourly_rate'] as num).toDouble()
-          : peakRate,
-      peakStartHour: json['peak_start_hour'] as int? ?? 17,
-      peakEndHour: json['peak_end_hour'] as int? ?? 22,
-      surfaceType: json['surface_type'] as String? ?? surface,
-      courtType: json['court_type'] as String? ?? type,
-      venueId: (json['venue_id'] as String?) ?? defaultVenueId,
-      venueName: parsedVenueName ?? defaultVenueName,
+          : 300.0,
+      isActive: generatedActive,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)?.toLocal()
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'] as String)?.toLocal()
+          : null,
     );
   }
 
@@ -98,43 +67,34 @@ class CourtModel {
     return {
       'id': id,
       'name': name,
+      'type': type,
       'status': status,
       'hourly_rate': hourlyRate,
-      'peak_hourly_rate': peakHourlyRate,
-      'peak_start_hour': peakStartHour,
-      'peak_end_hour': peakEndHour,
-      'surface_type': surfaceType,
-      'court_type': courtType,
-      'venue_id': venueId,
-      'venue_name': venueName,
+      'is_active': isActive,
+      if (createdAt != null) 'created_at': createdAt!.toUtc().toIso8601String(),
+      if (updatedAt != null) 'updated_at': updatedAt!.toUtc().toIso8601String(),
     };
   }
 
   CourtModel copyWith({
     String? id,
     String? name,
+    String? type,
     String? status,
     double? hourlyRate,
-    double? peakHourlyRate,
-    int? peakStartHour,
-    int? peakEndHour,
-    String? surfaceType,
-    String? courtType,
-    String? venueId,
-    String? venueName,
+    bool? isActive,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return CourtModel(
       id: id ?? this.id,
       name: name ?? this.name,
+      type: type ?? this.type,
       status: status ?? this.status,
       hourlyRate: hourlyRate ?? this.hourlyRate,
-      peakHourlyRate: peakHourlyRate ?? this.peakHourlyRate,
-      peakStartHour: peakStartHour ?? this.peakStartHour,
-      peakEndHour: peakEndHour ?? this.peakEndHour,
-      surfaceType: surfaceType ?? this.surfaceType,
-      courtType: courtType ?? this.courtType,
-      venueId: venueId ?? this.venueId,
-      venueName: venueName ?? this.venueName,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

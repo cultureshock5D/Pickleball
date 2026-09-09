@@ -7,22 +7,29 @@ import '../../widgets/custom_top_app_bar.dart';
 import '../booking/court_reservation.dart';
 import '../insights/insights.dart';
 import '../profile/profile_screen.dart';
+import 'landing_home_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final int initialIndex;
+
+  const MainNavigationScreen({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   final AuthService _authService = AuthService.instance;
   UserProfile? _userProfile;
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     _loadUserProfile();
   }
 
@@ -41,23 +48,27 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   String get _currentTabTitle {
     switch (_currentIndex) {
       case 0:
-        return 'Court Reservation';
+        return 'C&J Arena';
       case 1:
-        return 'Performance Hub';
+        return 'Court Reservation';
       case 2:
+        return 'Performance Hub';
+      case 3:
         return 'Account & Profile';
       default:
-        return 'SmashCourt';
+        return 'C&J Pickleball';
     }
   }
 
   String get _currentTabSubtitle {
     switch (_currentIndex) {
       case 0:
-        return 'Booking & Schedule';
+        return 'Championship Club';
       case 1:
-        return 'Analytics & Insights';
+        return 'Booking & Schedule';
       case 2:
+        return 'Analytics & Insights';
+      case 3:
         return 'Preferences & Membership';
       default:
         return 'Luxury Club';
@@ -77,7 +88,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         userProfile: _userProfile,
         userEmail: user?.email,
         onQuickAddPressed: () {
-          setState(() => _currentIndex = 0);
+          setState(() => _currentIndex = 1);
         },
         onNotificationPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -88,16 +99,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           );
         },
         onProfilePressed: () {
-          setState(() => _currentIndex = 2);
+          setState(() => _currentIndex = 3);
         },
       ),
       body: IndexedStack(
         index: _currentIndex,
         children: [
+          LandingHomeScreen(
+            onBookCourtPressed: () {
+              setState(() => _currentIndex = 1);
+            },
+          ),
           const CourtReservationScreen(),
           InsightsScreen(
             onBookCourtPressed: () {
-              setState(() => _currentIndex = 0);
+              setState(() => _currentIndex = 1);
             },
           ),
           const ProfileScreen(),
@@ -111,6 +127,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           });
         },
         items: const [
+          CustomBottomNavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: 'Arena',
+          ),
           CustomBottomNavItem(
             icon: Icons.sports_tennis_outlined,
             activeIcon: Icons.sports_tennis_rounded,

@@ -10,7 +10,7 @@ class ThemeService extends ChangeNotifier {
   ThemeService._internal();
   static final ThemeService instance = ThemeService._internal();
 
-  ThemeMode _themeMode = ThemeMode.dark;
+  ThemeMode _themeMode = ThemeMode.light;
 
   ThemeMode get themeMode => _themeMode;
 

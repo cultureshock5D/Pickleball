@@ -127,7 +127,7 @@ void main() {
       );
 
       expect(ics, contains('UID:'));
-      expect(ics, contains('@smashcourt.app'));
+      expect(ics, contains('@cjpickleball.app'));
     });
 
     test('buildIcsCalendarData sanitizes control characters and clamps fields', () {
@@ -247,13 +247,14 @@ void main() {
   group('Booking Confirmation Widget Tests', () {
     final testBooking = BookingModel(
       id: 'BK-9999-TEST',
-      customerId: 'user-123',
+      userId: 'user-123',
       courtId: 'court-1',
       courtName: 'Court 1 - Center Championship',
       startTime: DateTime(2026, 8, 29, 13),
       endTime: DateTime(2026, 8, 29, 15),
       status: 'confirmed',
-      totalAmount: 67.50,
+      totalPrice: 600.00,
+      durationHours: 2,
       createdAt: DateTime(2026, 8, 27),
     );
 
@@ -275,7 +276,7 @@ void main() {
       expect(find.text('Court 1 - Center Championship'), findsOneWidget);
       expect(find.text('SmashCourt Arena'), findsOneWidget);
       expect(find.text('Confirmed'), findsOneWidget);
-      expect(find.text('₱67.50'), findsOneWidget);
+      expect(find.text('₱600.00'), findsOneWidget);
       expect(find.text('BK-9999-TEST'), findsOneWidget);
 
       // Check Primary & Secondary CTA Buttons
@@ -298,7 +299,7 @@ void main() {
 
       expect(find.text('Court 1 - Center Championship'), findsOneWidget);
       expect(find.text('CONFIRMED'), findsOneWidget);
-      expect(find.text('₱67.50'), findsOneWidget);
+      expect(find.text('₱600.00'), findsOneWidget);
       expect(find.text('Gate Pass'), findsOneWidget);
       expect(find.text('Receipt'), findsOneWidget);
       expect(find.byIcon(Icons.event_available_rounded), findsOneWidget);

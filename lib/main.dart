@@ -36,7 +36,7 @@ Future<void> main() async {
       debugPrint('Supabase successfully initialized with URL: ${SupabaseConfig.url}');
     } else {
       debugPrint(
-        'Supabase is not configured with valid credentials. Running with mock/offline fallback.',
+        'Supabase is not configured with valid credentials.',
       );
     }
   } catch (e) {

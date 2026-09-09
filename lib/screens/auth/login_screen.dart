@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/brand_logo_painter.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
 import 'signup_screen.dart';
@@ -98,18 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: colors.surfaceElevated,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: colors.borderSubtle),
-                              ),
-                              child: Icon(
-                                Icons.bolt_rounded,
-                                color: colors.textPrimary,
-                                size: 18,
-                              ),
+                            const BrandLogoWidget(
+                              size: 34,
+                              showText: true,
+                              withSubtitle: true,
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -149,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         // App Header & Title
                         Text(
-                          'Welcome to SmashCourt',
+                          'Welcome to C&J Pickleball Court',
                           style: GoogleFonts.inter(
                             color: colors.neonGreen,
                             fontSize: 14,
@@ -204,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Championship Club Suite',
+                                          'C&J Pickleball Court Suite',
                                           style: GoogleFonts.inter(
                                             color: colors.textPrimary,
                                             fontSize: 14,
@@ -212,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         ),
                                         Text(
-                                          'Pickleball Club System',
+                                          'C&J Reservation System',
                                           style: GoogleFonts.inter(
                                             color: colors.textMuted,
                                             fontSize: 11.5,
@@ -225,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'Instant court reservations, performance analytics, and member management powered by Supabase.',
+                                'Instant court reservations, rental add-ons, and secure PayMongo checkout.',
                                 style: GoogleFonts.inter(
                                   color: colors.textSecondary,
                                   fontSize: 12.5,

@@ -110,7 +110,7 @@ class CalendarLinkService {
 
     final cleanUid = (uid != null && uid.trim().isNotEmpty)
         ? Validators.sanitizeText(uid, maxLength: 120)
-        : '${startTime.millisecondsSinceEpoch}-${cleanTitle.hashCode.abs()}@smashcourt.app';
+        : '${startTime.millisecondsSinceEpoch}-${cleanTitle.hashCode.abs()}@cjpickleball.app';
 
     final buffer = StringBuffer()
       ..write('BEGIN:VCALENDAR\r\n')
@@ -255,15 +255,15 @@ class CalendarLinkService {
     BuildContext? context,
     String? venueName,
   }) {
-    final court = booking.courtName ?? 'SmashCourt Center Championship';
-    final venue = venueName ?? 'SmashCourt Arena • $court';
+    final court = booking.courtName ?? 'C&J Pickleball - Court 1';
+    final venue = venueName ?? 'C&J Pickleball Court • $court';
 
     final dateFormat = DateFormat('EEEE, MMMM d, y');
     final formattedDate = dateFormat.format(booking.startTime);
     final formattedTime = Validators.formatTimeSlotRange(booking.startTime, booking.endTime);
 
     final details = StringBuffer()
-      ..writeln('🏓 SmashCourt Court Reservation')
+      ..writeln('🏓 C&J Pickleball Court Reservation')
       ..writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
       ..writeln('📍 Venue: $venue')
       ..writeln('🏟️ Court: $court')
@@ -274,7 +274,7 @@ class CalendarLinkService {
       ..writeln('🆔 Booking Reference: ${booking.id}')
       ..writeln()
       ..writeln('Please arrive 10 minutes prior to your session for court check-in.')
-      ..writeln('Managed via SmashCourt App.');
+      ..writeln('Managed via C&J Pickleball App.');
 
     return openGoogleCalendar(
       title: 'Pickleball @ $court',
