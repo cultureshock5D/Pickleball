@@ -13,6 +13,12 @@
 migrate_working_dir/
 referenceonly/
 
+# Agent workspace, skills, and rule documents
+.agents/
+.agent/
+AGENTS.md
+GEMINI.md
+
 # Environment files
 .env
 .env.*
