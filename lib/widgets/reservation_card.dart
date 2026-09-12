@@ -13,15 +13,23 @@ import 'check_in_qr_modal.dart';
 import 'downloadable_receipt_modal.dart';
 
 class ReservationCard extends StatefulWidget {
+  static const double cardHeight = 179.4;
+  static const double cardPitch = 191.4;
+  static const double verticalSpacing = 12.0;
+
   final BookingModel booking;
   final bool isUpcoming;
   final VoidCallback? onRefresh;
+  final double? height;
+  final EdgeInsetsGeometry? margin;
 
   const ReservationCard({
     super.key,
     required this.booking,
     this.isUpcoming = true,
     this.onRefresh,
+    this.height = cardHeight,
+    this.margin,
   });
 
   @override
@@ -348,9 +356,12 @@ class _ReservationCardState extends State<ReservationCard>
 
     final courtName = booking.displayCourtName;
 
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: Container(
+    return Container(
+      margin: widget.margin,
+      height: widget.height,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
@@ -463,7 +474,7 @@ class _ReservationCardState extends State<ReservationCard>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
                   // 2. Court Badge & Price Info
                   Row(
@@ -547,9 +558,9 @@ class _ReservationCardState extends State<ReservationCard>
                   ),
 
                   // 3. Quick Action Buttons
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Divider(color: colors.borderSubtle, height: 1),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       // QR Pass Action
@@ -669,6 +680,7 @@ class _ReservationCardState extends State<ReservationCard>
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

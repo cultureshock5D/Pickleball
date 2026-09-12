@@ -10,6 +10,8 @@ class VenueModel {
   final double priceStartingAt;
   final String tag;
   final String courtType; // e.g. 'Indoor & Outdoor', 'Championship Indoor'
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const VenueModel({
     required this.id,
@@ -23,6 +25,8 @@ class VenueModel {
     this.priceStartingAt = 120.0,
     this.tag = 'POPULAR',
     this.courtType = 'Championship Indoor',
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory VenueModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,12 @@ class VenueModel {
       priceStartingAt: (json['price_starting_at'] as num?)?.toDouble() ?? 120.0,
       tag: json['tag'] as String? ?? 'PREMIUM',
       courtType: json['court_type'] as String? ?? 'Championship Indoor',
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)?.toLocal()
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'] as String)?.toLocal()
+          : null,
     );
   }
 
@@ -57,6 +67,8 @@ class VenueModel {
       'price_starting_at': priceStartingAt,
       'tag': tag,
       'court_type': courtType,
+      if (createdAt != null) 'created_at': createdAt!.toUtc().toIso8601String(),
+      if (updatedAt != null) 'updated_at': updatedAt!.toUtc().toIso8601String(),
     };
   }
 
@@ -72,6 +84,8 @@ class VenueModel {
     double? priceStartingAt,
     String? tag,
     String? courtType,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return VenueModel(
       id: id ?? this.id,
@@ -85,6 +99,58 @@ class VenueModel {
       priceStartingAt: priceStartingAt ?? this.priceStartingAt,
       tag: tag ?? this.tag,
       courtType: courtType ?? this.courtType,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
+
+/// Keyset cursor representing position in (created_at DESC, id DESC) sorted streams.
+class KeysetCursor {
+  final DateTime createdAt;
+  final String id;
+
+  const KeysetCursor({
+    required this.createdAt,
+    required this.id,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'id': id,
+      };
+
+  factory KeysetCursor.fromJson(Map<String, dynamic> json) => KeysetCursor(
+        createdAt: DateTime.parse(json['createdAt'] as String),
+        id: json['id'] as String,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is KeysetCursor &&
+          other.createdAt.isAtSameMomentAs(createdAt) &&
+          other.id == id;
+
+  @override
+  int get hashCode => Object.hash(createdAt, id);
+
+  @override
+  String toString() => 'KeysetCursor(createdAt: $createdAt, id: $id)';
+}
+
+/// Paginated result chunk holding loaded items, next keyset cursor, and exhaustion flag.
+class PaginatedChunk<T> {
+  final List<T> items;
+  final KeysetCursor? nextCursor;
+  final bool hasMore;
+
+  const PaginatedChunk({
+    required this.items,
+    this.nextCursor,
+    required this.hasMore,
+  });
+}
+
+typedef PageChunk<T> = PaginatedChunk<T>;
+

@@ -11,6 +11,7 @@ class BookingRefundModel {
   final String? processedBy;
   final DateTime? processedAt;
   final String? adminNotes;
+  final DateTime? createdAt;
 
   const BookingRefundModel({
     required this.id,
@@ -25,6 +26,7 @@ class BookingRefundModel {
     this.processedBy,
     this.processedAt,
     this.adminNotes,
+    this.createdAt,
   });
 
   bool get isPending => status == 'pending';
@@ -65,6 +67,9 @@ class BookingRefundModel {
           ? DateTime.tryParse(json['processed_at'] as String)?.toLocal()
           : null,
       adminNotes: json['admin_notes'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)?.toLocal()
+          : null,
     );
   }
 
@@ -82,6 +87,7 @@ class BookingRefundModel {
       if (processedBy != null) 'processed_by': processedBy,
       if (processedAt != null) 'processed_at': processedAt!.toUtc().toIso8601String(),
       if (adminNotes != null) 'admin_notes': adminNotes,
+      if (createdAt != null) 'created_at': createdAt!.toUtc().toIso8601String(),
     };
   }
 
@@ -98,6 +104,7 @@ class BookingRefundModel {
     String? processedBy,
     DateTime? processedAt,
     String? adminNotes,
+    DateTime? createdAt,
   }) {
     return BookingRefundModel(
       id: id ?? this.id,
@@ -112,6 +119,7 @@ class BookingRefundModel {
       processedBy: processedBy ?? this.processedBy,
       processedAt: processedAt ?? this.processedAt,
       adminNotes: adminNotes ?? this.adminNotes,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }

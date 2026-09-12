@@ -424,19 +424,6 @@ class PayMongoWebhookService {
         );
       }
 
-      final now = currentTimestampSeconds ??
-          (DateTime.now().millisecondsSinceEpoch ~/ 1000);
-      if ((now - t).abs() > 300) {
-        return WebhookProcessResult(
-          success: false,
-          eventId: eventId,
-          status: 'replay_rejected',
-          message:
-              'Timestamp $t outside 300-second freshness tolerance window (now=$now)',
-          eventType: eventType,
-        );
-      }
-
       final targetSig = isLive
           ? (parsedHeader['li'] ?? parsedHeader['te'])
           : (parsedHeader['te'] ?? parsedHeader['li']);
@@ -446,6 +433,19 @@ class PayMongoWebhookService {
           eventId: eventId,
           status: 'missing_signature',
           message: 'Missing signature digest in Paymongo-Signature header',
+          eventType: eventType,
+        );
+      }
+
+      final now = currentTimestampSeconds ??
+          (DateTime.now().millisecondsSinceEpoch ~/ 1000);
+      if ((now - t).abs() > 300) {
+        return WebhookProcessResult(
+          success: false,
+          eventId: eventId,
+          status: 'replay_rejected',
+          message:
+              'Timestamp $t outside 300-second freshness tolerance window (now=$now)',
           eventType: eventType,
         );
       }
@@ -613,6 +613,7 @@ class PayMongoWebhookService {
         updatedBooking = MockData.markMockBookingAsPaid(
           targetBookingId,
           paymongoSessionId: resourceId.isNotEmpty ? resourceId : null,
+          status: 'confirmed',
         );
       } else if (targetStatus == 'cancelled') {
         MockData.cancelMockBooking(targetBookingId);

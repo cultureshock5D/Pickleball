@@ -8,9 +8,12 @@ import '../models/availability_slot.dart';
 import '../models/booking_model.dart';
 import '../models/booking_refund_model.dart';
 import '../models/court_model.dart';
+import '../models/venue_model.dart';
 import '../data/mock_data.dart';
 import '../core/constants/paymongo_config.dart';
 import 'auth_service.dart';
+
+export '../models/venue_model.dart' show KeysetCursor, PaginatedChunk, PageChunk;
 
 enum BookingRealtimeEventType { inserted, updated, deleted }
 
@@ -68,7 +71,7 @@ class BookingService {
   void _ensureBookingEventsController() {
     if (_bookingEventsController == null || _bookingEventsController!.isClosed) {
       _bookingEventsController =
-          StreamController<BookingRealtimeEvent>.broadcast();
+          StreamController<BookingRealtimeEvent>.broadcast(sync: true);
     }
   }
 
@@ -130,7 +133,6 @@ class BookingService {
         break;
       case PostgresChangeEvent.update:
       case PostgresChangeEvent.all:
-      default:
         eventType = BookingRealtimeEventType.updated;
         break;
     }
@@ -837,6 +839,94 @@ class BookingService {
     }
   }
 
+  /// Create an atomic booking hold with GiST 23P01 exclusion conflict trapping
+  Future<BookingModel> createBookingHold({
+    required String courtId,
+    required DateTime startTime,
+    required DateTime endTime,
+    required double totalAmount,
+    String guestName = '',
+    String guestEmail = '',
+    String guestPhone = '',
+    String? notes,
+    int holdDurationMinutes = 10,
+  }) async {
+    if (courtId.trim().isEmpty) {
+      throw ArgumentError.value(courtId, 'courtId', 'Court ID cannot be empty');
+    }
+    if (!startTime.isBefore(endTime)) {
+      throw ArgumentError('startTime must be before endTime');
+    }
+    if (totalAmount < 0) {
+      throw ArgumentError.value(totalAmount, 'totalAmount', 'Total amount must be non-negative');
+    }
+
+    if (!isSupabaseReady || _supabase == null) {
+      final user = _authService.currentUser;
+      final holdBooking = MockData.createMockBookingHold(
+        courtId: courtId,
+        startTime: startTime,
+        endTime: endTime,
+        totalAmount: totalAmount,
+        userId: user?.id,
+        guestName: guestName.isNotEmpty
+            ? guestName
+            : (user?.userMetadata?['full_name'] ?? 'Guest'),
+        guestEmail: guestEmail.isNotEmpty
+            ? guestEmail
+            : (user?.email ?? 'player@pickleball.dev'),
+        guestPhone: guestPhone,
+        notes: notes,
+        holdDurationMinutes: holdDurationMinutes,
+      );
+
+      invalidateAvailabilityCache(courtId: courtId, date: startTime);
+      broadcastMockBookingEvent(
+        BookingRealtimeEvent(
+          type: BookingRealtimeEventType.inserted,
+          booking: holdBooking,
+        ),
+      );
+      return holdBooking;
+    }
+
+    final user = _supabase!.auth.currentUser;
+    try {
+      final rpcParams = {
+        'p_court_id': courtId,
+        'p_user_id': user?.id,
+        'p_start_time': startTime.toUtc().toIso8601String(),
+        'p_end_time': endTime.toUtc().toIso8601String(),
+        'p_total_amount': totalAmount,
+        'p_guest_name': guestName.isNotEmpty
+            ? guestName
+            : (user?.userMetadata?['full_name'] ?? 'Guest'),
+        'p_guest_email': guestEmail.isNotEmpty ? guestEmail : (user?.email ?? ''),
+        'p_guest_phone': guestPhone,
+        'p_notes': notes,
+        'p_hold_duration_minutes': holdDurationMinutes,
+      };
+
+      final response = await _supabase!.rpc('create_booking_hold', params: rpcParams);
+      final bookingId = (response as Map<String, dynamic>)['booking_id'] as String;
+
+      final fullRecord = await _supabase!
+          .from('bookings')
+          .select('*, courts(name, type, hourly_rate)')
+          .eq('id', bookingId)
+          .single();
+
+      invalidateAvailabilityCache(courtId: courtId, date: startTime);
+      return BookingModel.fromJson(fullRecord);
+    } on PostgrestException catch (pe) {
+      debugPrint('PostgrestException in createBookingHold: ${pe.message} (${pe.code})');
+      rethrow;
+    } catch (e) {
+      debugPrint('Error in createBookingHold: $e');
+      rethrow;
+    }
+  }
+
   /// Fetch player bookings for the authenticated user
   Future<List<BookingModel>> fetchCustomerBookings() async {
     if (isSupabaseReady && _supabase != null) {
@@ -871,6 +961,198 @@ class BookingService {
 
     final user = _authService.currentUser;
     return MockData.getMockUserBookings(user?.id, user?.email);
+  }
+
+  /// Keyset cursor paginated customer bookings sorted by (created_at DESC, id DESC)
+  Future<PaginatedChunk<BookingModel>> fetchPaginatedCustomerBookings({
+    String? userId,
+    String? userEmail,
+    KeysetCursor? cursor,
+    int pageSize = 10,
+  }) async {
+    if (pageSize <= 0) pageSize = 10;
+
+    if (isSupabaseReady && _supabase != null) {
+      try {
+        final currentUser = _supabase!.auth.currentUser;
+        final targetUserId = userId ?? currentUser?.id;
+        final targetEmail =
+            (userEmail ?? currentUser?.email)?.trim().toLowerCase() ?? '';
+
+        var query = _supabase!
+            .from('bookings')
+            .select('*, courts(name, type, hourly_rate), booking_refunds(*)');
+
+        if (targetUserId != null && targetUserId.isNotEmpty) {
+          if (targetEmail.isNotEmpty) {
+            query = query.or(
+                'user_id.eq.$targetUserId,customer_id.eq.$targetUserId,guest_email.eq.$targetEmail');
+          } else {
+            query = query
+                .or('user_id.eq.$targetUserId,customer_id.eq.$targetUserId');
+          }
+        } else if (targetEmail.isNotEmpty) {
+          query = query.eq('guest_email', targetEmail);
+        }
+
+        if (cursor != null) {
+          final cAt = cursor.createdAt.toUtc().toIso8601String();
+          final cId = cursor.id;
+          query = query.or(
+              'created_at.lt.$cAt,and(created_at.eq.$cAt,id.lt.$cId)');
+        }
+
+        final response = await query
+            .order('created_at', ascending: false)
+            .order('id', ascending: false)
+            .limit(pageSize + 1);
+
+        final rawList = response as List<dynamic>;
+        final hasMore = rawList.length > pageSize;
+        final pageItems = rawList
+            .take(pageSize)
+            .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        KeysetCursor? nextCursor;
+        if (hasMore && pageItems.isNotEmpty) {
+          final last = pageItems.last;
+          nextCursor = KeysetCursor(
+            createdAt: last.createdAt ?? last.startTime,
+            id: last.id,
+          );
+        }
+
+        return PaginatedChunk<BookingModel>(
+          items: pageItems,
+          nextCursor: nextCursor,
+          hasMore: hasMore,
+        );
+      } catch (e) {
+        debugPrint('Error in fetchPaginatedCustomerBookings: $e');
+      }
+    }
+
+    final currentUserId = userId ?? _authService.currentUser?.id;
+    final currentUserEmail = userEmail ?? _authService.currentUser?.email;
+    return MockData.fetchPaginatedCustomerBookings(
+      userId: currentUserId,
+      userEmail: currentUserEmail,
+      cursor: cursor,
+      pageSize: pageSize,
+    );
+  }
+
+  /// Keyset cursor paginated venues sorted by (created_at DESC, id DESC)
+  Future<PaginatedChunk<VenueModel>> fetchPaginatedVenues({
+    KeysetCursor? cursor,
+    int pageSize = 10,
+  }) async {
+    if (pageSize <= 0) pageSize = 10;
+
+    if (isSupabaseReady && _supabase != null) {
+      try {
+        var query = _supabase!.from('venues').select();
+
+        if (cursor != null) {
+          final cAt = cursor.createdAt.toUtc().toIso8601String();
+          final cId = cursor.id;
+          query = query.or(
+              'created_at.lt.$cAt,and(created_at.eq.$cAt,id.lt.$cId)');
+        }
+
+        final response = await query
+            .order('created_at', ascending: false)
+            .order('id', ascending: false)
+            .limit(pageSize + 1);
+
+        final rawList = response as List<dynamic>;
+        final hasMore = rawList.length > pageSize;
+        final pageItems = rawList
+            .take(pageSize)
+            .map((json) => VenueModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        KeysetCursor? nextCursor;
+        if (hasMore && pageItems.isNotEmpty) {
+          final last = pageItems.last;
+          nextCursor = KeysetCursor(
+            createdAt: last.createdAt ?? DateTime.now(),
+            id: last.id,
+          );
+        }
+
+        return PaginatedChunk<VenueModel>(
+          items: pageItems,
+          nextCursor: nextCursor,
+          hasMore: hasMore,
+        );
+      } catch (e) {
+        debugPrint('Error in fetchPaginatedVenues from Supabase: $e');
+      }
+    }
+
+    return MockData.fetchPaginatedVenues(cursor: cursor, pageSize: pageSize);
+  }
+
+  /// Keyset cursor paginated courts sorted by (created_at DESC, id DESC)
+  Future<PaginatedChunk<CourtModel>> fetchPaginatedCourts({
+    KeysetCursor? cursor,
+    int pageSize = 10,
+    bool activeOnly = true,
+  }) async {
+    if (pageSize <= 0) pageSize = 10;
+
+    if (isSupabaseReady && _supabase != null) {
+      try {
+        var query = _supabase!.from('courts').select();
+        if (activeOnly) {
+          query = query.neq('status', 'inactive');
+        }
+
+        if (cursor != null) {
+          final cAt = cursor.createdAt.toUtc().toIso8601String();
+          final cId = cursor.id;
+          query = query.or(
+              'created_at.lt.$cAt,and(created_at.eq.$cAt,id.lt.$cId)');
+        }
+
+        final response = await query
+            .order('created_at', ascending: false)
+            .order('id', ascending: false)
+            .limit(pageSize + 1);
+
+        final rawList = response as List<dynamic>;
+        final hasMore = rawList.length > pageSize;
+        final pageItems = rawList
+            .take(pageSize)
+            .map((json) => CourtModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        KeysetCursor? nextCursor;
+        if (hasMore && pageItems.isNotEmpty) {
+          final last = pageItems.last;
+          nextCursor = KeysetCursor(
+            createdAt: last.createdAt ?? DateTime.now(),
+            id: last.id,
+          );
+        }
+
+        return PaginatedChunk<CourtModel>(
+          items: pageItems,
+          nextCursor: nextCursor,
+          hasMore: hasMore,
+        );
+      } catch (e) {
+        debugPrint('Error in fetchPaginatedCourts from Supabase: $e');
+      }
+    }
+
+    return MockData.fetchPaginatedCourts(
+      cursor: cursor,
+      pageSize: pageSize,
+      activeOnly: activeOnly,
+    );
   }
 
   /// Cancel a booking enforcing the strict 24-hour advance rule

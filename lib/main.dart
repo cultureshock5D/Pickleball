@@ -7,6 +7,7 @@ import 'core/constants/supabase_config.dart';
 import 'core/services/theme_service.dart';
 import 'core/theme/app_theme.dart';
 import 'widgets/auth_gate.dart';
+import 'widgets/network_status_banner.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,6 +73,9 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: ThemeService.instance.themeMode,
+          builder: (context, child) => NetworkStatusOverlay(
+            child: child ?? const SizedBox.shrink(),
+          ),
           home: const AuthGate(),
         );
       },

@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/pagination/pagination_controller.dart';
 import '../../core/services/theme_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
+import '../../data/repositories/booking_repository.dart';
+import '../../models/booking_model.dart';
 import '../../models/user_profile.dart';
 import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
+import '../../widgets/paginated_list_view.dart';
+import '../../widgets/reservation_card.dart';
+import '../../widgets/skeleton_loader.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -383,6 +389,14 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           const SizedBox(height: 8),
           _buildSettingsTile(
+            title: 'Match & Booking History',
+            subtitle: 'View past games and booking records',
+            icon: Icons.history_rounded,
+            iconColor: colors.neonLime,
+            onTap: _showMatchHistorySheet,
+          ),
+          const SizedBox(height: 8),
+          _buildSettingsTile(
             title: 'Notifications & Alerts',
             subtitle: 'Court alerts & match reminders',
             icon: Icons.notifications_none_rounded,
@@ -630,5 +644,102 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
       ),
     );
+  }
+
+  void _showMatchHistorySheet() {
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final controller = PaginationController<BookingModel>(
+      fetchPageChunk: (cursor, pageSize) =>
+          BookingRepository.forFlavor().fetchPaginatedCustomerBookings(
+        cursor: cursor,
+        pageSize: pageSize,
+      ),
+      idExtractor: (b) => b.id,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.sizeOf(ctx).height * 0.75,
+          padding: const EdgeInsets.only(top: 16),
+          decoration: BoxDecoration(
+            color: isDark ? colors.surfaceElevated : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(color: colors.borderSubtle),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.borderSubtle,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Match & Booking History',
+                      style: GoogleFonts.inter(
+                        color: colors.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      color: colors.textMuted,
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: PaginatedListView<BookingModel>(
+                  controller: controller,
+                  padding: const EdgeInsets.all(16),
+                  skeletonBuilder: (_, __) => const SkeletonReservationCard(
+                    margin: EdgeInsets.symmetric(vertical: 6),
+                  ),
+                  itemBuilder: (context, item, index) {
+                    final isUpcoming = item.endTime.isAfter(DateTime.now()) &&
+                        item.status != 'cancelled' &&
+                        item.status != 'expired';
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: ReservationCard(
+                        booking: item,
+                        isUpcoming: isUpcoming,
+                        onRefresh: () async {
+                          await _loadProfile();
+                          await controller.refresh();
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ).whenComplete(() {
+      controller.dispose();
+    });
   }
 }

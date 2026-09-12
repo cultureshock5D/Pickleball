@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/utils/validators.dart';
 import '../models/booking_model.dart';
 import '../models/court_model.dart';
 import '../models/user_profile.dart';
@@ -54,7 +56,7 @@ class MockData {
       name: 'Court 1 — Indoor (Pro Cushion)',
     ),
     CourtModel(
-      id: 'court-2-indoor-tourspec',
+      id: 'court-2-indoor-tour',
       name: 'Court 2 — Indoor (Tour Spec)',
       hourlyRate: 350.0,
     ),
@@ -333,29 +335,31 @@ class MockData {
   }
 
   /// Cancel an in-memory mock booking
-  static bool cancelMockBooking(String bookingId) {
+  static BookingModel? cancelMockBooking(String bookingId) {
     _ensureInitialized();
     final index = _mockBookings.indexWhere((b) => b.id == bookingId);
     if (index != -1) {
-      _mockBookings[index] = _mockBookings[index].copyWith(
+      final updated = _mockBookings[index].copyWith(
         status: 'cancelled',
         updatedAt: DateTime.now(),
       );
-      return true;
+      _mockBookings[index] = updated;
+      return updated;
     }
-    return false;
+    return null;
   }
 
   /// Mark an in-memory mock booking as paid
   static BookingModel? markMockBookingAsPaid(
     String bookingId, {
     String? paymongoSessionId,
+    String status = 'paid',
   }) {
     _ensureInitialized();
     final index = _mockBookings.indexWhere((b) => b.id == bookingId);
     if (index != -1) {
       final updated = _mockBookings[index].copyWith(
-        status: 'paid',
+        status: status,
         paymongoCheckoutSessionId:
             paymongoSessionId ?? _mockBookings[index].paymongoCheckoutSessionId,
         updatedAt: DateTime.now(),
@@ -365,4 +369,320 @@ class MockData {
     }
     return null;
   }
+
+  /// Create and persist an in-memory mock booking hold with 23P01 concurrency check
+  static BookingModel createMockBookingHold({
+    required String courtId,
+    required DateTime startTime,
+    required DateTime endTime,
+    required double totalAmount,
+    String guestName = '',
+    String guestEmail = '',
+    String guestPhone = '',
+    String? userId,
+    String? notes,
+    int holdDurationMinutes = 10,
+  }) {
+    _ensureInitialized();
+
+    if (courtId.trim().isEmpty) {
+      throw ArgumentError.value(courtId, 'courtId', 'Court ID cannot be empty');
+    }
+    if (!startTime.isBefore(endTime)) {
+      throw ArgumentError('startTime must be before endTime');
+    }
+    if (totalAmount < 0) {
+      throw ArgumentError.value(totalAmount, 'totalAmount', 'Total amount must be non-negative');
+    }
+
+    final now = DateTime.now();
+
+    // 1. Lazy cleanup of expired holds on this court
+    for (int i = 0; i < _mockBookings.length; i++) {
+      final b = _mockBookings[i];
+      if (b.courtId == courtId &&
+          (b.status == 'pending' || b.status == 'pending_payment') &&
+          b.expiresAt != null &&
+          b.expiresAt!.isBefore(now)) {
+        _mockBookings[i] = b.copyWith(
+          status: 'expired',
+          updatedAt: now,
+        );
+      }
+    }
+
+    // 2. Check for overlapping active reservations on this court
+    // (status NOT IN ('cancelled', 'cancelled_refund_pending', 'expired'))
+    final hasOverlap = _mockBookings.any((b) {
+      if (b.courtId != courtId) return false;
+      if (b.status == 'cancelled' ||
+          b.status == 'cancelled_refund_pending' ||
+          b.status == 'expired') {
+        return false;
+      }
+      return Validators.hasTimeOverlap(
+        newStart: startTime,
+        newEnd: endTime,
+        existingStart: b.startTime,
+        existingEnd: b.endTime,
+      );
+    });
+
+    if (hasOverlap) {
+      throw const PostgrestException(
+        message: 'Slot is no longer available: Another player has reserved this time.',
+        code: '23P01',
+        details: 'GiST exclusion constraint violation on court slot interval.',
+      );
+    }
+
+    // 3. Create the hold booking
+    final court = defaultCourts.firstWhere(
+      (c) => c.id == courtId,
+      orElse: () => CourtModel(
+        id: courtId,
+        name: 'Pickleball Court',
+        hourlyRate: totalAmount > 0 ? totalAmount : 300.0,
+      ),
+    );
+
+    final durationHours = endTime.difference(startTime).inHours;
+    final expiresAt = now.add(Duration(minutes: holdDurationMinutes));
+
+    final hold = BookingModel(
+      id: 'mock-hold-${now.millisecondsSinceEpoch}',
+      courtId: courtId,
+      court: court,
+      courtName: court.name,
+      userId: userId ?? mockUserProfile.id,
+      guestName: guestName.isNotEmpty
+          ? guestName
+          : (mockUserProfile.fullName ?? 'Player'),
+      guestEmail: guestEmail.isNotEmpty
+          ? guestEmail
+          : (mockUserProfile.email ?? 'player@pickleball.dev'),
+      guestPhone: guestPhone.isNotEmpty
+          ? guestPhone
+          : (mockUserProfile.phone ?? ''),
+      startTime: startTime,
+      endTime: endTime,
+      durationHours: durationHours > 0 ? durationHours : 1,
+      totalPrice: totalAmount,
+      expiresAt: expiresAt,
+      notes: notes,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    _mockBookings.add(hold);
+    return hold;
+  }
+
+  /// Keyset paginated customer bookings sorted by (created_at DESC, id DESC)
+  static PaginatedChunk<BookingModel> fetchPaginatedCustomerBookings({
+    String? userId,
+    String? userEmail,
+    KeysetCursor? cursor,
+    int pageSize = 10,
+  }) {
+    _ensureInitialized();
+    final allUserBookings = getMockUserBookings(userId, userEmail);
+
+    // Stable keyset sorting: created_at DESC, id DESC
+    allUserBookings.sort((a, b) {
+      final aDate = a.createdAt ?? a.startTime;
+      final bDate = b.createdAt ?? b.startTime;
+      final cmp = bDate.compareTo(aDate);
+      if (cmp != 0) return cmp;
+      return b.id.compareTo(a.id);
+    });
+
+    List<BookingModel> candidates = allUserBookings;
+    if (cursor != null) {
+      candidates = candidates.where((b) {
+        final bDate = b.createdAt ?? b.startTime;
+        if (bDate.isBefore(cursor.createdAt)) return true;
+        if (bDate.isAtSameMomentAs(cursor.createdAt)) {
+          return b.id.compareTo(cursor.id) < 0;
+        }
+        return false;
+      }).toList();
+    }
+
+    final hasMore = candidates.length > pageSize;
+    final items = candidates.take(pageSize).toList();
+    KeysetCursor? nextCursor;
+    if (hasMore && items.isNotEmpty) {
+      final last = items.last;
+      nextCursor = KeysetCursor(
+        createdAt: last.createdAt ?? last.startTime,
+        id: last.id,
+      );
+    }
+
+    return PaginatedChunk<BookingModel>(
+      items: items,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+    );
+  }
+
+  /// Keyset paginated venues sorted by (created_at DESC, id DESC)
+  static PaginatedChunk<VenueModel> fetchPaginatedVenues({
+    KeysetCursor? cursor,
+    int pageSize = 10,
+  }) {
+    final list = List<VenueModel>.from(venues);
+    list.sort((a, b) {
+      final aDate = _effectiveVenueCreatedAt(a);
+      final bDate = _effectiveVenueCreatedAt(b);
+      final cmp = bDate.compareTo(aDate);
+      if (cmp != 0) return cmp;
+      return b.id.compareTo(a.id);
+    });
+
+    List<VenueModel> candidates = list;
+    if (cursor != null) {
+      candidates = candidates.where((v) {
+        final vDate = _effectiveVenueCreatedAt(v);
+        if (vDate.isBefore(cursor.createdAt)) return true;
+        if (vDate.isAtSameMomentAs(cursor.createdAt)) {
+          return v.id.compareTo(cursor.id) < 0;
+        }
+        return false;
+      }).toList();
+    }
+
+    final hasMore = candidates.length > pageSize;
+    final items = candidates.take(pageSize).toList();
+    KeysetCursor? nextCursor;
+    if (hasMore && items.isNotEmpty) {
+      final last = items.last;
+      nextCursor = KeysetCursor(
+        createdAt: _effectiveVenueCreatedAt(last),
+        id: last.id,
+      );
+    }
+
+    return PaginatedChunk<VenueModel>(
+      items: items,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+    );
+  }
+
+  /// Keyset paginated courts sorted by (created_at DESC, id DESC)
+  static PaginatedChunk<CourtModel> fetchPaginatedCourts({
+    KeysetCursor? cursor,
+    int pageSize = 10,
+    bool activeOnly = true,
+  }) {
+    var list = defaultCourts.toList();
+    if (activeOnly) {
+      list = list.where((c) => c.status == 'active' && c.isActive).toList();
+    }
+
+    list.sort((a, b) {
+      final aDate = _effectiveCourtCreatedAt(a);
+      final bDate = _effectiveCourtCreatedAt(b);
+      final cmp = bDate.compareTo(aDate);
+      if (cmp != 0) return cmp;
+      return b.id.compareTo(a.id);
+    });
+
+    List<CourtModel> candidates = list;
+    if (cursor != null) {
+      candidates = candidates.where((c) {
+        final cDate = _effectiveCourtCreatedAt(c);
+        if (cDate.isBefore(cursor.createdAt)) return true;
+        if (cDate.isAtSameMomentAs(cursor.createdAt)) {
+          return c.id.compareTo(cursor.id) < 0;
+        }
+        return false;
+      }).toList();
+    }
+
+    final hasMore = candidates.length > pageSize;
+    final items = candidates.take(pageSize).toList();
+    KeysetCursor? nextCursor;
+    if (hasMore && items.isNotEmpty) {
+      final last = items.last;
+      nextCursor = KeysetCursor(
+        createdAt: _effectiveCourtCreatedAt(last),
+        id: last.id,
+      );
+    }
+
+    return PaginatedChunk<CourtModel>(
+      items: items,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+    );
+  }
+
+  static DateTime _effectiveVenueCreatedAt(VenueModel v) {
+    if (v.createdAt != null) return v.createdAt!;
+    switch (v.id) {
+      case 'venue-bgc-prime':
+        return DateTime.utc(2026, 8, 1, 10);
+      case 'venue-alabang-center':
+        return DateTime.utc(2026, 8, 5, 12);
+      default:
+        return DateTime.fromMillisecondsSinceEpoch(0);
+    }
+  }
+
+  static DateTime _effectiveCourtCreatedAt(CourtModel c) {
+    if (c.createdAt != null) return c.createdAt!;
+    switch (c.id) {
+      case 'court-1-indoor-cushion':
+        return DateTime.utc(2026, 8, 1, 8);
+      case 'court-2-indoor-tour':
+        return DateTime.utc(2026, 8, 1, 9);
+      case 'court-3-outdoor-lighted':
+        return DateTime.utc(2026, 8, 1, 10);
+      case 'court-4-outdoor-acrylic':
+        return DateTime.utc(2026, 8, 1, 11);
+      default:
+        return DateTime.fromMillisecondsSinceEpoch(0);
+    }
+  }
+
+  /// Add a mock booking directly into the in-memory store (useful for tests)
+  static void addMockBooking(BookingModel booking) {
+    _ensureInitialized();
+    _mockBookings.add(booking);
+  }
+
+  /// Clear all mock bookings
+  static void clearMockBookings() {
+    _mockBookings.clear();
+    _initialized = true;
+  }
+
+  /// Check if a court slot is available (no confirmed or pending overlapping bookings)
+  static bool checkMockCourtAvailability({
+    required String courtId,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) {
+    _ensureInitialized();
+    final startUtc = startTime.toUtc();
+    final endUtc = endTime.toUtc();
+    for (final b in _mockBookings) {
+      if (b.courtId == courtId &&
+          (b.status == 'confirmed' ||
+           b.status == 'pending' ||
+           b.status == 'paid' ||
+           b.status == 'pending_payment')) {
+        final bStart = b.startTime.toUtc();
+        final bEnd = b.endTime.toUtc();
+        if (startUtc.isBefore(bEnd) && endUtc.isAfter(bStart)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }
+

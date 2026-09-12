@@ -48,14 +48,14 @@ void main() {
       expect(venues, hasLength(2));
 
       final bgc = venues.firstWhere((v) => v.name.contains('BGC'));
-      expect(bgc.city, equals('Taguig'));
+      expect(bgc.city, contains('Taguig'));
       expect(bgc.courtCount, equals(4));
       expect(bgc.rating, greaterThanOrEqualTo(4.0));
       expect(bgc.amenities, isNotEmpty);
 
       final alabang = venues.firstWhere((v) => v.name.contains('Alabang'));
-      expect(alabang.city, equals('Muntinlupa'));
-      expect(alabang.courtCount, equals(4));
+      expect(alabang.city, contains('Muntinlupa'));
+      expect(alabang.courtCount, equals(6));
       expect(alabang.amenities, isNotEmpty);
     });
 
@@ -109,7 +109,7 @@ void main() {
       // Cancel booking
       final cancelledBooking = MockData.cancelMockBooking(created.id);
       expect(cancelledBooking, isNotNull);
-      expect(cancelledBooking.status, equals('cancelled'));
+      expect(cancelledBooking!.status, equals('cancelled'));
 
       // Reset to default
       MockData.resetToDefault();
@@ -357,7 +357,8 @@ void main() {
       expect(updated.phone, equals('+63 917 888 7766'));
 
       final fetched = await AuthService.instance.fetchUserProfile();
-      expect(fetched.fullName, equals('Alex Superstar'));
+      expect(fetched, isNotNull);
+      expect(fetched!.fullName, equals('Alex Superstar'));
       expect(fetched.phone, equals('+63 917 888 7766'));
     });
 

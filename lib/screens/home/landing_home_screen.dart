@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../core/pagination/pagination_controller.dart';
+import '../../core/pagination/pagination_state.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../data/repositories/booking_repository.dart';
+import '../../models/venue_model.dart';
 import '../../widgets/brand_logo_painter.dart';
 import '../../widgets/court_visualizer.dart';
+import '../../widgets/skeleton_loader.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/tap_collapse.dart';
 import 'rates_and_spec_screen.dart';
@@ -22,6 +27,26 @@ class LandingHomeScreen extends StatefulWidget {
 
 class _LandingHomeScreenState extends State<LandingHomeScreen> {
   int _expandedFaqIndex = -1;
+  late final PaginationController<VenueModel> _venuesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _venuesController = PaginationController<VenueModel>(
+      fetchPageChunk: (cursor, pageSize) =>
+          BookingRepository.forFlavor().fetchPaginatedVenues(
+        cursor: cursor,
+        pageSize: pageSize,
+      ),
+      idExtractor: (v) => v.id,
+    );
+  }
+
+  @override
+  void dispose() {
+    _venuesController.dispose();
+    super.dispose();
+  }
 
   final List<({String question, String answer})> _faqs = const [
     (
@@ -267,6 +292,40 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
                       ),
                     ],
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          // 3.5. Popular Arenas & Club Venues (Paginated)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'POPULAR CLUBS',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: colors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'DISCOVER ARENAS',
+                    style: TextStyle(
+                      fontFamily: 'BebasNeue',
+                      fontSize: 26,
+                      letterSpacing: -0.3,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildVenuesSection(colors),
                 ],
               ),
             ),
@@ -663,6 +722,180 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVenuesSection(AppPalette colors) {
+    return AnimatedBuilder(
+      animation: _venuesController,
+      builder: (context, _) {
+        final state = _venuesController.state;
+        if (state is PaginationInitialLoading<VenueModel>) {
+          return const Column(
+            children: [
+              SkeletonVenueCard(margin: EdgeInsets.only(bottom: 10)),
+              SkeletonVenueCard(margin: EdgeInsets.only(bottom: 10)),
+            ],
+          );
+        }
+        final venues = state.currentItems;
+        if (venues.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          children: venues.map((venue) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: colors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceElevated,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: colors.borderSubtle),
+                        ),
+                        child: Icon(Icons.location_on_rounded, color: colors.neonLime, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    venue.name,
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: colors.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                StatusBadge(
+                                  label: venue.tag,
+                                  variant: BadgeVariant.success,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${venue.address}, ${venue.city}',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                color: colors.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${venue.courtCount} Courts Available',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star_rounded, size: 12, color: Colors.amber),
+                            const SizedBox(width: 2),
+                            Text(
+                              '${venue.rating} (${venue.reviewCount})',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'From ₱${venue.priceStartingAt.toStringAsFixed(0)}/hr',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      TapCollapse(
+                        onTap: widget.onBookCourtPressed,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: colors.textPrimary,
+                            borderRadius: BorderRadius.circular(9999),
+                          ),
+                          child: Text(
+                            'Select Arena',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: colors.background,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }
