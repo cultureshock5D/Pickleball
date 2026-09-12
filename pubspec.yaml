@@ -1,7 +1,7 @@
 name: pickleball_app
 description: "A luxury dark-themed Flutter application integrated with Supabase Auth and Postgres profiles."
 publish_to: "none"
-version: 1.0.0+1
+version: 0.3.0+1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

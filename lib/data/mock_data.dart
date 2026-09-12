@@ -240,7 +240,9 @@ class MockData {
     _ensureInitialized();
     return _mockBookings.where((b) {
       if (b.courtId != courtId) return false;
-      if (b.isCancelled || b.isHoldExpired) return false;
+      if (b.isCancelled || b.isHoldExpired || b.isVoid) {
+        return false;
+      }
 
       final start = b.startTime;
       return start.year == date.year &&
@@ -358,13 +360,58 @@ class MockData {
     _ensureInitialized();
     final index = _mockBookings.indexWhere((b) => b.id == bookingId);
     if (index != -1) {
-      final updated = _mockBookings[index].copyWith(
+      final current = _mockBookings[index];
+
+      // Check if another booking was already paid for this exact court & overlapping time
+      final alreadyPaidOverlap = _mockBookings.any((b) =>
+          b.id != current.id &&
+          b.courtId == current.courtId &&
+          b.isPaid &&
+          Validators.hasTimeOverlap(
+            newStart: current.startTime,
+            newEnd: current.endTime,
+            existingStart: b.startTime,
+            existingEnd: b.endTime,
+          ));
+
+      if (alreadyPaidOverlap) {
+        // Someone booked and paid faster -> this booking is VOID
+        final voided = current.copyWith(
+          status: 'void',
+          notes: 'Slot was secured and paid by another player first.',
+          updatedAt: DateTime.now(),
+        );
+        _mockBookings[index] = voided;
+        return voided;
+      }
+
+      final updated = current.copyWith(
         status: status,
         paymongoCheckoutSessionId:
-            paymongoSessionId ?? _mockBookings[index].paymongoCheckoutSessionId,
+            paymongoSessionId ?? current.paymongoCheckoutSessionId,
         updatedAt: DateTime.now(),
       );
       _mockBookings[index] = updated;
+
+      // Void any other pending bookings for the same court and overlapping time
+      for (int i = 0; i < _mockBookings.length; i++) {
+        final b = _mockBookings[i];
+        if (b.id != updated.id &&
+            b.courtId == updated.courtId &&
+            (b.status == 'pending_payment' || b.status == 'pending') &&
+            Validators.hasTimeOverlap(
+              newStart: updated.startTime,
+              newEnd: updated.endTime,
+              existingStart: b.startTime,
+              existingEnd: b.endTime,
+            )) {
+          _mockBookings[i] = b.copyWith(
+            status: 'void',
+            notes: 'Slot was secured and paid by another player first.',
+            updatedAt: DateTime.now(),
+          );
+        }
+      }
       return updated;
     }
     return null;

@@ -335,8 +335,6 @@ class BookingService {
                 'confirmed',
                 'checked_in',
                 'walk_in',
-                'pending_payment',
-                'pending',
               ])
               .gte('end_time', dayStart.toUtc().toIso8601String())
               .lte('start_time', dayEnd.toUtc().toIso8601String());
@@ -345,9 +343,13 @@ class BookingService {
         final allBookings = (response as List<dynamic>)
             .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
             .where((b) {
-          // Discard expired pending holds
-          if ((b.status == 'pending_payment' || b.status == 'pending') &&
-              b.isHoldExpired) {
+          // Discard cancelled, void, expired, and pending bookings from blocking availability
+          if (b.status == 'cancelled' ||
+              b.status == 'cancelled_refund_pending' ||
+              b.status == 'expired' ||
+              b.status == 'void' ||
+              b.status == 'pending_payment' ||
+              b.status == 'pending') {
             return false;
           }
           return true;
@@ -405,6 +407,14 @@ class BookingService {
     final occupiedHours = <int>{};
 
     for (final b in bookings) {
+      if (b.status == 'cancelled' ||
+          b.status == 'cancelled_refund_pending' ||
+          b.status == 'expired' ||
+          b.status == 'void' ||
+          b.status == 'pending_payment' ||
+          b.status == 'pending') {
+        continue;
+      }
       final s = b.startTime;
       final e = b.endTime;
 
@@ -460,8 +470,14 @@ class BookingService {
     final existingBookings = await fetchCourtBookingsForDate(courtId, startTime);
 
     for (final b in existingBookings) {
-      if (b.status == 'cancelled' || b.status == 'expired') continue;
-      if (b.status == 'pending_payment' && b.isHoldExpired) continue;
+      if (b.status == 'cancelled' ||
+          b.status == 'cancelled_refund_pending' ||
+          b.status == 'expired' ||
+          b.status == 'void' ||
+          b.status == 'pending_payment' ||
+          b.status == 'pending') {
+        continue;
+      }
 
       // Overlap condition: proposed start < existing end AND proposed end > existing start
       if (startTime.isBefore(b.endTime) && endTime.isAfter(b.startTime)) {
@@ -1316,6 +1332,58 @@ class BookingService {
   }) async {
     if (_supabase != null) {
       try {
+        // 1. Fetch current booking to check court & time
+        final currentRes = await _supabase!
+            .from('bookings')
+            .select('court_id, start_time, end_time')
+            .eq('id', bookingId)
+            .maybeSingle();
+
+        if (currentRes != null) {
+          final cId = currentRes['court_id'] as String;
+          final sTime = currentRes['start_time'] as String;
+          final eTime = currentRes['end_time'] as String;
+
+          // Check if any conflicting booking was ALREADY confirmed/paid
+          final conflictRes = await _supabase!
+              .from('bookings')
+              .select('id')
+              .eq('court_id', cId)
+              .neq('id', bookingId)
+              .inFilter('status', ['paid', 'confirmed', 'checked_in', 'walk_in'])
+              .lt('start_time', eTime)
+              .gt('end_time', sTime);
+
+          if (conflictRes.isNotEmpty) {
+            // Another player paid faster -> mark this booking as void
+            final voidPayload = {
+              'status': 'void',
+              'notes': 'Slot was secured and paid by another player first.',
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            };
+            final voidedRes = await _supabase!
+                .from('bookings')
+                .update(voidPayload)
+                .eq('id', bookingId)
+                .select('*, courts(name, type, hourly_rate)')
+                .single();
+
+            MockData.markMockBookingAsPaid(
+              bookingId,
+              paymongoSessionId: paymongoSessionId,
+            );
+            invalidateAvailabilityCache();
+            final voidedBooking = BookingModel.fromJson(voidedRes);
+            broadcastMockBookingEvent(
+              BookingRealtimeEvent(
+                type: BookingRealtimeEventType.updated,
+                booking: voidedBooking,
+              ),
+            );
+            return voidedBooking;
+          }
+        }
+
         final updatePayload = {
           'status': 'paid',
           if (paymongoSessionId != null && paymongoSessionId.isNotEmpty)
@@ -1329,6 +1397,26 @@ class BookingService {
             .eq('id', bookingId)
             .select('*, courts(name, type, hourly_rate)')
             .single();
+
+        // Also void any other pending bookings for the same court and slot
+        if (currentRes != null) {
+          try {
+            await _supabase!
+                .from('bookings')
+                .update({
+                  'status': 'void',
+                  'notes': 'Slot was secured and paid by another player first.',
+                  'updated_at': DateTime.now().toUtc().toIso8601String(),
+                })
+                .eq('court_id', currentRes['court_id'] as String)
+                .neq('id', bookingId)
+                .inFilter('status', ['pending_payment', 'pending'])
+                .lt('start_time', currentRes['end_time'] as String)
+                .gt('end_time', currentRes['start_time'] as String);
+          } catch (e) {
+            debugPrint('Note voiding overlapping pending bookings in Supabase: $e');
+          }
+        }
 
         MockData.markMockBookingAsPaid(
           bookingId,

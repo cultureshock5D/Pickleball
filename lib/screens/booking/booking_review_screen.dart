@@ -706,6 +706,10 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
         final b = event.booking;
         if (b != null && b.id == widget.booking.id) {
           final status = b.status.toLowerCase();
+          if (status == 'void' || b.isVoid) {
+            _handleBookingVoided();
+            return;
+          }
           if (status == 'paid' || status == 'confirmed' || b.isPaid) {
             final enriched = b.court == null && widget.booking.court != null
                 ? b.copyWith(court: widget.booking.court)
@@ -719,6 +723,10 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
 
   void _handlePaymentSuccess(BookingModel paidBooking) {
     if (_isPaymentCompleted) return;
+    if (paidBooking.isVoid) {
+      _handleBookingVoided();
+      return;
+    }
     _isPaymentCompleted = true;
     _pollTimer?.cancel();
     _realtimeSubscription?.cancel();
@@ -727,6 +735,22 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
     if (mounted) {
       Navigator.of(context).pop(); // pop this modal sheet
       widget.onPaymentConfirmed(paidBooking);
+    }
+  }
+
+  void _handleBookingVoided() {
+    if (_isPaymentCompleted) return;
+    _isPaymentCompleted = true;
+    _pollTimer?.cancel();
+    _realtimeSubscription?.cancel();
+    HapticFeedback.vibrate();
+
+    if (mounted) {
+      Navigator.of(context).pop(); // pop this modal sheet
+      AppSnackBar.error(
+        context,
+        'Booking Void: This time slot was secured and paid by another player first.',
+      );
     }
   }
 
@@ -766,20 +790,32 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
           widget.booking.id,
           maxAttempts: 1,
         );
-        if (polled != null && (polled.isPaid || polled.isCheckedIn)) {
-          isPaid = true;
+        if (polled != null) {
+          if (polled.isVoid) {
+            _handleBookingVoided();
+            return;
+          }
+          if (polled.isPaid || polled.isCheckedIn) {
+            isPaid = true;
+          }
         }
       }
 
       if (isPaid && mounted) {
-        _isPaymentCompleted = true;
-        _pollTimer?.cancel();
-        HapticFeedback.heavyImpact();
-
         final updatedBooking = await _bookingService.markBookingAsPaid(
           widget.booking.id,
           paymongoSessionId: widget.sessionId,
         );
+
+        if (updatedBooking.isVoid) {
+          _handleBookingVoided();
+          return;
+        }
+
+        _isPaymentCompleted = true;
+        _pollTimer?.cancel();
+        _realtimeSubscription?.cancel();
+        HapticFeedback.heavyImpact();
 
         if (mounted) {
           Navigator.of(context).pop(); // pop this modal sheet
@@ -799,15 +835,20 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
   }
 
   Future<void> _confirmPaymentImmediately() async {
-    _isPaymentCompleted = true;
-    _pollTimer?.cancel();
-    _realtimeSubscription?.cancel();
-    HapticFeedback.heavyImpact();
-
     final updatedBooking = await _bookingService.markBookingAsPaid(
       widget.booking.id,
       paymongoSessionId: widget.sessionId,
     );
+
+    if (updatedBooking.isVoid) {
+      _handleBookingVoided();
+      return;
+    }
+
+    _isPaymentCompleted = true;
+    _pollTimer?.cancel();
+    _realtimeSubscription?.cancel();
+    HapticFeedback.heavyImpact();
 
     if (mounted) {
       Navigator.of(context).pop();

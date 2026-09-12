@@ -68,6 +68,7 @@ class BookingModel {
   bool get isRefundPending => status == 'cancelled_refund_pending';
   bool get isPendingPayment =>
       status == 'pending_payment' || status == 'pending';
+  bool get isVoid => status == 'void';
   bool get isMaintenance => status == 'maintenance';
 
   /// Check if 5-minute checkout hold is expired

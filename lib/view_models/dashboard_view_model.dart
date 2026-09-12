@@ -44,7 +44,8 @@ class DashboardViewModel extends ChangeNotifier {
     return _bookings.where((b) {
       return b.endTime.isBefore(now) &&
           b.status != 'cancelled' &&
-          b.status != 'cancelled_refund_pending';
+          b.status != 'cancelled_refund_pending' &&
+          b.status != 'void';
     }).toList();
   }
 
@@ -52,7 +53,8 @@ class DashboardViewModel extends ChangeNotifier {
     return _bookings.where((b) {
       return b.status == 'cancelled' ||
           b.status == 'cancelled_refund_pending' ||
-          b.status == 'expired';
+          b.status == 'expired' ||
+          b.status == 'void';
     }).toList();
   }
 

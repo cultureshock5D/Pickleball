@@ -146,5 +146,53 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
     });
+
+    testWidgets('ReservationCard hides Receipt and shows Awaiting Payment for pending booking', (WidgetTester tester) async {
+      final pendingBooking = BookingModel(
+        id: 'BK-PENDING-1',
+        userId: 'cust-1',
+        courtId: 'court-1',
+        startTime: DateTime.now().add(const Duration(hours: 24)),
+        endTime: DateTime.now().add(const Duration(hours: 25)),
+        totalPrice: 300.0,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ReservationCard(booking: pendingBooking),
+          ),
+        ),
+      );
+
+      expect(find.text('PENDING'), findsOneWidget);
+      expect(find.text('Awaiting Payment Reflection'), findsOneWidget);
+      expect(find.text('Receipt'), findsNothing);
+      expect(find.text('Gate Pass'), findsNothing);
+    });
+
+    testWidgets('ReservationCard shows VOID status and hides Receipt for void booking', (WidgetTester tester) async {
+      final voidBooking = BookingModel(
+        id: 'BK-VOID-1',
+        userId: 'cust-1',
+        courtId: 'court-1',
+        startTime: DateTime.now().add(const Duration(hours: 24)),
+        endTime: DateTime.now().add(const Duration(hours: 25)),
+        status: 'void',
+        totalPrice: 300.0,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ReservationCard(booking: voidBooking),
+          ),
+        ),
+      );
+
+      expect(find.text('VOID (SLOT TAKEN)'), findsOneWidget);
+      expect(find.text('Slot Taken by Another Player'), findsOneWidget);
+      expect(find.text('Receipt'), findsNothing);
+    });
   });
 }

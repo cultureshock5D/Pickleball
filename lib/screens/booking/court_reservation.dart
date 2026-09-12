@@ -324,8 +324,14 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     }
 
     for (final b in _bookedSlotsForCurrentDay) {
-      if (b.status == 'cancelled' || b.status == 'expired') continue;
-      if (b.status == 'pending_payment' && b.isHoldExpired) continue;
+      if (b.status == 'cancelled' ||
+          b.status == 'cancelled_refund_pending' ||
+          b.status == 'expired' ||
+          b.status == 'void' ||
+          b.status == 'pending_payment' ||
+          b.status == 'pending') {
+        continue;
+      }
 
       if (Validators.hasTimeOverlap(
         newStart: slotStart,
@@ -360,7 +366,6 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   void _resetBooking() {
     HapticFeedback.selectionClick();
     setState(() {
-      _selectedDate = DateTime.now();
       _selectedCourtIndex = 0;
       _selectedSlotIndices = {};
       _paddleRental = false;
@@ -853,7 +858,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                 ],
               ),
               Tooltip(
-                message: 'Reset your court, date, time and rental choices',
+                message: 'Reset your court, time and rental choices on this date',
                 child: InkWell(
                   onTap: _resetBooking,
                   borderRadius: BorderRadius.circular(6),
