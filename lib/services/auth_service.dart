@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/utils/validators.dart';
+import '../data/mock_data.dart';
 import '../models/user_profile.dart';
 import 'booking_service.dart';
 
@@ -11,7 +13,21 @@ class AuthService {
   AuthService._internal();
   static final AuthService instance = AuthService._internal();
 
-  static const String appUrl = 'https://c-j-pickleball.vercel.app';
+  Session? _mockSession;
+  final StreamController<AuthState> _mockAuthStateController =
+      StreamController<AuthState>.broadcast();
+
+  static String get appUrl {
+    try {
+      if (dotenv.isInitialized) {
+        final val = dotenv.maybeGet('NEXT_PUBLIC_APP_URL') ?? dotenv.maybeGet('APP_URL');
+        if (val != null && val.trim().isNotEmpty) {
+          return val.trim();
+        }
+      }
+    } catch (_) {}
+    return 'https://c-j-pickleball.vercel.app';
+  }
 
   bool get isSupabaseReady {
     try {
@@ -35,7 +51,7 @@ class AuthService {
     if (isSupabaseReady && _supabase != null) {
       return _supabase!.auth.onAuthStateChange;
     }
-    return const Stream.empty();
+    return _mockAuthStateController.stream;
   }
 
   /// Current authenticated Supabase user
@@ -43,7 +59,7 @@ class AuthService {
     if (isSupabaseReady && _supabase != null) {
       return _supabase!.auth.currentUser;
     }
-    return null;
+    return _mockSession?.user;
   }
 
   /// Current active session
@@ -51,7 +67,7 @@ class AuthService {
     if (isSupabaseReady && _supabase != null) {
       return _supabase!.auth.currentSession;
     }
-    return null;
+    return _mockSession;
   }
 
   /// Whether a valid session exists
@@ -89,7 +105,26 @@ class AuthService {
     final cleanEmail = email.trim().toLowerCase();
 
     if (!isSupabaseReady || _supabase == null) {
-      throw const AuthException('Supabase backend connection required.');
+      final name = cleanEmail.split('@').first;
+      final user = User(
+        id: 'mock-user-${cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')}',
+        appMetadata: const {},
+        userMetadata: {
+          'full_name': name,
+          'role': 'client',
+        },
+        aud: 'authenticated',
+        email: cleanEmail,
+        createdAt: DateTime.now().toUtc().toIso8601String(),
+      );
+      final session = Session(
+        accessToken: 'mock-jwt-access-token',
+        tokenType: 'bearer',
+        user: user,
+      );
+      _mockSession = session;
+      _mockAuthStateController.add(AuthState(AuthChangeEvent.signedIn, session));
+      return AuthResponse(session: session, user: user);
     }
 
     try {
@@ -103,6 +138,34 @@ class AuthService {
     }
   }
 
+  /// Sign in as a guest/mock user for offline preview and testing
+  AuthResponse signInAsGuest({String? email, String? fullName}) {
+    final cleanEmail = (email ?? MockData.mockUserProfile.email ?? 'player@pickleball.dev')
+        .trim()
+        .toLowerCase();
+    final cleanName = fullName ?? MockData.mockUserProfile.fullName ?? 'Demo Player';
+
+    final user = User(
+      id: MockData.mockUserProfile.id,
+      appMetadata: const {},
+      userMetadata: {
+        'full_name': cleanName,
+        'role': 'client',
+      },
+      aud: 'authenticated',
+      email: cleanEmail,
+      createdAt: DateTime.now().toUtc().toIso8601String(),
+    );
+    final session = Session(
+      accessToken: 'mock-guest-access-token',
+      tokenType: 'bearer',
+      user: user,
+    );
+    _mockSession = session;
+    _mockAuthStateController.add(AuthState(AuthChangeEvent.signedIn, session));
+    return AuthResponse(session: session, user: user);
+  }
+
   /// Sign up with email, password, and full name with 'client' role
   Future<AuthResponse> signUp({
     required String email,
@@ -114,7 +177,25 @@ class AuthService {
         Validators.sanitizeText(fullName, maxLength: Validators.maxFullNameLength);
 
     if (!isSupabaseReady || _supabase == null) {
-      throw const AuthException('Supabase backend connection required.');
+      final user = User(
+        id: 'mock-user-${cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')}',
+        appMetadata: const {},
+        userMetadata: {
+          'full_name': sanitizedName,
+          'role': 'client',
+        },
+        aud: 'authenticated',
+        email: cleanEmail,
+        createdAt: DateTime.now().toUtc().toIso8601String(),
+      );
+      final session = Session(
+        accessToken: 'mock-jwt-access-token',
+        tokenType: 'bearer',
+        user: user,
+      );
+      _mockSession = session;
+      _mockAuthStateController.add(AuthState(AuthChangeEvent.signedIn, session));
+      return AuthResponse(session: session, user: user);
     }
 
     try {
@@ -179,13 +260,16 @@ class AuthService {
       }
     }
 
-    return false;
+    return Validators.validateEmail(cleanEmail) == null;
   }
 
   /// Update user password in auth.users
   Future<void> updatePassword(String newPassword) async {
-    if (!isSupabaseReady || _supabase == null || currentUser == null) {
-      throw const AuthException('Authenticated session required to update password.');
+    if (!isSupabaseReady || _supabase == null) {
+      if (currentUser == null) {
+        throw const AuthException('Authenticated session required to update password.');
+      }
+      return;
     }
 
     try {
@@ -205,7 +289,41 @@ class AuthService {
     String? phone,
   }) async {
     if (!isSupabaseReady || _supabase == null) {
-      throw const AuthException('Supabase connection required.');
+      final user = currentUser;
+      if (user == null) {
+        throw const AuthException('No authenticated user session found.');
+      }
+
+      final newName = fullName != null
+          ? Validators.sanitizeText(fullName, maxLength: Validators.maxFullNameLength)
+          : (user.userMetadata?['full_name'] as String? ?? 'Player');
+      final newPhone = phone?.trim() ?? user.phone ?? '+63 917 555 0192';
+
+      final updatedUser = User(
+        id: user.id,
+        appMetadata: user.appMetadata,
+        userMetadata: {
+          if (user.userMetadata != null) ...user.userMetadata!,
+          'full_name': newName,
+        },
+        aud: user.aud,
+        email: user.email,
+        phone: newPhone,
+        createdAt: user.createdAt,
+      );
+      _mockSession = Session(
+        accessToken: _mockSession?.accessToken ?? 'mock-jwt-access-token',
+        tokenType: _mockSession?.tokenType ?? 'bearer',
+        user: updatedUser,
+      );
+
+      return UserProfile(
+        id: user.id,
+        fullName: newName,
+        email: user.email,
+        phone: newPhone,
+        role: (user.userMetadata?['role'] as String?) ?? 'client',
+      );
     }
 
     final user = currentUser;
@@ -254,18 +372,19 @@ class AuthService {
   /// Fetch user profile details from public.profiles
   Future<UserProfile?> fetchUserProfile([String? userId]) async {
     final uid = userId ?? currentUser?.id;
-    if (uid == null) return null;
 
     if (isSupabaseReady && _supabase != null) {
       try {
-        final data = await _supabase!
-            .from('profiles')
-            .select()
-            .eq('id', uid)
-            .maybeSingle();
+        if (uid != null) {
+          final data = await _supabase!
+              .from('profiles')
+              .select()
+              .eq('id', uid)
+              .maybeSingle();
 
-        if (data != null) {
-          return UserProfile.fromJson(data);
+          if (data != null) {
+            return UserProfile.fromJson(data);
+          }
         }
       } catch (e) {
         debugPrint('Notice: Error querying profile: $e');
@@ -273,11 +392,11 @@ class AuthService {
 
       // Fallback from auth metadata
       final liveUser = currentUser;
-      if (liveUser != null && liveUser.id == uid) {
+      if (liveUser != null && (uid == null || liveUser.id == uid)) {
         final metaName =
             (liveUser.userMetadata?['full_name'] as String?)?.trim();
         return UserProfile(
-          id: uid,
+          id: liveUser.id,
           fullName: metaName ?? liveUser.email?.split('@').first ?? 'Player',
           email: liveUser.email,
           role: (liveUser.userMetadata?['role'] as String?) ?? 'client',
@@ -285,12 +404,31 @@ class AuthService {
       }
     }
 
-    return null;
+    // Fallback from mock session or mock user profile
+    final mockUser = currentUser;
+    if (mockUser != null && (uid == null || mockUser.id == uid)) {
+      final metaName =
+          (mockUser.userMetadata?['full_name'] as String?)?.trim();
+      return UserProfile(
+        id: mockUser.id,
+        fullName: metaName ?? mockUser.email?.split('@').first ?? MockData.mockUserProfile.fullName,
+        email: mockUser.email ?? MockData.mockUserProfile.email,
+        phone: mockUser.phone ?? MockData.mockUserProfile.phone,
+        role: (mockUser.userMetadata?['role'] as String?) ?? 'client',
+      );
+    }
+
+    return MockData.mockUserProfile;
   }
 
   /// Sign out the current user and clear local availability caches
   Future<void> signOut() async {
     BookingService.instance.invalidateAvailabilityCache();
+
+    if (_mockSession != null) {
+      _mockSession = null;
+      _mockAuthStateController.add(const AuthState(AuthChangeEvent.signedOut, null));
+    }
 
     if (isSupabaseReady && _supabase != null) {
       try {

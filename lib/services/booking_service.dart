@@ -1,25 +1,228 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/availability_slot.dart';
 import '../models/booking_model.dart';
 import '../models/booking_refund_model.dart';
 import '../models/court_model.dart';
+import '../data/mock_data.dart';
 import '../core/constants/paymongo_config.dart';
 import 'auth_service.dart';
+
+enum BookingRealtimeEventType { inserted, updated, deleted }
+
+class BookingRealtimeEvent {
+  final BookingRealtimeEventType type;
+  final BookingModel? booking;
+  final String? courtId;
+  final DateTime? startTime;
+
+  BookingRealtimeEvent({
+    required this.type,
+    this.booking,
+    String? courtId,
+    DateTime? startTime,
+  })  : courtId = courtId ?? booking?.courtId,
+        startTime = startTime ?? booking?.startTime;
+
+  @override
+  String toString() =>
+      'BookingRealtimeEvent(type: $type, courtId: $courtId, startTime: $startTime, booking: ${booking?.id})';
+}
 
 class BookingService {
   BookingService._internal();
   static final BookingService instance = BookingService._internal();
 
-  static const String appUrl = 'https://c-j-pickleball.vercel.app';
+  static String get appUrl {
+    try {
+      if (dotenv.isInitialized) {
+        final val = dotenv.maybeGet('NEXT_PUBLIC_APP_URL') ?? dotenv.maybeGet('APP_URL');
+        if (val != null && val.trim().isNotEmpty) {
+          return val.trim();
+        }
+      }
+    } catch (_) {}
+    return 'https://c-j-pickleball.vercel.app';
+  }
   static const double defaultHourlyRate = 300.0;
   static const double paddleRentalFee = 150.0; // Flat fee for 2x paddles + 3x balls
   static const double ballThrowerHourlyFee = 150.0; // Per hour
 
   final AuthService _authService = AuthService.instance;
+
+  // Realtime subscription and event stream
+  RealtimeChannel? _bookingsChannel;
+  StreamController<BookingRealtimeEvent>? _bookingEventsController;
+  bool _hasSubscribedBefore = false;
+
+  /// Expose broadcast stream of realtime booking events
+  Stream<BookingRealtimeEvent> get bookingRealtimeEvents {
+    _ensureBookingEventsController();
+    return _bookingEventsController!.stream;
+  }
+
+  void _ensureBookingEventsController() {
+    if (_bookingEventsController == null || _bookingEventsController!.isClosed) {
+      _bookingEventsController =
+          StreamController<BookingRealtimeEvent>.broadcast();
+    }
+  }
+
+  /// Initialize Supabase Realtime channel on public:bookings table
+  void initRealtimeSubscription() {
+    _ensureBookingEventsController();
+
+    if (!isSupabaseReady || _supabase == null) {
+      debugPrint('Supabase is not ready. Realtime subscription deferred.');
+      return;
+    }
+
+    if (_bookingsChannel != null) {
+      return;
+    }
+
+    try {
+      _bookingsChannel = _supabase!.channel('public:bookings')
+        ..onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'bookings',
+          callback: (PostgresChangePayload payload) {
+            _handleRealtimePayload(payload);
+          },
+        )
+        ..subscribe((RealtimeSubscribeStatus status, Object? error) {
+          if (status == RealtimeSubscribeStatus.subscribed) {
+            debugPrint(
+              'Supabase Realtime channel public:bookings subscribed successfully.',
+            );
+            if (_hasSubscribedBefore) {
+              // Reconnection catch-up: invalidate cache and notify UI listeners
+              invalidateAvailabilityCache();
+              _bookingEventsController?.add(
+                BookingRealtimeEvent(
+                  type: BookingRealtimeEventType.updated,
+                ),
+              );
+            }
+            _hasSubscribedBefore = true;
+          } else if (status == RealtimeSubscribeStatus.channelError) {
+            debugPrint('Supabase Realtime channel error: $error');
+          }
+        });
+    } catch (e) {
+      debugPrint('Error initializing Supabase Realtime channel: $e');
+    }
+  }
+
+  void _handleRealtimePayload(PostgresChangePayload payload) {
+    BookingRealtimeEventType eventType;
+    switch (payload.eventType) {
+      case PostgresChangeEvent.insert:
+        eventType = BookingRealtimeEventType.inserted;
+        break;
+      case PostgresChangeEvent.delete:
+        eventType = BookingRealtimeEventType.deleted;
+        break;
+      case PostgresChangeEvent.update:
+      case PostgresChangeEvent.all:
+      default:
+        eventType = BookingRealtimeEventType.updated;
+        break;
+    }
+
+    final record =
+        payload.newRecord.isNotEmpty ? payload.newRecord : payload.oldRecord;
+    BookingModel? booking;
+    if (record.isNotEmpty) {
+      try {
+        booking = BookingModel.fromJson(record);
+      } catch (e) {
+        debugPrint('Note: unable to parse BookingModel from realtime payload: $e');
+      }
+    }
+
+    final rawCourtId = payload.newRecord['court_id'] ??
+        payload.newRecord['courtId'] ??
+        payload.oldRecord['court_id'] ??
+        payload.oldRecord['courtId'];
+    final courtId = rawCourtId?.toString() ?? booking?.courtId;
+
+    DateTime? startTime = booking?.startTime;
+    if (startTime == null) {
+      final rawStartTime = payload.newRecord['start_time'] ??
+          payload.newRecord['startTime'] ??
+          payload.oldRecord['start_time'] ??
+          payload.oldRecord['startTime'];
+      if (rawStartTime != null) {
+        startTime = DateTime.tryParse(rawStartTime.toString());
+      }
+    }
+
+    // Invalidate cache for newly affected court & date
+    if (courtId != null && startTime != null) {
+      invalidateAvailabilityCache(courtId: courtId, date: startTime);
+    } else {
+      invalidateAvailabilityCache();
+    }
+
+    // Also invalidate old court/date if this was an update and changed slot
+    final oldCourtId =
+        (payload.oldRecord['court_id'] ?? payload.oldRecord['courtId'])?.toString();
+    final rawOldStart =
+        payload.oldRecord['start_time'] ?? payload.oldRecord['startTime'];
+    final oldStartTime =
+        rawOldStart != null ? DateTime.tryParse(rawOldStart.toString()) : null;
+    if (oldCourtId != null &&
+        oldStartTime != null &&
+        (oldCourtId != courtId || oldStartTime != startTime)) {
+      invalidateAvailabilityCache(courtId: oldCourtId, date: oldStartTime);
+    }
+
+    final event = BookingRealtimeEvent(
+      type: eventType,
+      booking: booking,
+      courtId: courtId,
+      startTime: startTime,
+    );
+
+    _ensureBookingEventsController();
+    _bookingEventsController?.add(event);
+  }
+
+  /// Broadcast a mock or simulator event to all UI listeners and invalidate cache
+  void broadcastMockBookingEvent(BookingRealtimeEvent event) {
+    if (event.courtId != null && event.startTime != null) {
+      invalidateAvailabilityCache(courtId: event.courtId, date: event.startTime);
+    } else {
+      invalidateAvailabilityCache();
+    }
+    _ensureBookingEventsController();
+    _bookingEventsController?.add(event);
+  }
+
+  /// Tear down and close Realtime subscriptions and streams
+  void disposeRealtimeSubscription() {
+    if (_bookingsChannel != null && _supabase != null) {
+      try {
+        _supabase!.removeChannel(_bookingsChannel!);
+      } catch (e) {
+        debugPrint('Error removing realtime channel: $e');
+      }
+      _bookingsChannel = null;
+    }
+    if (_bookingEventsController != null && !_bookingEventsController!.isClosed) {
+      _bookingEventsController!.close();
+      _bookingEventsController = null;
+    }
+    _hasSubscribedBefore = false;
+  }
+
+  User? get currentUser => _authService.currentUser;
 
   // In-memory availability cache: key is "courtId_YYYY-MM-DD"
   static const int _maxCacheEntries = 60;
@@ -86,14 +289,17 @@ class BookingService {
             .neq('status', 'inactive')
             .order('name');
 
-        return (response as List<dynamic>)
+        final courts = (response as List<dynamic>)
             .map((json) => CourtModel.fromJson(json as Map<String, dynamic>))
             .toList();
+        if (courts.isNotEmpty) {
+          return courts;
+        }
       } catch (e) {
         debugPrint('Error fetching active courts from Supabase: $e');
       }
     }
-    return [];
+    return MockData.getMockActiveCourts();
   }
 
   /// Fetch bookings for a court on a given date range to check availability
@@ -181,7 +387,9 @@ class BookingService {
       }
     }
 
-    return [];
+    final fallbackBookings = MockData.getBookingsForCourtAndDate(courtId, date);
+    _putInCache(key, fallbackBookings);
+    return fallbackBookings;
   }
 
   /// Generate 16 hourly slots (6:00 AM – 10:00 PM, hours 6 to 21) for a court on date
@@ -537,13 +745,6 @@ class BookingService {
       throw ArgumentError.value(totalAmount, 'totalAmount', 'Total amount must be non-negative');
     }
 
-    if (_supabase == null) {
-      throw const AuthException('Supabase connection required to create a booking.');
-    }
-
-    final user = _supabase!.auth.currentUser;
-    final duration = endTime.difference(startTime).inHours;
-
     final isAvail = await checkSlotAvailability(
       courtId: courtId,
       startTime: startTime,
@@ -553,6 +754,41 @@ class BookingService {
     if (!isAvail) {
       throw Exception('Slot No Longer Available: Time interval already booked.');
     }
+
+    if (!isSupabaseReady || _supabase == null) {
+      final user = _authService.currentUser;
+      final mockBooking = MockData.createMockBooking(
+        courtId: courtId,
+        startTime: startTime,
+        endTime: endTime,
+        totalAmount: totalAmount,
+        userId: user?.id,
+        guestName: guestName.isNotEmpty
+            ? guestName
+            : (user?.userMetadata?['full_name'] ?? 'Guest'),
+        guestEmail: guestEmail.isNotEmpty
+            ? guestEmail
+            : (user?.email ?? 'player@pickleball.dev'),
+        guestPhone: guestPhone,
+        paymongoCheckoutSessionId: paymongoCheckoutSessionId,
+        notes: notes,
+        status: (paymongoCheckoutSessionId != null &&
+                paymongoCheckoutSessionId.isNotEmpty)
+            ? 'pending_payment'
+            : 'confirmed',
+      );
+      invalidateAvailabilityCache(courtId: courtId, date: startTime);
+      broadcastMockBookingEvent(
+        BookingRealtimeEvent(
+          type: BookingRealtimeEventType.inserted,
+          booking: mockBooking,
+        ),
+      );
+      return mockBooking;
+    }
+
+    final user = _supabase!.auth.currentUser;
+    final duration = endTime.difference(startTime).inHours;
 
     try {
       final payload = {
@@ -605,7 +841,9 @@ class BookingService {
   Future<List<BookingModel>> fetchCustomerBookings() async {
     if (isSupabaseReady && _supabase != null) {
       final user = _supabase!.auth.currentUser;
-      if (user == null) return [];
+      if (user == null) {
+        return MockData.getMockUserBookings();
+      }
 
       try {
         final email = user.email?.trim().toLowerCase() ?? '';
@@ -619,33 +857,51 @@ class BookingService {
             .or(orFilter)
             .order('start_time', ascending: false);
 
-        return (response as List<dynamic>)
+        final bookings = (response as List<dynamic>)
             .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
             .toList();
+        if (bookings.isNotEmpty) {
+          return bookings;
+        }
       } catch (e) {
         debugPrint('Error fetching player bookings: $e');
       }
+      return MockData.getMockUserBookings(user.id, user.email);
     }
 
-    return [];
+    final user = _authService.currentUser;
+    return MockData.getMockUserBookings(user?.id, user?.email);
   }
 
   /// Cancel a booking enforcing the strict 24-hour advance rule
   Future<void> cancelBooking(BookingModel booking) async {
-    if (_supabase == null) {
-      throw const AuthException('Supabase connection required to cancel a booking.');
-    }
-
-    final user = _supabase!.auth.currentUser;
-    if (user == null) {
-      throw const AuthException('Authentication required.');
-    }
-
     // Strict 24-hour advance cancellation rule
     if (!booking.isCancellable) {
       throw Exception(
         'Cancellations are only permitted 24+ hours in advance of match start time.',
       );
+    }
+
+    if (!isSupabaseReady || _supabase == null) {
+      final cancelled = MockData.cancelMockBooking(booking.id);
+      invalidateAvailabilityCache(
+        courtId: booking.courtId,
+        date: booking.startTime,
+      );
+      broadcastMockBookingEvent(
+        BookingRealtimeEvent(
+          type: BookingRealtimeEventType.updated,
+          booking: cancelled ?? booking.copyWith(status: 'cancelled'),
+          courtId: booking.courtId,
+          startTime: booking.startTime,
+        ),
+      );
+      return;
+    }
+
+    final user = _supabase!.auth.currentUser;
+    if (user == null) {
+      throw const AuthException('Authentication required.');
     }
 
     final nextStatus = booking.paymentMethod == 'cash'
@@ -662,6 +918,7 @@ class BookingService {
           .eq('id', booking.id)
           .eq('user_id', user.id);
 
+      MockData.cancelMockBooking(booking.id);
       invalidateAvailabilityCache(
         courtId: booking.courtId,
         date: booking.startTime,
@@ -681,8 +938,20 @@ class BookingService {
     required String accountNumber,
     String? reason,
   }) async {
-    if (_supabase == null) {
-      throw const AuthException('Supabase connection required for refund request.');
+    if (!isSupabaseReady || _supabase == null) {
+      final refund = BookingRefundModel(
+        id: 'mock-ref-${DateTime.now().millisecondsSinceEpoch}',
+        bookingId: bookingId,
+        amount: amount,
+        walletType: walletType,
+        accountName: accountName.trim(),
+        accountNumber: accountNumber.trim(),
+        reason: reason?.trim(),
+        createdAt: DateTime.now(),
+      );
+      MockData.cancelMockBooking(bookingId);
+      invalidateAvailabilityCache();
+      return refund;
     }
 
     try {
@@ -708,6 +977,7 @@ class BookingService {
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }).eq('id', bookingId);
 
+      MockData.cancelMockBooking(bookingId);
       invalidateAvailabilityCache();
       return BookingRefundModel.fromJson(response);
     } catch (e) {
@@ -722,7 +992,20 @@ class BookingService {
     int maxAttempts = 15,
     Duration interval = const Duration(seconds: 2),
   }) async {
-    if (_supabase == null) return null;
+    if (_supabase == null) {
+      final mock = MockData.mockBookings.firstWhere(
+        (b) => b.id == bookingId,
+        orElse: () => BookingModel(
+          id: bookingId,
+          courtId: '',
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 1)),
+          totalPrice: 300.0,
+        ),
+      );
+      if (mock.isPaid) return mock;
+      return null;
+    }
 
     for (int i = 0; i < maxAttempts; i++) {
       try {
@@ -765,21 +1048,44 @@ class BookingService {
             .select('*, courts(name, type, hourly_rate)')
             .single();
 
+        MockData.markMockBookingAsPaid(
+          bookingId,
+          paymongoSessionId: paymongoSessionId,
+        );
         invalidateAvailabilityCache();
-        return BookingModel.fromJson(response);
+        final paidBooking = BookingModel.fromJson(response);
+        broadcastMockBookingEvent(
+          BookingRealtimeEvent(
+            type: BookingRealtimeEventType.updated,
+            booking: paidBooking,
+          ),
+        );
+        return paidBooking;
       } catch (e) {
         debugPrint('Error marking booking as paid in Supabase: $e');
       }
     }
 
-    // Return fallback booking model with paid status
-    return BookingModel(
-      id: bookingId,
-      courtId: '',
-      startTime: DateTime.now(),
-      endTime: DateTime.now().add(const Duration(hours: 1)),
-      status: 'paid',
-      totalPrice: 300.0,
+    final updatedMock = MockData.markMockBookingAsPaid(
+      bookingId,
+      paymongoSessionId: paymongoSessionId,
     );
+    invalidateAvailabilityCache();
+    final fallbackBooking = updatedMock ??
+        BookingModel(
+          id: bookingId,
+          courtId: '',
+          startTime: DateTime.now(),
+          endTime: DateTime.now().add(const Duration(hours: 1)),
+          status: 'paid',
+          totalPrice: 300.0,
+        );
+    broadcastMockBookingEvent(
+      BookingRealtimeEvent(
+        type: BookingRealtimeEventType.updated,
+        booking: fallbackBooking,
+      ),
+    );
+    return fallbackBooking;
   }
 }

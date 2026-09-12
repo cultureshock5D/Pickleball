@@ -193,8 +193,13 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       // 3. Launch PayMongo Checkout URL in external browser first
       if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
         final uri = Uri.parse(checkoutUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        try {
+          final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (!launched) {
+            await launchUrl(uri);
+          }
+        } catch (e) {
+          debugPrint('PayMongo URL launch notice: $e');
         }
       }
 
@@ -677,12 +682,14 @@ class _AwaitingPaymentModal extends StatefulWidget {
 class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
   final BookingService _bookingService = BookingService.instance;
   Timer? _pollTimer;
+  StreamSubscription<BookingRealtimeEvent>? _realtimeSubscription;
   bool _isChecking = false;
   bool _isPaymentCompleted = false;
 
   @override
   void initState() {
     super.initState();
+    _initRealtimeListener();
     // Poll every 2.5 seconds for payment reflection
     _pollTimer = Timer.periodic(
       const Duration(milliseconds: 2500),
@@ -690,9 +697,43 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
     );
   }
 
+  void _initRealtimeListener() {
+    _realtimeSubscription =
+        _bookingService.bookingRealtimeEvents.listen((event) {
+      if (_isPaymentCompleted || !mounted) return;
+
+      if (event.type == BookingRealtimeEventType.updated) {
+        final b = event.booking;
+        if (b != null && b.id == widget.booking.id) {
+          final status = b.status.toLowerCase();
+          if (status == 'paid' || status == 'confirmed' || b.isPaid) {
+            final enriched = b.court == null && widget.booking.court != null
+                ? b.copyWith(court: widget.booking.court)
+                : b;
+            _handlePaymentSuccess(enriched);
+          }
+        }
+      }
+    });
+  }
+
+  void _handlePaymentSuccess(BookingModel paidBooking) {
+    if (_isPaymentCompleted) return;
+    _isPaymentCompleted = true;
+    _pollTimer?.cancel();
+    _realtimeSubscription?.cancel();
+    HapticFeedback.heavyImpact();
+
+    if (mounted) {
+      Navigator.of(context).pop(); // pop this modal sheet
+      widget.onPaymentConfirmed(paidBooking);
+    }
+  }
+
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _realtimeSubscription?.cancel();
     super.dispose();
   }
 
@@ -760,6 +801,7 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
   Future<void> _confirmPaymentImmediately() async {
     _isPaymentCompleted = true;
     _pollTimer?.cancel();
+    _realtimeSubscription?.cancel();
     HapticFeedback.heavyImpact();
 
     final updatedBooking = await _bookingService.markBookingAsPaid(
@@ -776,8 +818,18 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
   Future<void> _relaunchCheckout() async {
     if (widget.checkoutUrl != null && widget.checkoutUrl!.isNotEmpty) {
       final uri = Uri.parse(widget.checkoutUrl!);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      try {
+        bool launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!launched) {
+          launched = await launchUrl(uri);
+        }
+        if (!launched && mounted) {
+          AppSnackBar.error(context, 'Could not open PayMongo checkout in browser.');
+        }
+      } catch (e) {
+        if (mounted) {
+          AppSnackBar.error(context, 'Could not launch checkout: $e');
+        }
       }
     } else {
       AppSnackBar.info(context, 'No active checkout URL found.');

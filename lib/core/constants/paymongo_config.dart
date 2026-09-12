@@ -65,4 +65,28 @@ class PayMongoConfig {
 
   /// Whether current active key is a live production key
   static bool get isLiveMode => secretKey.startsWith('sk_live_');
+
+  /// PayMongo Webhook Secret Key (prefers dotenv, then dart-define)
+  static String get webhookSecretKey {
+    try {
+      if (dotenv.isInitialized) {
+        final val = dotenv.maybeGet('PAYMONGO_WEBHOOK_SECRET') ??
+            dotenv.maybeGet('PAYMONGO_WEBHOOK_SECRET_KEY');
+        if (val != null && val.trim().isNotEmpty) {
+          return val.trim();
+        }
+      }
+    } catch (_) {}
+
+    const envSec = String.fromEnvironment('PAYMONGO_WEBHOOK_SECRET');
+    if (envSec.isNotEmpty) return envSec.trim();
+
+    const envAlt = String.fromEnvironment('PAYMONGO_WEBHOOK_SECRET_KEY');
+    if (envAlt.isNotEmpty) return envAlt.trim();
+
+    return '';
+  }
+
+  /// Whether PayMongo Webhook is configured with a valid secret key
+  static bool get isWebhookConfigured => webhookSecretKey.isNotEmpty;
 }

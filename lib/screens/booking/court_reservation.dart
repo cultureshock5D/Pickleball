@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -32,6 +33,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   bool get wantKeepAlive => true;
 
   final BookingService _bookingService = BookingService.instance;
+  StreamSubscription<BookingRealtimeEvent>? _realtimeSubscription;
 
   // View state: 0 = Reserve Court, 1 = My Reservations
   late int _activeModeIndex;
@@ -81,6 +83,50 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     super.initState();
     _activeModeIndex = widget.initialSubTab;
     _initializeData();
+    _initRealtimeSubscription();
+  }
+
+  void _initRealtimeSubscription() {
+    _bookingService.initRealtimeSubscription();
+    _realtimeSubscription = _bookingService.bookingRealtimeEvents
+        .listen(_handleRealtimeBookingEvent);
+  }
+
+  void _handleRealtimeBookingEvent(BookingRealtimeEvent event) {
+    if (!mounted) return;
+
+    final court = _currentCourt;
+    bool shouldReloadAvailability = false;
+
+    if (court != null) {
+      final matchesCourt = event.courtId == null || event.courtId == court.id;
+      final matchesDate = event.startTime == null ||
+          (event.startTime!.year == _selectedDate.year &&
+              event.startTime!.month == _selectedDate.month &&
+              event.startTime!.day == _selectedDate.day);
+
+      if (matchesCourt && matchesDate) {
+        shouldReloadAvailability = true;
+      }
+    } else {
+      shouldReloadAvailability = true;
+    }
+
+    if (shouldReloadAvailability) {
+      _loadCourtAvailability();
+    }
+
+    final user = _bookingService.currentUser;
+    final b = event.booking;
+    final affectsUser = b == null ||
+        (user != null &&
+            (b.userId == user.id ||
+                (b.guestEmail.isNotEmpty && b.guestEmail == user.email))) ||
+        _activeModeIndex == 1;
+
+    if (affectsUser) {
+      _loadCustomerBookings();
+    }
   }
 
   Future<void> _initializeData() async {
@@ -1217,5 +1263,11 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _realtimeSubscription?.cancel();
+    super.dispose();
   }
 }
