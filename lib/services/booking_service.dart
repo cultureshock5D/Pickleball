@@ -571,14 +571,16 @@ class BookingService {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('https://api.paymongo.com/v1/checkout_sessions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': PayMongoConfig.basicAuthHeader,
-        },
-        body: body,
-      );
+      final response = await http
+          .post(
+            Uri.parse('https://api.paymongo.com/v1/checkout_sessions'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': PayMongoConfig.basicAuthHeader,
+            },
+            body: body,
+          )
+          .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -606,21 +608,23 @@ class BookingService {
       debugPrint('Direct PayMongo API notice (e.g. browser CORS on Web): $e');
       // Fallback: Attempt Next.js server-side proxy
       try {
-        final proxyRes = await http.post(
-          Uri.parse('$appUrl/api/checkout/paymongo'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'courtId': courtId,
-            'courtName': courtName,
-            'hourlyRate': hourlyRate,
-            'durationHours': durationHours,
-            'guestName': guestName.trim(),
-            'guestEmail': guestEmail.trim().toLowerCase(),
-            'guestPhone': guestPhone.trim(),
-            'paddleRental': paddleRental,
-            'ballThrowerRental': ballThrowerRental,
-          }),
-        );
+        final proxyRes = await http
+            .post(
+              Uri.parse('$appUrl/api/checkout/paymongo'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({
+                'courtId': courtId,
+                'courtName': courtName,
+                'hourlyRate': hourlyRate,
+                'durationHours': durationHours,
+                'guestName': guestName.trim(),
+                'guestEmail': guestEmail.trim().toLowerCase(),
+                'guestPhone': guestPhone.trim(),
+                'paddleRental': paddleRental,
+                'ballThrowerRental': ballThrowerRental,
+              }),
+            )
+            .timeout(const Duration(seconds: 4));
 
         if (proxyRes.statusCode == 200 || proxyRes.statusCode == 201) {
           final data = jsonDecode(proxyRes.body) as Map<String, dynamic>;
@@ -638,6 +642,16 @@ class BookingService {
         debugPrint('Proxy endpoint notice: $proxyErr');
       }
 
+      final errLower = e.toString().toLowerCase();
+      if (errLower.contains('socket') ||
+          errLower.contains('timeout') ||
+          errLower.contains('failed host lookup') ||
+          errLower.contains('clientexception') ||
+          errLower.contains('handshake') ||
+          errLower.contains('connection')) {
+        throw Exception('Unable to reach payment gateway. Please check your internet connection.');
+      }
+
       rethrow;
     }
   }
@@ -645,12 +659,14 @@ class BookingService {
   /// Direct PayMongo REST API query to inspect checkout session payment status
   Future<Map<String, dynamic>> getPayMongoSessionStatus(String sessionId) async {
     try {
-      final response = await http.get(
-        Uri.parse('https://api.paymongo.com/v1/checkout_sessions/$sessionId'),
-        headers: {
-          'Authorization': PayMongoConfig.basicAuthHeader,
-        },
-      );
+      final response = await http
+          .get(
+            Uri.parse('https://api.paymongo.com/v1/checkout_sessions/$sessionId'),
+            headers: {
+              'Authorization': PayMongoConfig.basicAuthHeader,
+            },
+          )
+          .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -721,11 +737,13 @@ class BookingService {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('$appUrl/api/checkout/paymongo'),
-        headers: headers,
-        body: body,
-      );
+      final response = await http
+          .post(
+            Uri.parse('$appUrl/api/checkout/paymongo'),
+            headers: headers,
+            body: body,
+          )
+          .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/network/network_connectivity_watcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
@@ -137,6 +138,21 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       return;
     }
 
+    // Fast offline check to prevent long spinning when unreachable
+    final isOnline = await DefaultNetworkConnectivityWatcher().isConnected.timeout(
+      const Duration(milliseconds: 700),
+      onTimeout: () => true,
+    );
+    if (!isOnline) {
+      if (mounted) {
+        AppSnackBar.error(
+          context,
+          'Cannot reach payment gateway. You are currently offline.',
+        );
+      }
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
@@ -232,7 +248,20 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final errorMsg = e.toString().replaceAll('Exception: ', '');
+        final errLower = e.toString().toLowerCase();
+        final String errorMsg;
+        if (errLower.contains('socket') ||
+            errLower.contains('timeout') ||
+            errLower.contains('failed host lookup') ||
+            errLower.contains('clientexception') ||
+            errLower.contains('handshake') ||
+            errLower.contains('offline') ||
+            errLower.contains('unreachable') ||
+            errLower.contains('connection')) {
+          errorMsg = 'Cannot reach payment gateway. Please check your internet connection.';
+        } else {
+          errorMsg = e.toString().replaceAll('Exception: ', '');
+        }
         AppSnackBar.error(context, errorMsg);
       }
     } finally {
@@ -841,6 +870,22 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
     if (_isPaymentCompleted) return;
     if (_isChecking) return;
 
+    if (isManual) {
+      final isOnline = await DefaultNetworkConnectivityWatcher().isConnected.timeout(
+        const Duration(milliseconds: 700),
+        onTimeout: () => true,
+      );
+      if (!isOnline) {
+        if (mounted) {
+          AppSnackBar.error(
+            context,
+            'Cannot reach payment gateway. You are currently offline.',
+          );
+        }
+        return;
+      }
+    }
+
     if (mounted && isManual) {
       setState(() => _isChecking = true);
     }
@@ -911,6 +956,17 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
   }
 
   Future<void> _relaunchCheckout() async {
+    final isOnline = await DefaultNetworkConnectivityWatcher().isConnected.timeout(
+      const Duration(milliseconds: 700),
+      onTimeout: () => true,
+    );
+    if (!isOnline) {
+      if (mounted) {
+        AppSnackBar.error(context, 'Cannot reach payment gateway. You are currently offline.');
+      }
+      return;
+    }
+
     if (widget.checkoutUrl != null && widget.checkoutUrl!.isNotEmpty) {
       final uri = Uri.parse(widget.checkoutUrl!);
       try {
@@ -926,7 +982,7 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
           AppSnackBar.error(context, 'Could not launch checkout: $e');
         }
       }
-    } else {
+    } else if (mounted) {
       AppSnackBar.info(context, 'No active checkout URL found.');
     }
   }

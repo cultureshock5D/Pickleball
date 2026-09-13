@@ -90,14 +90,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onQuickAddPressed: () {
           setState(() => _currentIndex = 1);
         },
-        onNotificationPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Notifications: No new alerts today.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
         onProfilePressed: () {
           setState(() => _currentIndex = 3);
         },

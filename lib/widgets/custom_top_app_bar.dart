@@ -11,7 +11,6 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
   final UserProfile? userProfile;
   final String? userEmail;
   final VoidCallback? onQuickAddPressed;
-  final VoidCallback? onNotificationPressed;
   final VoidCallback? onProfilePressed;
 
   const CustomTopAppBar({
@@ -21,7 +20,6 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.userProfile,
     this.userEmail,
     this.onQuickAddPressed,
-    this.onNotificationPressed,
     this.onProfilePressed,
   });
 
@@ -82,7 +80,7 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
 
-            // Right Action Icons (Theme Mode Toggle, Notifications Bell, User Avatar)
+            // Right Action Icons (Theme Mode Toggle, User Avatar)
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -127,60 +125,9 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 8),
 
-                // 2. Notifications Bell with neon badge
-                Semantics(
-                  button: true,
-                  label: 'Notifications',
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      onNotificationPressed?.call();
-                    },
-                    child: Container(
-                      constraints: const BoxConstraints(
-                        minWidth: 48,
-                        minHeight: 48,
-                      ),
-                      alignment: Alignment.center,
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: colors.surfaceElevated,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: colors.borderSubtle),
-                            ),
-                            child: Icon(
-                              Icons.notifications_none_rounded,
-                              color: colors.textPrimary,
-                              size: 19,
-                            ),
-                          ),
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: colors.neonGreen,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 4),
-
-                // 3. User Avatar / Initials Badge with neon ring
+                // 2. User Avatar / Initials Badge with neon ring
                 Semantics(
                   button: true,
                   label: 'Profile: $displayName',
