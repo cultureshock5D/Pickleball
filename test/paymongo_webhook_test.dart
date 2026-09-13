@@ -208,7 +208,6 @@ void main() {
         startTime: DateTime.now().add(const Duration(days: 3, hours: 10)),
         endTime: DateTime.now().add(const Duration(days: 3, hours: 11)),
         totalAmount: 300.0,
-        status: 'pending_payment',
         paymongoCheckoutSessionId: 'cs_hook_test_001',
       );
 
@@ -241,7 +240,6 @@ void main() {
         startTime: DateTime.now().add(const Duration(days: 4, hours: 14)),
         endTime: DateTime.now().add(const Duration(days: 4, hours: 15)),
         totalAmount: 300.0,
-        status: 'pending_payment',
         paymongoCheckoutSessionId: 'cs_hook_test_dup',
       );
 
@@ -280,7 +278,6 @@ void main() {
         startTime: DateTime.now().add(const Duration(days: 5, hours: 9)),
         endTime: DateTime.now().add(const Duration(days: 5, hours: 10)),
         totalAmount: 350.0,
-        status: 'pending_payment',
         paymongoCheckoutSessionId: 'cs_hook_test_fail',
       );
 
@@ -310,6 +307,7 @@ void main() {
         startTime: DateTime.now().add(const Duration(days: 6, hours: 16)),
         endTime: DateTime.now().add(const Duration(days: 6, hours: 17)),
         totalAmount: 280.0,
+        status: 'confirmed',
         paymongoCheckoutSessionId: 'cs_hook_already_confirmed',
       );
 
@@ -341,7 +339,6 @@ void main() {
         startTime: DateTime.now().add(const Duration(days: 7, hours: 18)),
         endTime: DateTime.now().add(const Duration(days: 7, hours: 19)),
         totalAmount: 320.0,
-        status: 'pending_payment',
         paymongoCheckoutSessionId: 'cs_realtime_stream_test',
       );
 
@@ -617,7 +614,6 @@ void main() {
         startTime: DateTime.now().add(const Duration(days: 10, hours: 9)),
         endTime: DateTime.now().add(const Duration(days: 10, hours: 10)),
         totalAmount: 350.0,
-        status: 'pending_payment',
         paymongoCheckoutSessionId: 'cs_parallel_stress_test',
       );
 
@@ -692,6 +688,7 @@ void main() {
         startTime: DateTime.now().add(const Duration(days: 11, hours: 14)),
         endTime: DateTime.now().add(const Duration(days: 11, hours: 15)),
         totalAmount: 400.0,
+        status: 'confirmed',
         paymongoCheckoutSessionId: 'cs_multi_fail_test',
       );
 

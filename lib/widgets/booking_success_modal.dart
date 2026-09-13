@@ -156,54 +156,84 @@ class _BookingSuccessModalState extends State<BookingSuccessModal>
               ),
               const SizedBox(height: 20),
 
-              // Glowing Success Badge Header with Electric Lime #CCFF00 Glow
-              Container(
-                width: 76,
-                height: 76,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colors.neonGreenAlpha14,
-                  border: Border.all(color: colors.neonGreen, width: 2.2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.neonGreenAlpha35,
-                      blurRadius: 26,
-                      spreadRadius: 3,
-                    ),
-                    BoxShadow(
-                      color: colors.neonGreenAlpha14,
-                      blurRadius: 14,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.check_circle_rounded,
-                    color: colors.neonGreen,
-                    size: 42,
-                  ),
-                ),
-              ),
-          const SizedBox(height: 16),
+              // Glowing Badge Header based on status
+              Builder(
+                builder: (context) {
+                  final IconData headerIcon;
+                  final Color headerColor;
+                  final String title;
+                  final String subtitle;
 
-          Text(
-            'Reservation Confirmed!',
-            style: GoogleFonts.inter(
-              color: colors.textPrimary,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Your court has been successfully locked in.',
-            style: GoogleFonts.inter(
-              color: colors.textSecondary,
-              fontSize: 13.5,
-            ),
-          ),
+                  if (booking.isVoid) {
+                    headerIcon = Icons.cancel_rounded;
+                    headerColor = colors.errorRed;
+                    title = 'Booking Void';
+                    subtitle = 'Slot was secured and paid by another player first.';
+                  } else if (booking.isCancelled) {
+                    headerIcon = Icons.cancel_outlined;
+                    headerColor = colors.errorRed;
+                    title = 'Reservation Cancelled';
+                    subtitle = 'This reservation has been cancelled.';
+                  } else if (booking.isPendingPayment) {
+                    headerIcon = Icons.schedule_rounded;
+                    headerColor = colors.neonYellow;
+                    title = 'Payment Pending';
+                    subtitle = 'Awaiting payment reflection. Complete checkout to confirm.';
+                  } else {
+                    headerIcon = Icons.check_circle_rounded;
+                    headerColor = colors.neonGreen;
+                    title = 'Reservation Confirmed!';
+                    subtitle = 'Your court has been successfully locked in.';
+                  }
+
+                  return Column(
+                    children: [
+                      Container(
+                        width: 76,
+                        height: 76,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: headerColor.withValues(alpha: 0.14),
+                          border: Border.all(color: headerColor, width: 2.2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: headerColor.withValues(alpha: 0.35),
+                              blurRadius: 26,
+                              spreadRadius: 3,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
+                            headerIcon,
+                            color: headerColor,
+                            size: 42,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        title,
+                        style: GoogleFonts.inter(
+                          color: colors.textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          color: colors.textSecondary,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
           const SizedBox(height: 20),
 
           // Reservation Summary Card

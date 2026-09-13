@@ -80,7 +80,6 @@ void main() {
         totalAmount: 300.0,
         userId: 'user-offline-test',
         guestEmail: 'test.user@pickleball.dev',
-        status: 'pending_payment',
       );
 
       expect(MockData.mockBookings.length, equals(initialCount + 1));
@@ -170,7 +169,7 @@ void main() {
       expect(booking.endTime, equals(slotEnd));
       expect(booking.totalPrice, equals(300.0));
       expect(booking.guestName, equals('Jordan Vance'));
-      expect(booking.status, equals('confirmed'));
+      expect(booking.status, equals('pending_payment'));
 
       // Verify cache was invalidated
       expect(BookingService.instance.getCachedAvailability(courtId, slotStart), isNull);
@@ -180,19 +179,20 @@ void main() {
       expect(refreshed.any((b) => b.id == booking.id), isTrue);
     });
 
-    test('Prevents double-booking: rejecting overlapping interval with exception', () async {
+    test('Prevents double-booking: rejecting overlapping interval with exception once paid', () async {
       final futureDate = DateTime.now().add(const Duration(days: 15));
       final slotStart = DateTime(futureDate.year, futureDate.month, futureDate.day, 14);
       final slotEnd = slotStart.add(const Duration(hours: 2));
       const courtId = 'court-2-indoor-tour';
 
-      // Initial booking: 2:00 PM to 4:00 PM
-      await BookingService.instance.createBooking(
+      // Initial booking: 2:00 PM to 4:00 PM (Paid)
+      final initialBooking = await BookingService.instance.createBooking(
         courtId: courtId,
         startTime: slotStart,
         endTime: slotEnd,
         totalAmount: 700.0,
       );
+      await BookingService.instance.markBookingAsPaid(initialBooking.id);
 
       // Overlapping booking: 3:00 PM to 5:00 PM (overlaps by 1 hour)
       final overlappingStart = slotStart.add(const Duration(hours: 1));
@@ -261,6 +261,7 @@ void main() {
         startTime: advanceTime,
         endTime: advanceTime.add(const Duration(hours: 1)),
         totalAmount: 300.0,
+        status: 'confirmed',
       );
 
       expect(booking.isCancellable, isTrue);
@@ -282,6 +283,7 @@ void main() {
         startTime: soonTime,
         endTime: soonTime.add(const Duration(hours: 1)),
         totalAmount: 300.0,
+        status: 'confirmed',
       );
 
       expect(booking.isCancellable, isFalse);
@@ -298,22 +300,25 @@ void main() {
       );
     });
 
-    test('Rejects cancellation for pending or unpaid bookings', () async {
+    test('Allows immediate cancellation for pending or unpaid bookings without 24h constraint', () async {
       final advanceTime = DateTime.now().add(const Duration(days: 4));
       final unpaidBooking = MockData.createMockBooking(
         courtId: 'court-1-indoor-cushion',
         startTime: advanceTime,
         endTime: advanceTime.add(const Duration(hours: 1)),
         totalAmount: 300.0,
-        status: 'pending_payment',
       );
 
-      expect(unpaidBooking.isCancellable, isFalse);
+      expect(unpaidBooking.isPendingPayment, isTrue);
 
-      expect(
-        () => BookingService.instance.cancelBooking(unpaidBooking),
-        throwsA(isA<Exception>()),
+      await expectLater(
+        BookingService.instance.cancelBooking(unpaidBooking),
+        completes,
       );
+
+      final updated = MockData.mockBookings.firstWhere((b) => b.id == unpaidBooking.id);
+      expect(updated.status, equals('cancelled'));
+      expect(updated.isCancelled, isTrue);
     });
   });
 

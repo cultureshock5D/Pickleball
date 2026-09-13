@@ -682,14 +682,33 @@ class _AwaitingPaymentModal extends StatefulWidget {
 class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
   final BookingService _bookingService = BookingService.instance;
   Timer? _pollTimer;
+  Timer? _countdownTimer;
   StreamSubscription<BookingRealtimeEvent>? _realtimeSubscription;
   bool _isChecking = false;
   bool _isPaymentCompleted = false;
+  int _secondsRemaining = 300; // 5 minutes
 
   @override
   void initState() {
     super.initState();
     _initRealtimeListener();
+
+    // Calculate initial remaining seconds if expiresAt exists
+    if (widget.booking.expiresAt != null) {
+      final diff = widget.booking.expiresAt!.difference(DateTime.now()).inSeconds;
+      _secondsRemaining = diff > 0 ? diff : 0;
+    }
+
+    // 1-second interval countdown timer
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsRemaining > 0) {
+        if (mounted) setState(() => _secondsRemaining--);
+      } else {
+        timer.cancel();
+        _handleBookingExpired();
+      }
+    });
+
     // Poll every 2.5 seconds for payment reflection
     _pollTimer = Timer.periodic(
       const Duration(milliseconds: 2500),
@@ -708,6 +727,17 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
           final status = b.status.toLowerCase();
           if (status == 'void' || b.isVoid) {
             _handleBookingVoided();
+            return;
+          }
+          if (status == 'cancelled') {
+            _isPaymentCompleted = true;
+            _pollTimer?.cancel();
+            _countdownTimer?.cancel();
+            _realtimeSubscription?.cancel();
+            if (mounted) {
+              Navigator.of(context).pop();
+              AppSnackBar.info(context, 'Booking was cancelled.');
+            }
             return;
           }
           if (status == 'paid' || status == 'confirmed' || b.isPaid) {
@@ -729,6 +759,7 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
     }
     _isPaymentCompleted = true;
     _pollTimer?.cancel();
+    _countdownTimer?.cancel();
     _realtimeSubscription?.cancel();
     HapticFeedback.heavyImpact();
 
@@ -742,6 +773,7 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
     if (_isPaymentCompleted) return;
     _isPaymentCompleted = true;
     _pollTimer?.cancel();
+    _countdownTimer?.cancel();
     _realtimeSubscription?.cancel();
     HapticFeedback.vibrate();
 
@@ -754,9 +786,53 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
     }
   }
 
+  Future<void> _handleBookingExpired() async {
+    if (_isPaymentCompleted) return;
+    _isPaymentCompleted = true;
+    _pollTimer?.cancel();
+    _countdownTimer?.cancel();
+    _realtimeSubscription?.cancel();
+    HapticFeedback.vibrate();
+
+    try {
+      await _bookingService.cancelBooking(widget.booking);
+    } catch (e) {
+      debugPrint('Auto-cancel expired booking notice: $e');
+    }
+
+    if (mounted) {
+      Navigator.of(context).pop();
+      AppSnackBar.error(
+        context,
+        'Payment window expired (5 mins). Pending reservation cancelled.',
+      );
+    }
+  }
+
+  Future<void> _cancelBookingByUser() async {
+    if (_isPaymentCompleted) return;
+    _isPaymentCompleted = true;
+    _pollTimer?.cancel();
+    _countdownTimer?.cancel();
+    _realtimeSubscription?.cancel();
+    HapticFeedback.lightImpact();
+
+    try {
+      await _bookingService.cancelBooking(widget.booking);
+    } catch (e) {
+      debugPrint('Cancel pending booking notice: $e');
+    }
+
+    if (mounted) {
+      Navigator.of(context).pop();
+      AppSnackBar.info(context, 'Pending booking cancelled.');
+    }
+  }
+
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _countdownTimer?.cancel();
     _realtimeSubscription?.cancel();
     super.dispose();
   }
@@ -831,28 +907,6 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
       if (mounted && isManual) {
         setState(() => _isChecking = false);
       }
-    }
-  }
-
-  Future<void> _confirmPaymentImmediately() async {
-    final updatedBooking = await _bookingService.markBookingAsPaid(
-      widget.booking.id,
-      paymongoSessionId: widget.sessionId,
-    );
-
-    if (updatedBooking.isVoid) {
-      _handleBookingVoided();
-      return;
-    }
-
-    _isPaymentCompleted = true;
-    _pollTimer?.cancel();
-    _realtimeSubscription?.cancel();
-    HapticFeedback.heavyImpact();
-
-    if (mounted) {
-      Navigator.of(context).pop();
-      widget.onPaymentConfirmed(updatedBooking);
     }
   }
 
@@ -1013,6 +1067,43 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                Divider(color: colors.borderSubtle, height: 1),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Payment Window',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 14,
+                          color: _secondsRemaining < 60
+                              ? colors.errorRed
+                              : colors.neonYellow,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${(_secondsRemaining ~/ 60).toString().padLeft(2, '0')}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}',
+                          style: GoogleFonts.robotoMono(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: _secondsRemaining < 60
+                                ? colors.errorRed
+                                : colors.neonYellow,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
                 if (widget.sessionId != null) ...[
                   const SizedBox(height: 8),
                   Divider(color: colors.borderSubtle, height: 1),
@@ -1071,12 +1162,8 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
 
           // Action 1: Manual Check Button
           NeonButton(
-            text: widget.checkoutUrl != null
-                ? 'I Have Paid — Check Status'
-                : 'Confirm Payment (Web Test Mode)',
-            onPressed: widget.checkoutUrl != null
-                ? () => _checkPaymentStatus(isManual: true)
-                : _confirmPaymentImmediately,
+            text: 'Check Payment Status',
+            onPressed: () => _checkPaymentStatus(isManual: true),
             isLoading: _isChecking,
           ),
           const SizedBox(height: 10),
@@ -1109,14 +1196,40 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
             const SizedBox(height: 8),
           ],
 
-          // Action 3: Dismiss / Back
+          // Action 3: Cancel Booking Button
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: OutlinedButton.icon(
+              onPressed: _cancelBookingByUser,
+              icon: Icon(Icons.close_rounded, size: 16, color: colors.errorRed),
+              label: Text(
+                'Cancel Booking',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: colors.errorRed,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: colors.errorRedAlpha30),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Action 4: Dismiss / Keep Pending
           TextButton(
             onPressed: () {
               _pollTimer?.cancel();
+              _countdownTimer?.cancel();
               Navigator.of(context).pop();
             },
             child: Text(
-              'Cancel / Finish Later',
+              'Keep Booking Pending (Finish Later)',
               style: GoogleFonts.inter(
                 fontSize: 12.5,
                 color: colors.textMuted,

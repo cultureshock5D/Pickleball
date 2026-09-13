@@ -311,7 +311,7 @@ void main() {
         totalAmount: 300.0,
       );
       expect(created.id, isNotEmpty);
-      expect(created.status, equals('confirmed'));
+      expect(created.status, equals('pending_payment'));
 
       // 4. Mark as paid offline
       final paid = await BookingService.instance.markBookingAsPaid(created.id);

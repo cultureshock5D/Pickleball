@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../core/theme/app_theme.dart';
 import '../core/utils/snackbar_helper.dart';
-import '../core/utils/validators.dart';
 import '../models/booking_model.dart';
 import '../services/booking_service.dart';
 import '../services/calendar_link_service.dart';
@@ -38,13 +36,10 @@ class ReservationCard extends StatefulWidget {
 
 class _ReservationCardState extends State<ReservationCard>
     with SingleTickerProviderStateMixin {
-  bool _isAddingToCalendar = false;
-  bool _isCancelling = false;
   late AnimationController _pressController;
   late Animation<double> _scaleAnimation;
-
-  static final DateFormat _monthDayYearFormat = DateFormat('MMMM d, y');
-  static final DateFormat _fullDayFormat = DateFormat('EEEE, MMMM d, y');
+  bool _isAddingToCalendar = false;
+  bool _isCancelling = false;
 
   @override
   void initState() {
@@ -52,13 +47,10 @@ class _ReservationCardState extends State<ReservationCard>
     _pressController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 120),
-      lowerBound: 0.95,
+      lowerBound: 0.97,
       value: 1.0,
     );
-    _scaleAnimation = CurvedAnimation(
-      parent: _pressController,
-      curve: Curves.easeInOut,
-    );
+    _scaleAnimation = _pressController;
   }
 
   @override
@@ -68,32 +60,30 @@ class _ReservationCardState extends State<ReservationCard>
   }
 
   String _formatDateHeader(DateTime dt) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(const Duration(days: 1));
-    final target = DateTime(dt.year, dt.month, dt.day);
-
-    if (target == today) {
-      return 'Today • ${_monthDayYearFormat.format(dt)}';
-    } else if (target == tomorrow) {
-      return 'Tomorrow • ${_monthDayYearFormat.format(dt)}';
-    }
-    return _fullDayFormat.format(dt);
+    return DateFormat('EEE, MMM d, yyyy').format(dt.toLocal());
   }
 
   String _formatTimeSlot(DateTime start, DateTime end) {
-    return Validators.formatTimeSlotRange(start, end);
+    final startFmt = DateFormat('h:mm a').format(start.toLocal());
+    final endFmt = DateFormat('h:mm a').format(end.toLocal());
+    return '$startFmt - $endFmt';
   }
 
   Future<void> _handleAddToCalendar() async {
-    HapticFeedback.lightImpact();
-    _pressController.forward(from: 0.95);
     setState(() => _isAddingToCalendar = true);
     try {
-      await CalendarLinkService.addBookingToCalendar(
+      final success = await CalendarLinkService.addBookingToCalendar(
         widget.booking,
         context: context,
       );
+      if (!success && mounted) {
+        AppSnackBar.error(
+            context, 'Could not open calendar. Please check link settings.');
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.error(context, 'Calendar export failed: $e');
+      }
     } finally {
       if (mounted) {
         setState(() => _isAddingToCalendar = false);
@@ -102,33 +92,95 @@ class _ReservationCardState extends State<ReservationCard>
   }
 
   void _openDetailsModal() {
-    HapticFeedback.selectionClick();
     BookingSuccessModal.show(
+      context,
+      booking: widget.booking,
+      onViewBookings: widget.onRefresh,
+    );
+  }
+
+  void _openCheckInQrModal() {
+    CheckInQrModal.show(
       context,
       booking: widget.booking,
     );
   }
 
-  void _openCheckInQrModal() {
-    HapticFeedback.mediumImpact();
-    CheckInQrModal.show(context, booking: widget.booking);
-  }
-
   void _openReceiptModal() {
-    HapticFeedback.lightImpact();
-    DownloadableReceiptModal.show(context, booking: widget.booking);
+    DownloadableReceiptModal.show(
+      context,
+      booking: widget.booking,
+    );
   }
 
-  Future<void> _openRefundDialog() async {
+  Future<void> _handleCancelPendingBooking() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.colors.surfaceElevated,
+        title: Text(
+          'Cancel Pending Booking?',
+          style: GoogleFonts.plusJakartaSans(
+            color: context.colors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to cancel this pending booking? The held slot will be freed immediately.',
+          style: GoogleFonts.inter(color: context.colors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'Keep Booking',
+              style: GoogleFonts.inter(color: context.colors.textMuted),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.colors.errorRed,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              'Cancel Booking',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && mounted) {
+      setState(() => _isCancelling = true);
+      try {
+        await BookingService.instance.cancelBooking(widget.booking);
+        if (mounted) {
+          AppSnackBar.success(context, 'Booking cancelled successfully.');
+          widget.onRefresh?.call();
+        }
+      } catch (e) {
+        if (mounted) {
+          AppSnackBar.error(context, 'Failed to cancel booking: $e');
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isCancelling = false);
+        }
+      }
+    }
+  }
+
+  void _openRefundDialog() {
     final colors = context.colors;
     final booking = widget.booking;
-
-    String selectedWallet = 'gcash';
-    final nameController = TextEditingController(text: booking.guestName);
-    final accountController = TextEditingController(text: booking.guestPhone);
+    final nameController = TextEditingController();
+    final accountController = TextEditingController();
     final reasonController = TextEditingController();
+    String selectedWallet = 'gcash';
 
-    await showModalBottomSheet(
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: colors.surfaceElevated,
@@ -136,13 +188,13 @@ class _ReservationCardState extends State<ReservationCard>
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) {
+        builder: (modalCtx, setModalState) {
           return Padding(
             padding: EdgeInsets.only(
               left: 20,
               right: 20,
               top: 20,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 20,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -152,34 +204,34 @@ class _ReservationCardState extends State<ReservationCard>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Request Booking Refund',
+                      'Request Cancellation & Refund',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
                         color: colors.textPrimary,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded),
+                      icon: Icon(Icons.close_rounded, color: colors.textMuted),
                       onPressed: () => Navigator.of(ctx).pop(),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'C&J 24-Hour Policy: Cancellations are permitted 24+ hours in advance. Amount: ₱${booking.totalPrice.toStringAsFixed(2)}',
+                  'Eligible for 100% refund (24h+ before start). Please enter refund payout details:',
                   style: GoogleFonts.inter(
-                    fontSize: 12.5,
+                    fontSize: 13,
                     color: colors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Select E-Wallet / Bank',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textMuted,
+                  'Payout Method',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -627,7 +679,7 @@ class _ReservationCardState extends State<ReservationCard>
                           ),
                         ],
 
-                        // Awaiting payment info chip
+                        // Awaiting payment info chip + Cancel button
                         if (booking.isPendingPayment) ...[
                           Expanded(
                             child: Container(
@@ -645,15 +697,39 @@ class _ReservationCardState extends State<ReservationCard>
                                   Icon(Icons.hourglass_empty_rounded,
                                       size: 15, color: colors.neonYellow),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    'Awaiting Payment Reflection',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: colors.neonYellow,
+                                  Flexible(
+                                    child: Text(
+                                      'Awaiting Payment Reflection',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.neonYellow,
+                                      ),
                                     ),
                                   ),
                                 ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 48),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 10),
+                              side: BorderSide(color: colors.errorRedAlpha30),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: _isCancelling ? null : _handleCancelPendingBooking,
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: colors.errorRed,
                               ),
                             ),
                           ),

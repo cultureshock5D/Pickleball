@@ -77,6 +77,7 @@ void main() {
           endTime: slotEnd,
           totalAmount: 300.0,
           guestName: 'Court Rival',
+          status: 'confirmed',
         );
 
         // 5. Emit realtime booking event to the BookingService broadcast stream
@@ -149,6 +150,7 @@ void main() {
           startTime: slotStart,
           endTime: slotEnd,
           totalAmount: 300.0,
+          status: 'confirmed',
         );
 
         // Emit insert event to lock the slot

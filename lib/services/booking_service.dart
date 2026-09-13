@@ -775,6 +775,8 @@ class BookingService {
 
     if (!isSupabaseReady || _supabase == null) {
       final user = _authService.currentUser;
+      final now = DateTime.now();
+      final expiresAt = now.add(const Duration(minutes: 5));
       final mockBooking = MockData.createMockBooking(
         courtId: courtId,
         startTime: startTime,
@@ -790,10 +792,7 @@ class BookingService {
         guestPhone: guestPhone,
         paymongoCheckoutSessionId: paymongoCheckoutSessionId,
         notes: notes,
-        status: (paymongoCheckoutSessionId != null &&
-                paymongoCheckoutSessionId.isNotEmpty)
-            ? 'pending_payment'
-            : 'confirmed',
+        expiresAt: expiresAt,
       );
       invalidateAvailabilityCache(courtId: courtId, date: startTime);
       broadcastMockBookingEvent(
@@ -807,6 +806,8 @@ class BookingService {
 
     final user = _supabase!.auth.currentUser;
     final duration = endTime.difference(startTime).inHours;
+    final now = DateTime.now();
+    final expiresAt = now.add(const Duration(minutes: 5));
 
     try {
       final payload = {
@@ -830,7 +831,8 @@ class BookingService {
         if (paymongoCheckoutSessionId != null && paymongoCheckoutSessionId.isNotEmpty)
           'paymongo_checkout_session_id': paymongoCheckoutSessionId,
         if (notes != null) 'notes': notes,
-        'created_at': DateTime.now().toUtc().toIso8601String(),
+        'expires_at': expiresAt.toUtc().toIso8601String(),
+        'created_at': now.toUtc().toIso8601String(),
       };
 
       final response = await _supabase!
@@ -1171,10 +1173,11 @@ class BookingService {
     );
   }
 
-  /// Cancel a booking enforcing the strict 24-hour advance rule
+  /// Cancel a booking enforcing the strict 24-hour advance rule for paid bookings,
+  /// or allowing immediate cancellation for pending bookings.
   Future<void> cancelBooking(BookingModel booking) async {
-    // Strict 24-hour advance cancellation rule
-    if (!booking.isCancellable) {
+    final isPending = booking.isPendingPayment || booking.status == 'pending';
+    if (!isPending && !booking.isCancellable) {
       throw Exception(
         'Cancellations are only permitted 24+ hours in advance of match start time.',
       );
@@ -1202,9 +1205,11 @@ class BookingService {
       throw const AuthException('Authentication required.');
     }
 
-    final nextStatus = booking.paymentMethod == 'cash'
+    final nextStatus = isPending
         ? 'cancelled'
-        : 'cancelled_refund_pending';
+        : (booking.paymentMethod == 'cash'
+            ? 'cancelled'
+            : 'cancelled_refund_pending');
 
     try {
       await _supabase!

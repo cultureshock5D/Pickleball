@@ -73,9 +73,14 @@ class BookingModel {
 
   /// Check if 5-minute checkout hold is expired
   bool get isHoldExpired {
-    if (status == 'expired') return true;
-    if ((status == 'pending_payment' || status == 'pending') && expiresAt != null) {
-      return expiresAt!.isBefore(DateTime.now());
+    if (status == 'expired' || status == 'cancelled') return true;
+    if (status == 'pending_payment' || status == 'pending') {
+      if (expiresAt != null) {
+        return expiresAt!.isBefore(DateTime.now());
+      }
+      if (createdAt != null) {
+        return DateTime.now().difference(createdAt!).inMinutes >= 5;
+      }
     }
     return false;
   }

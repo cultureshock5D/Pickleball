@@ -290,7 +290,8 @@ class MockData {
     String? userId,
     String? paymongoCheckoutSessionId,
     String? notes,
-    String status = 'confirmed',
+    DateTime? expiresAt,
+    String status = 'pending_payment',
     String paymentMethod = 'paymongo',
   }) {
     _ensureInitialized();
@@ -305,8 +306,9 @@ class MockData {
     );
 
     final durationHours = endTime.difference(startTime).inHours;
+    final now = DateTime.now();
     final booking = BookingModel(
-      id: 'mock-bk-${DateTime.now().millisecondsSinceEpoch}',
+      id: 'mock-bk-${now.millisecondsSinceEpoch}',
       courtId: courtId,
       court: court,
       courtName: court.name,
@@ -327,9 +329,10 @@ class MockData {
       status: status,
       paymentMethod: paymentMethod,
       paymongoCheckoutSessionId: paymongoCheckoutSessionId,
+      expiresAt: expiresAt ?? now.add(const Duration(minutes: 5)),
       notes: notes,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: now,
+      updatedAt: now,
     );
 
     _mockBookings.add(booking);
