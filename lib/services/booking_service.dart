@@ -493,27 +493,46 @@ class BookingService {
     required String courtId,
     required String courtName,
     required double hourlyRate,
-    required int durationHours,
+    required num durationHours,
     required String guestName,
     required String guestEmail,
     required String guestPhone,
     bool paddleRental = false,
     bool ballThrowerRental = false,
     List<String>? selectedPaymentMethods,
+    double? totalAmount,
   }) async {
     final secretKey = PayMongoConfig.secretKey;
     if (secretKey.isEmpty) {
       throw Exception('PayMongo live secret key not configured.');
     }
 
+    final durationHoursVal = durationHours.toDouble();
+    final durationStr = (durationHoursVal == durationHoursVal.roundToDouble())
+        ? '${durationHoursVal.toInt()} hr'
+        : '${durationHoursVal.toStringAsFixed(1)} hr';
+
     final lineItems = <Map<String, dynamic>>[];
 
+    final paddleAmountCentavos = paddleRental ? (paddleRentalFee * 100).round() : 0;
+    final ballThrowerAmountCentavos = ballThrowerRental
+        ? (ballThrowerHourlyFee * durationHoursVal * 100).round()
+        : 0;
+
+    final int courtAmountCentavos;
+    if (totalAmount != null && totalAmount > 0) {
+      final totalCentavos = (totalAmount * 100).round();
+      final remainder = totalCentavos - paddleAmountCentavos - ballThrowerAmountCentavos;
+      courtAmountCentavos = remainder > 0 ? remainder : (hourlyRate * durationHoursVal * 100).round();
+    } else {
+      courtAmountCentavos = (hourlyRate * durationHoursVal * 100).round();
+    }
+
     // 1. Court line item (centavos)
-    final courtAmountCentavos = (hourlyRate * durationHours * 100).round();
     lineItems.add({
       'currency': 'PHP',
-      'amount': courtAmountCentavos,
-      'name': '$courtName ($durationHours hr)',
+      'amount': courtAmountCentavos > 0 ? courtAmountCentavos : (hourlyRate * durationHoursVal * 100).round(),
+      'name': '$courtName ($durationStr)',
       'quantity': 1,
     });
 
@@ -521,7 +540,7 @@ class BookingService {
     if (paddleRental) {
       lineItems.add({
         'currency': 'PHP',
-        'amount': (paddleRentalFee * 100).round(),
+        'amount': paddleAmountCentavos,
         'name': 'Paddle Rental (2x Paddles, 3x Balls)',
         'quantity': 1,
       });
@@ -531,8 +550,8 @@ class BookingService {
     if (ballThrowerRental) {
       lineItems.add({
         'currency': 'PHP',
-        'amount': (ballThrowerHourlyFee * durationHours * 100).round(),
-        'name': 'Ball Thrower Machine ($durationHours hr)',
+        'amount': ballThrowerAmountCentavos,
+        'name': 'Ball Thrower Machine ($durationStr)',
         'quantity': 1,
       });
     }
@@ -550,14 +569,14 @@ class BookingService {
         ? selectedPaymentMethods
         : defaultPaymentMethods;
 
-    final body = jsonEncode({
+    Map<String, dynamic> buildPayload(List<String> methods) => {
       'data': {
         'attributes': {
           'send_email_receipt': true,
           'show_description': true,
           'show_line_items': true,
           'line_items': lineItems,
-          'payment_method_types': paymentMethodTypes,
+          'payment_method_types': methods,
           'description': 'C&J Pickleball Court Booking - $courtName',
           'billing': {
             'name': guestName.trim().isNotEmpty ? guestName.trim() : 'Guest Player',
@@ -568,19 +587,34 @@ class BookingService {
           'cancel_url': '$appUrl/booking/cancelled',
         }
       }
-    });
+    };
 
     try {
-      final response = await http
+      var response = await http
           .post(
             Uri.parse('https://api.paymongo.com/v1/checkout_sessions'),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': PayMongoConfig.basicAuthHeader,
             },
-            body: body,
+            body: jsonEncode(buildPayload(paymentMethodTypes)),
           )
-          .timeout(const Duration(seconds: 4));
+          .timeout(const Duration(seconds: 15));
+
+      // If specific payment method returned a 400 rejection (e.g. method disabled on merchant), retry with full set
+      if (response.statusCode == 400 && paymentMethodTypes != defaultPaymentMethods) {
+        debugPrint('PayMongo specific method returned 400, retrying with all default methods...');
+        response = await http
+            .post(
+              Uri.parse('https://api.paymongo.com/v1/checkout_sessions'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': PayMongoConfig.basicAuthHeader,
+              },
+              body: jsonEncode(buildPayload(defaultPaymentMethods)),
+            )
+            .timeout(const Duration(seconds: 15));
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -616,7 +650,8 @@ class BookingService {
                 'courtId': courtId,
                 'courtName': courtName,
                 'hourlyRate': hourlyRate,
-                'durationHours': durationHours,
+                'durationHours': durationHoursVal,
+                'totalAmount': totalAmount,
                 'guestName': guestName.trim(),
                 'guestEmail': guestEmail.trim().toLowerCase(),
                 'guestPhone': guestPhone.trim(),
@@ -624,7 +659,7 @@ class BookingService {
                 'ballThrowerRental': ballThrowerRental,
               }),
             )
-            .timeout(const Duration(seconds: 4));
+            .timeout(const Duration(seconds: 15));
 
         if (proxyRes.statusCode == 200 || proxyRes.statusCode == 201) {
           final data = jsonDecode(proxyRes.body) as Map<String, dynamic>;
@@ -666,7 +701,7 @@ class BookingService {
               'Authorization': PayMongoConfig.basicAuthHeader,
             },
           )
-          .timeout(const Duration(seconds: 4));
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
