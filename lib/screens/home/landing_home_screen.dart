@@ -11,6 +11,8 @@ import '../../widgets/court_visualizer.dart';
 import '../../widgets/skeleton_loader.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/tap_collapse.dart';
+import '../booking/event_place_booking_screen.dart';
+import '../../core/utils/responsive_layout.dart';
 import 'rates_and_spec_screen.dart';
 
 class LandingHomeScreen extends StatefulWidget {
@@ -78,8 +80,9 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: CustomScrollView(
-        slivers: [
+      body: AdaptiveContainer(
+        child: CustomScrollView(
+          slivers: [
           // 1. Utility Strip Top Bar
           SliverToBoxAdapter(
             child: Container(
@@ -294,6 +297,14 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // 3.1. Events Place & Arena Rentals Showcase
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              child: _buildEventSpacesBanner(colors, isDark),
             ),
           ),
 
@@ -571,6 +582,7 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -896,6 +908,128 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
           }).toList(),
         );
       },
+    );
+  }
+
+  Widget _buildEventSpacesBanner(AppPalette colors, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF18221D) : colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppTheme.neonLime.withValues(alpha: 0.35) : colors.border,
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppTheme.neonLime.withValues(alpha: 0.15)
+                      : colors.neonGreenAlpha15,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'ARENA VENUES & PAVILIONS',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                    color: isDark ? AppTheme.neonLime : colors.textPrimary,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Icon(Icons.celebration_rounded, color: isDark ? AppTheme.neonLime : colors.neonGreen, size: 20),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "C&J'S EVENTS PLACE & COURT RENTAL",
+            style: GoogleFonts.bebasNeue(
+              fontSize: 26,
+              letterSpacing: -0.3,
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "Book our premier 500-sqm air-conditioned venue with 180 pax capacity, elevator access, 4-hour rental with basic lights & sound, free dressing rooms, and 15-vehicle indoor parking.",
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: colors.textMuted,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'RATE: PHP 30K / 4-HRS',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? AppTheme.neonLime : colors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    '500 sqm • Up to 180 pax capacity',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              TapCollapse(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const EventPlaceBookingScreen(),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppTheme.neonLime : colors.textPrimary,
+                    borderRadius: BorderRadius.circular(9999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Book Event Space',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: isDark ? const Color(0xFF111111) : colors.background,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 14,
+                        color: isDark ? const Color(0xFF111111) : colors.background,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

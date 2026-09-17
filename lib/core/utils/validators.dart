@@ -59,6 +59,19 @@ class Validators {
     return null;
   }
 
+  /// Validates phone number (optional international + with 7 to 20 digits/separators).
+  static String? validatePhone(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter your phone number';
+    }
+    final trimmed = value.trim();
+    final phoneRegex = RegExp(r'^\+?[0-9\s\-()]{7,20}$');
+    if (!phoneRegex.hasMatch(trimmed)) {
+      return 'Please enter a valid phone number';
+    }
+    return null;
+  }
+
   /// Validates password meeting NIST 8-character minimum and 128-character bound.
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {

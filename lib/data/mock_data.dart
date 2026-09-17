@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/utils/validators.dart';
 import '../models/booking_model.dart';
 import '../models/court_model.dart';
+import '../models/event_space_model.dart';
 import '../models/user_profile.dart';
 import '../models/venue_model.dart';
 
@@ -733,6 +735,186 @@ class MockData {
       }
     }
     return true;
+  }
+
+  // --- Events Place & Spaces ---
+  static const List<EventSpaceModel> eventSpaces = [
+    EventSpaceModel(
+      id: 'space-cj-events-place',
+      name: "C&J's Events Place & Court Rental",
+      subtitle: '500-sqm fully air-conditioned venue with 180 pax capacity & elevator access',
+      description:
+          "Welcome to C&J's Events Place & Court Rental! Premier 500-sqm hall accommodating up to 180 guests on the 3rd floor with direct elevator access. Includes 4-hour venue rental with basic lights & sound system, free access to private dressing rooms and wash area, plus indoor car parking for up to 15 vehicles with 24/7 security. Free ocular visits available by appointment.",
+      capacityMin: 30,
+      capacityMax: 180,
+      hourlyRate: 0.0,
+      halfDayRate: 0.0,
+      fullDayRate: 0.0,
+      amenities: [
+        '500-sqm Fully Air-Conditioned Venue',
+        '4-Hour Rental with Basic Lights & Sound',
+        'Free Dressing Rooms & Wash Area Access',
+        '3rd Floor Level with Elevator Access',
+        'Indoor Car Parking for 15 Vehicles',
+        '24/7 Dedicated Security',
+        'Free Ocular Visit by Appointment',
+        'Direct Basketball & Pickleball Court Access',
+      ],
+      tags: ['INQUIRY ONLY', '180 PAX', 'MESSAGE US FIRST'],
+      surface: 'Indoor Hardwood & Pro Cushion Acrylic',
+      areaSqm: 500,
+      levelInfo: '3rd Floor • Elevator Access',
+      contactPhone: '0917-123-0382',
+      isOcularAvailable: true,
+      isMessageFirst: true,
+    ),
+    EventSpaceModel(
+      id: 'space-grand-pavilion',
+      name: 'Grand Championship Pavilion & Arena',
+      subtitle: 'Dual-court exclusive access, VIP lounge & tournament sound',
+      description:
+          'Our flagship arena space designed for major club tournaments, corporate team sports days, and large-scale celebrations. Includes exclusive private access to both tournament courts, elevated VIP referee and spectator lounge, dedicated high-power PA system, and banquet preparation area.',
+      capacityMin: 20,
+      capacityMax: 150,
+      hourlyRate: 3500.0,
+      halfDayRate: 12000.0,
+      fullDayRate: 22000.0,
+      amenities: [
+        'Exclusive Dual-Court Access',
+        'Surround Sound & Wireless Mic',
+        'Full Climate-Controlled Lounge',
+        'Banquet & Catering Prep Deck',
+        'LED Tournament Scoreboards',
+        'Private Restrooms & Showers',
+      ],
+      tags: ['FLAGSHIP', 'TOURNAMENTS', 'CORPORATE'],
+      surface: 'Dual 8mm Shock-Absorbing Acrylic',
+      areaSqm: 420,
+      levelInfo: 'Ground Floor Arena',
+      contactPhone: '0917-123-0382',
+      isOcularAvailable: true,
+    ),
+    EventSpaceModel(
+      id: 'space-skyline-terrace',
+      name: 'The Skyline View Deck & Terrace',
+      subtitle: 'Elevated view deck rental with open-air terrace overlooking the arena',
+      description:
+          'A chic indoor-outdoor view deck and terrace overlooking the championship basketball & pickleball courts. Features modern lounge couches, private beverage bar counter, ambient festoon lighting, and acoustic audio streaming. Perfect for view deck rentals, birthday parties, and private mixers.',
+      capacityMin: 15,
+      capacityMax: 60,
+      hourlyRate: 2200.0,
+      halfDayRate: 7500.0,
+      fullDayRate: 14000.0,
+      amenities: [
+        'Panoramic Arena & Court View Deck',
+        'Open-Air Cocktail Terrace',
+        'Integrated Bluetooth Audio',
+        'Lounge Couches & High Tables',
+        'Dedicated Restroom',
+      ],
+      tags: ['VIEW DECK', 'SOCIAL MIXERS', 'PARTIES'],
+      accentColorValue: 0xFF00E599,
+      courtCount: 1,
+      surface: 'Clubhouse Lounge & Terrace Deck',
+      areaSqm: 180,
+      levelInfo: '2nd Floor View Deck',
+      contactPhone: '0917-123-0382',
+      isOcularAvailable: true,
+    ),
+    EventSpaceModel(
+      id: 'space-vip-glasshouse',
+      name: 'The VIP Glasshouse Studio & Suite',
+      subtitle: 'Executive air-conditioned studio for clinics and private gatherings',
+      description:
+          'An executive, ultra-quiet studio suite with floor-to-ceiling glass looking directly into Court 1. Equipped with a 65" 4K presentation display, conference seating, and direct court-side access. Tailored for masterclasses, training clinics, board strategy sessions, or intimate VIP games.',
+      capacityMin: 8,
+      capacityMax: 25,
+      hourlyRate: 1400.0,
+      halfDayRate: 4800.0,
+      fullDayRate: 8800.0,
+      amenities: [
+        '65" 4K Smart Presentation TV',
+        'Executive Air Conditioning',
+        'Court 1 Direct Pass-Through',
+        'High-Speed Fiber Wi-Fi',
+        'Coffee & Refreshment Bar',
+      ],
+      tags: ['EXECUTIVE', 'CLINICS', 'VIP SUITE'],
+      accentColorValue: 0xFF00B4D8,
+      courtCount: 1,
+      surface: 'Acoustic Glass Studio Suite',
+      areaSqm: 90,
+      levelInfo: '2nd Floor Mezzanine',
+      contactPhone: '0917-123-0382',
+      isOcularAvailable: true,
+    ),
+  ];
+
+  static const List<EventAddon> eventAddons = [
+    EventAddon(
+      id: 'addon-tables-chairs',
+      name: 'Addtl Tables and Chairs Rental',
+      description: 'Extra banquet tables and cushioned conference chairs for 50+ guests',
+      price: 1500.0,
+      icon: Icons.chair_rounded,
+    ),
+    EventAddon(
+      id: 'addon-court-combo',
+      name: 'Basketball & Pickleball Court Access',
+      description: 'Full reserved access to hardwood basketball & tournament pickleball court',
+      price: 3500.0,
+      icon: Icons.sports_basketball_rounded,
+    ),
+    EventAddon(
+      id: 'addon-sound-dj',
+      name: 'Upgraded Pro Audio & Wireless Mics',
+      description: 'Dual 1000W speakers, wireless microphones, and DJ mixer interface',
+      price: 1500.0,
+      icon: Icons.speaker_group_rounded,
+    ),
+    EventAddon(
+      id: 'addon-tournament-director',
+      name: 'Tournament Director & Referees',
+      description: 'Dedicated certified club referee and live bracket management coordinator',
+      price: 2500.0,
+      icon: Icons.sports_rounded,
+    ),
+    EventAddon(
+      id: 'addon-catering-setup',
+      name: 'Banquet & Catering Station Setup',
+      description: 'Chafing dish stations, drink coolers, ice bins, and clean-up crew service',
+      price: 3000.0,
+      icon: Icons.restaurant_rounded,
+    ),
+    EventAddon(
+      id: 'addon-digital-scoreboard',
+      name: 'Live Digital Scoreboards & Stream Rig',
+      description: 'Electronic LED match scoreboards and mobile tripod camera rigs',
+      price: 1800.0,
+      icon: Icons.videocam_rounded,
+    ),
+    EventAddon(
+      id: 'addon-unlimited-gear',
+      name: 'Unlimited Demo Paddles & Balls',
+      description: 'Up to 20 carbon fiber performance paddles and 50 tournament balls',
+      price: 1200.0,
+      icon: Icons.sports_tennis_rounded,
+    ),
+  ];
+
+  // In-Memory Mutable Event Bookings Store
+  static final List<EventBookingModel> _mockEventBookings = [];
+
+  static List<EventBookingModel> getMockEventBookings() {
+    return List.unmodifiable(_mockEventBookings);
+  }
+
+  static void addMockEventBooking(EventBookingModel booking) {
+    _mockEventBookings.add(booking);
+  }
+
+  static void clearMockEventBookings() {
+    _mockEventBookings.clear();
   }
 }
 

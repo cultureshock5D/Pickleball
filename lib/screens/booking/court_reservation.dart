@@ -18,6 +18,8 @@ import '../../widgets/skeleton_loader.dart';
 import '../../widgets/tap_collapse.dart';
 import '../../widgets/time_player_picker_modal.dart';
 import 'booking_review_screen.dart';
+import 'event_place_booking_screen.dart';
+import '../../core/utils/responsive_layout.dart';
 
 class CourtReservationScreen extends StatefulWidget {
   final int initialSubTab; // 0 = Reserve Court, 1 = My Reservations
@@ -85,7 +87,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   @override
   void initState() {
     super.initState();
-    _activeModeIndex = widget.initialSubTab;
+    _activeModeIndex = widget.initialSubTab == 1 ? 2 : widget.initialSubTab;
     _bookingsPaginationController = PaginationController<BookingModel>(
       fetchPageChunk: (cursor, pageSize) =>
           BookingRepository.forFlavor().fetchPaginatedCustomerBookings(
@@ -415,7 +417,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             _loadCustomerBookings();
             _loadCourtAvailability();
             setState(() {
-              _activeModeIndex = 1; // Switch to My Reservations view
+              _activeModeIndex = 2; // Switch to My Reservations view
             });
           },
         ),
@@ -440,9 +442,18 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
             // Content Area
             Expanded(
-              child: _activeModeIndex == 0
-                  ? _buildReserveCourtContent()
-                  : _buildMyReservationsContent(),
+              child: AdaptiveContainer(
+                child: _activeModeIndex == 0
+                    ? _buildReserveCourtContent()
+                    : _activeModeIndex == 1
+                        ? EventPlaceBookingScreen(
+                            showAppBar: false,
+                            onBookingCompleted: () {
+                              setState(() => _activeModeIndex = 2);
+                            },
+                          )
+                        : _buildMyReservationsContent(),
+              ),
             ),
           ],
         ),
@@ -472,15 +483,24 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             Expanded(
               child: _buildModeTab(
                 index: 0,
-                label: 'Reserve Court',
+                label: 'Courts',
                 icon: Icons.sports_tennis_rounded,
-                badgeText: '${_courts.length} Courts',
+                badgeText: '${_courts.length}',
               ),
             ),
             const SizedBox(width: 4),
             Expanded(
               child: _buildModeTab(
                 index: 1,
+                label: 'Events Place',
+                icon: Icons.celebration_rounded,
+                badgeText: 'New',
+              ),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: _buildModeTab(
+                index: 2,
                 label: 'My Bookings',
                 icon: Icons.calendar_month_rounded,
                 badgeCount: _upcomingBookings.length,
@@ -525,42 +545,46 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 icon,
-                size: 17,
+                size: 15,
                 color: isSelected ? colors.background : colors.textMuted,
               ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  color: isSelected ? colors.background : colors.textMuted,
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: isSelected ? colors.background : colors.textMuted,
+                    fontSize: 11.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
                 ),
               ),
               if (badgeCount != null && badgeCount > 0) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
-                    color:
-                        isSelected ? colors.surfaceHighlight : colors.surfaceHighlight,
+                    color: colors.surfaceHighlight,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     '$badgeCount',
                     style: GoogleFonts.inter(
                       color: isSelected ? colors.textPrimary : colors.textSecondary,
-                      fontSize: 10,
+                      fontSize: 9.5,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
               ] else if (badgeText != null && isSelected) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
@@ -680,17 +704,23 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'SELECT COURT',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.0,
-                color: colors.textMuted,
+            Flexible(
+              child: Text(
+                'SELECT COURT',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                  color: colors.textMuted,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             Text(
               '${_courts.length} Pro Courts Available',
+              maxLines: 1,
               style: GoogleFonts.inter(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -700,116 +730,169 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           ],
         ),
         const SizedBox(height: 10),
-        Row(
-          children: _courts.asMap().entries.map((entry) {
-            final index = entry.key;
-            final court = entry.value;
-            final isSel = _selectedCourtIndex == index;
+        _courts.length <= 2
+            ? Row(
+                children: _courts.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final court = entry.value;
+                  final isSel = _selectedCourtIndex == index;
 
-            // Extract display names
-            String displayName = court.name;
-            String surfaceName = court.type.toUpperCase();
-            if (court.name.contains('—')) {
-              final parts = court.name.split('—');
-              displayName = parts.first.trim();
-              surfaceName = parts.last.replaceAll('(', '').replaceAll(')', '').trim();
-            } else if (court.name.contains('-')) {
-              final parts = court.name.split('-');
-              displayName = parts.first.trim();
-              surfaceName = parts.last.replaceAll('(', '').replaceAll(')', '').trim();
-            }
+                  String displayName = court.name;
+                  String surfaceName = court.type.toUpperCase();
+                  if (court.name.contains('—')) {
+                    final parts = court.name.split('—');
+                    displayName = parts.first.trim();
+                    surfaceName = parts.last.replaceAll('(', '').replaceAll(')', '').trim();
+                  } else if (court.name.contains('-')) {
+                    final parts = court.name.split('-');
+                    displayName = parts.first.trim();
+                    surfaceName = parts.last.replaceAll('(', '').replaceAll(')', '').trim();
+                  }
 
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right: index < _courts.length - 1 ? 6 : 0,
-                  left: index > 0 ? 6 : 0,
-                ),
-                child: TapCollapse(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _selectedCourtIndex = index);
-                    _loadCourtAvailability();
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: isSel ? colors.surfaceElevated : colors.surfaceElevated,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: isSel ? colors.textPrimary : colors.borderSubtle,
-                        width: isSel ? 2.0 : 1.0,
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: index < _courts.length - 1 ? 6 : 0,
+                        left: index > 0 ? 6 : 0,
                       ),
+                      child: _buildCourtPickerCard(colors, index, isSel, displayName, surfaceName, court),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 7, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: isSel
-                                      ? colors.textPrimary
-                                      : colors.surfaceHighlight,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  court.type.toUpperCase(),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    color: isSel ? colors.background : colors.textMuted,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '₱${court.hourlyRate.toStringAsFixed(0)}/hr',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                          ],
+                  );
+                }).toList(),
+              )
+            : SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: _courts.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final court = entry.value;
+                    final isSel = _selectedCourtIndex == index;
+
+                    String displayName = court.name;
+                    String surfaceName = court.type.toUpperCase();
+                    if (court.name.contains('—')) {
+                      final parts = court.name.split('—');
+                      displayName = parts.first.trim();
+                      surfaceName = parts.last.replaceAll('(', '').replaceAll(')', '').trim();
+                    } else if (court.name.contains('-')) {
+                      final parts = court.name.split('-');
+                      displayName = parts.first.trim();
+                      surfaceName = parts.last.replaceAll('(', '').replaceAll(')', '').trim();
+                    }
+
+                    return SizedBox(
+                      width: 175,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: index < _courts.length - 1 ? 8 : 0,
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          displayName,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          surfaceName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: colors.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                        child: _buildCourtPickerCard(colors, index, isSel, displayName, surfaceName, court),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
-            );
-          }).toList(),
-        ),
       ],
+    );
+  }
+
+  Widget _buildCourtPickerCard(
+    AppPalette colors,
+    int index,
+    bool isSel,
+    String displayName,
+    String surfaceName,
+    CourtModel court,
+  ) {
+    return Semantics(
+      button: true,
+      label: 'Select court ${court.name}, hourly rate ${court.hourlyRate.toStringAsFixed(0)} pesos',
+      selected: isSel,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedCourtIndex = index;
+            _selectedSlotIndices.clear();
+          });
+          _loadCourtAvailability();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isSel ? colors.textPrimary : colors.borderSubtle,
+              width: isSel ? 2.0 : 1.0,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: isSel
+                            ? colors.textPrimary
+                            : colors.surfaceHighlight,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        court.type.toUpperCase(),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: GoogleFonts.inter(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: isSel ? colors.background : colors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '₱${court.hourlyRate.toStringAsFixed(0)}/hr',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                surfaceName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -833,30 +916,38 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(
-                    'SCHEDULE MATCH TIME',
-                    style: GoogleFonts.inter(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: colors.textMuted,
-                    ),
-                  ),
-                  if (_isLoadingAvailability) ...[
-                    const SizedBox(width: 6),
-                    SizedBox(
-                      width: 11,
-                      height: 11,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.8,
-                        valueColor: AlwaysStoppedAnimation<Color>(colors.textPrimary),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        'SCHEDULE MATCH TIME',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: colors.textMuted,
+                        ),
                       ),
                     ),
+                    if (_isLoadingAvailability) ...[
+                      const SizedBox(width: 6),
+                      SizedBox(
+                        width: 11,
+                        height: 11,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.8,
+                          valueColor: AlwaysStoppedAnimation<Color>(colors.textPrimary),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
+              const SizedBox(width: 6),
               Tooltip(
                 message: 'Reset your court, time and rental choices on this date',
                 child: InkWell(
@@ -1061,26 +1152,34 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      isSlotAvailable
-                          ? Icons.check_circle_rounded
-                          : Icons.cancel_rounded,
-                      size: 14,
-                      color: isSlotAvailable ? colors.textPrimary : Colors.redAccent,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${timeFormat.format(_calculatedStartDateTime)} – ${timeFormat.format(_calculatedEndDateTime)} (${_selectedDurationHours}h)',
-                      style: GoogleFonts.inter(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isSlotAvailable
+                            ? Icons.check_circle_rounded
+                            : Icons.cancel_rounded,
+                        size: 14,
+                        color: isSlotAvailable ? colors.textPrimary : Colors.redAccent,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          '${timeFormat.format(_calculatedStartDateTime)} – ${timeFormat.format(_calculatedEndDateTime)} (${_selectedDurationHours}h)',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 6),
                 Text(
                   isSlotAvailable
                       ? '₱${(_currentRate * _selectedDurationHours).toStringAsFixed(0)}'
