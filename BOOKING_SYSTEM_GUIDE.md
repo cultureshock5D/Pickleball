@@ -1,69 +1,180 @@
-# Comprehensive Booking System & Multi-Time Slot Selection Guide
+# 🏟️ Comprehensive Booking System & Multi-Resource Reservation Guide
 
-This guide details the complete architecture, data models, slot algorithms, conflict detection, pricing engine, and UI patterns used in the booking system. You can adapt this architecture directly to other mobile (Flutter/React Native) or web (Next.js/React/Vue) applications.
-
----
-
-## Table of Contents
-1. [Architecture Overview](#1-architecture-overview)
-2. [Data Models & Schema](#2-data-models--schema)
-3. [Time Slot Grid & Multi-Selection Engine](#3-time-slot-grid--multi-selection-engine)
-4. [Availability & Conflict Detection Algorithm](#4-availability--conflict-detection-algorithm)
-5. [Dynamic Pricing & Rate Engine (Peak / Off-Peak)](#5-dynamic-pricing--rate-engine-peak--off-peak)
-6. [Realtime Synchronization & Race Condition Prevention](#6-realtime-synchronization--race-condition-prevention)
-7. [UI/UX Interaction & Accessibility Blueprint](#7-uiux-interaction--accessibility-blueprint)
-8. [Portable Implementation Boilerplate](#8-portable-implementation-boilerplate)
+This technical guide details the complete architecture, data models, slot algorithms, conflict detection engine, dynamic pricing formulas, and end-to-end booking lifecycle implemented in the application.
 
 ---
 
-## 1. Architecture Overview
+## 📑 Table of Contents
+1. [Executive Summary & Multi-Resource Domain](#1-executive-summary--multi-resource-domain)
+2. [End-to-End Booking Lifecycle: How It Works](#2-end-to-end-booking-lifecycle-how-it-works)
+3. [Data Models & PostgreSQL Schema](#3-data-models--postgresql-schema)
+4. [Time Slot Grid & Multi-Selection Engine](#4-time-slot-grid--multi-selection-engine)
+5. [Availability & Conflict Detection Algorithm](#5-availability--conflict-detection-algorithm)
+6. [Dynamic Pricing Engine (Peak, Off-Peak & Equipment Add-ons)](#6-dynamic-pricing-engine-peak-off-peak--equipment-add-ons)
+7. [Concurrency, Atomic Locks & Realtime Pub/Sub](#7-concurrency-atomic-locks--realtime-pubsub)
+8. [Post-Checkout Fulfillment: Gate Pass, Receipts & Calendar Deep Links](#8-post-checkout-fulfillment-gate-pass-receipts--calendar-deep-links)
+9. [Navigation Hierarchy & UI/UX Architecture](#9-navigation-hierarchy--uiux-architecture)
+10. [Cancellation & Refund Rules (24-Hour Policy)](#10-cancellation--refund-rules-24-hour-policy)
+11. [Portable Implementation Boilerplate](#11-portable-implementation-boilerplate)
 
-The system uses a **discrete interval slot model** (e.g., 1-hour fixed blocks) coupled with **set-based index tracking** for flexible single or contiguous multi-hour bookings.
+---
 
-```mermaid
-flowchart TD
-    A[User Selects Date & Court] --> B[Fetch Booked Slots for Date]
-    B --> C[Compute Slot Availability Grid]
-    C --> D[User Selects Time Slot(s)]
-    D --> E[Multi-Slot Index Tracker (Set&lt;int&gt;)]
-    E --> F[Auto-compute Start/End DateTime & Duration]
-    E --> G[Live Pricing Engine (Base + Peak + Addons)]
-    G --> H[Proceed to Review / Checkout]
-    H --> I[Transient Lock / DB Insertion with Exclusion Constraint]
-    I --> J[Supabase Realtime Broadcast to All Clients]
+## 1. Executive Summary & Multi-Resource Domain
+
+The reservation engine powers three distinct sports and hospitality disciplines within a single high-performance system:
+
+1. **Pickleball Courts (Courts 1–4):**
+   - Regulation indoor cushioned acrylic, premium outdoor, and championship stadium configurations.
+   - Standard rates: ₱300.00/hr (off-peak) / ₱350.00/hr (peak).
+   - Sport-specific equipment rentals: Carbon fiber pro paddles (₱150 flat) and programmable spin ball machines (₱150/hr).
+2. **Basketball Half-Courts (Hoops 1 & Hoops 2):**
+   - High-impact indoor polyurethane and FIBA-spec shock-absorbent hardwood half courts designed for 3v3 training, shootouts, and team scrimmages.
+   - Standard rates: ₱400.00/hr (off-peak) / ₱500.00/hr (peak).
+   - Sport-specific equipment rentals: Official game basketballs (₱100 flat) and digital scoreboard & shot clock remote (₱150/hr).
+3. **Events Place & Pavilions (Grand Pavilion & Glasshouse):**
+   - Full venue reservations for tournaments, corporate leagues, and exhibitions with guest count selection, dedicated event date ranges, and AV/catering integration.
+
+```
+                      +---------------------------------------+
+                      |       MAIN NAVIGATION (4 TABS)        |
+                      +---------------------------------------+
+                      | 1. Arena (Hero Action Carousel)       |
+                      | 2. Reservation (3-Segment Selector)   |
+                      | 3. My Bookings (Active, Upcoming, QR) |
+                      | 4. Profile (DUPR, Tier, Theme)        |
+                      +-------------------+-------------------+
+                                          |
+                                 [Tab 2: Reservation]
+                                          |
+        +---------------------------------+---------------------------------+
+        |                                 |                                 |
+[Pickleball Courts]             [Basketball Half Courts]              [Events Place]
+- Courts 1 to 4                 - Hoops 1 & 2 (Half Court)            - Grand Pavilion
+- Cushioned / Indoor / Outdoor  - Polyurethane / FIBA Spec            - Glasshouse Hall
+- Paddle / Ball Machine Add-ons - Ball / Shot Clock Add-ons           - Full Day / Half Day
 ```
 
-### Key Highlights
-- **Discrete Granularity:** 1-hour slots from `06:00` (6:00 AM) to `22:00` (10:00 PM) represented as a fixed array of `TimeOfDay` indices `0..15`.
-- **Set-Based State:** Selected slots are maintained in a `Set<int>` (`_selectedSlotIndices`) allowing $O(1)$ lookup, dynamic additions, removals, and contiguous duration calculation.
-- **Half-Open Intervals:** All overlap calculations use the mathematical standard $[start, end)$ to seamlessly support back-to-back bookings (e.g., 8:00–9:00 AM and 9:00–10:00 AM).
-- **Reactive Realtime:** Live PostgreSQL channel updates reflect instantly on all connected client grids when another user books a slot.
+---
+
+## 2. End-to-End Booking Lifecycle: How It Works
+
+The booking journey is an atomic, step-by-step pipeline designed for zero-jank execution, strict inventory isolation, and instant post-booking fulfillment:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Player / Client
+    participant UI as CourtReservationScreen
+    participant Engine as Booking & Pricing Engine
+    participant DB as Supabase PostgreSQL
+    participant RT as Supabase Realtime
+    participant Gateway as PayMongo Checkout
+    participant Wallet as Gate Pass & Calendar Service
+
+    User->>UI: Selects Sport Sub-Tab (Pickleball / Basketball / Events)
+    UI->>DB: Fetch Active Courts & Bookings for Selected Date
+    DB-->>UI: Return Courts & Active Bookings List
+    UI->>Engine: Generate 16-Hour Slot Grid (06:00 - 22:00) with Collision Check
+    Engine-->>UI: Render Slot Grid (Available / Peak / Booked)
+    
+    User->>UI: Taps One or Contiguous Time Slots
+    UI->>Engine: Recalculate Range, Peak Hours & Total Fee
+    User->>UI: Selects Equipment Add-ons
+    User->>UI: Clicks "Reserve Court" -> Navigates to Review Screen
+    
+    User->>Gateway: Submits Payment (GCash / Maya / GrabPay / Card)
+    Gateway-->>UI: Payment Success Reference
+    
+    UI->>DB: Insert Booking (EXCLUDE USING gist Range Lock)
+    DB-->>UI: Booking Confirmed (UUID generated)
+    DB-)RT: Broadcast Table Change to all connected users
+    RT-)UI: Other clients instantly disable booked slots
+    
+    UI->>Wallet: Generate 30s Rolling TOTP QR Code & Calendar Deep Links
+    UI->>User: Display Booking Success Modal
+    User->>UI: Views in "My Bookings" Tab 3 anytime
+```
+
+### Detailed Step-by-Step Flow
+
+#### Step 1: Sport Category Discovery
+- In the **Reservation Screen** (`lib/screens/booking/court_reservation.dart`), users select one of three top sub-tabs:
+  - **Pickleball** (Index 0)
+  - **Basketball (Half Court)** (Index 1)
+  - **Events Place** (Index 2)
+- Switching tabs updates the court list dynamically while preserving selected dates.
+
+#### Step 2: Date & Court Selection
+- Users browse horizontal court cards displaying surface type, lighting amenities, hourly rates, and venue location.
+- Changing the calendar date triggers a query to fetch all confirmed reservations for that resource on that calendar day.
+
+#### Step 3: Interactive Time Slot Grid
+- Operating hours span **06:00 to 22:00 (16 discrete 1-hour blocks)**.
+- The engine checks three conditions for every block:
+  1. Past hour constraint (if viewing today, expired hours are disabled).
+  2. Operating boundary ($hour + 1 \le 22$).
+  3. Collision check against active database records using half-open intervals $[start, end)$.
+- Users can select a single slot or multi-select contiguous blocks.
+
+#### Step 4: Equipment & Sport Add-ons
+- Add-on options adapt based on active sport:
+  - **Pickleball**: Carbon fiber paddles (+₱150 flat) and ball thrower machine (+₱150/hr).
+  - **Basketball**: Official game basketballs (+₱100 flat) and digital scoreboard/shot clock remote (+₱150/hr).
+
+#### Step 5: Live Pricing Computation
+- Total cost formula:
+  $$\text{Total} = \sum_{s \in \text{Slots}} \text{Rate}(s) + \text{Flat Addons} + (\text{Hourly Addons} \times \text{Duration})$$
+- Peak hour surcharge is automatically factored in for any slot falling between 17:00 and 22:00.
+
+#### Step 6: Review & PayMongo Multi-Channel Checkout
+- In `BookingReviewScreen`, player contact details are validated under NIST SP 800-63B standards.
+- Payment is processed via **PayMongo** supporting GCash, Maya, GrabPay, and major Credit/Debit cards (with resilient offline sandbox simulation).
+
+#### Step 7: Atomic Insertion & Double-Booking Defense
+- Insertion query executes with PostgreSQL `btree_gist` exclusion constraints. If two users attempt to book the exact same court and time simultaneously, PostgreSQL rejects the second transaction cleanly.
+- Supabase Realtime channel broadcasts the update to all connected clients, disabling the slot across all devices without a page reload.
+
+#### Step 8: Fulfillment & Gate Pass
+- The user receives an instant confirmation dialog with:
+  - **1-Tap RFC 5545 Calendar Sync** (Google Calendar, Apple Calendar, Microsoft Outlook, `.ics`).
+  - **Downloadable Itemized Receipt** with PDF/image share sheet.
+  - **Dynamic Laser-Sweep QR Code Gate Pass** generated via rolling 30-second TOTP tokens for kiosk turnstile access.
+- All reservations appear in **Tab 3 ("My Bookings")** under Upcoming or Past tabs.
 
 ---
 
-## 2. Data Models & Schema
+## 3. Data Models & PostgreSQL Schema
 
-### PostgreSQL Database Schema
-
-To prevent double-booking at the database engine level, use a Postgres `btree_gist` extension with an `EXCLUDE` constraint on timestamps:
+### Production Database Schema (`referenceonly/Project.sql`)
 
 ```sql
 -- Enable btree_gist extension for timestamp exclusion
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
--- Courts / Resources Table
+-- Venues Table
+CREATE TABLE IF NOT EXISTS public.venues (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(150) NOT NULL,
+    address TEXT NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    operating_hours VARCHAR(50) DEFAULT '06:00 - 22:00',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Courts & Sports Resources Table
 CREATE TABLE IF NOT EXISTS public.courts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    venue_id UUID NOT NULL,
+    venue_id UUID NOT NULL REFERENCES public.venues(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
-    type VARCHAR(50) DEFAULT 'indoor', -- 'indoor' | 'outdoor' | 'cushioned'
+    type VARCHAR(50) DEFAULT 'indoor', -- 'indoor' | 'outdoor' | 'cushioned acrylic' | 'polyurethane' | 'fiba'
+    sport VARCHAR(50) DEFAULT 'pickleball', -- 'pickleball' | 'basketball'
     hourly_rate NUMERIC(10,2) NOT NULL DEFAULT 300.00,
     peak_hourly_rate NUMERIC(10,2) NOT NULL DEFAULT 350.00,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Bookings / Reservations Table
+-- Bookings & Reservations Table
 CREATE TABLE IF NOT EXISTS public.bookings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     court_id UUID NOT NULL REFERENCES public.courts(id) ON DELETE CASCADE,
@@ -72,33 +183,36 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     end_time TIMESTAMPTZ NOT NULL,
     duration_hours NUMERIC(4,2) NOT NULL,
     total_amount NUMERIC(10,2) NOT NULL,
-    status VARCHAR(30) NOT NULL DEFAULT 'confirmed', -- 'confirmed' | 'pending_payment' | 'cancelled' | 'expired'
+    status VARCHAR(30) NOT NULL DEFAULT 'confirmed', -- 'confirmed' | 'pending' | 'cancelled'
     paddle_rental BOOLEAN DEFAULT FALSE,
     ball_thrower_rental BOOLEAN DEFAULT FALSE,
+    basketball_rental BOOLEAN DEFAULT FALSE,
+    scoreboard_rental BOOLEAN DEFAULT FALSE,
     guest_email VARCHAR(255),
     payment_reference VARCHAR(100),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     
-    -- Ensure start is strictly before end
+    -- Validation: start strictly precedes end
     CONSTRAINT check_booking_times CHECK (start_time < end_time),
     
-    -- Prevent double booking for active/confirmed reservations on the same court
+    -- Zero Double-Booking Guarantee via GiST Range Exclusion
     CONSTRAINT exclude_overlapping_bookings EXCLUDE USING gist (
         court_id WITH =,
         tsrange(start_time, end_time, '[)') WITH &&
     ) WHERE (status NOT IN ('cancelled', 'expired', 'void'))
 );
 
-CREATE INDEX idx_bookings_court_date ON public.bookings (court_id, start_time, end_time);
-CREATE INDEX idx_bookings_user ON public.bookings (user_id);
+CREATE INDEX idx_bookings_court_interval ON public.bookings (court_id, start_time, end_time);
+CREATE INDEX idx_bookings_user_status ON public.bookings (user_id, status);
 ```
 
-### Core Dart / TypeScript Entities
+### Core Dart Models
 
-#### Resource / Court Model
+#### Court Model (`lib/models/court_model.dart`)
 ```dart
 class CourtModel {
   final String id;
+  final String venueId;
   final String name;
   final String type;
   final double hourlyRate;
@@ -107,16 +221,24 @@ class CourtModel {
 
   CourtModel({
     required this.id,
+    required this.venueId,
     required this.name,
     required this.type,
     required this.hourlyRate,
-    this.peakHourlyRate = 300.0,
+    this.peakHourlyRate = 350.0,
     this.isActive = true,
   });
+
+  bool get isBasketball =>
+      name.toLowerCase().contains('hoops') ||
+      name.toLowerCase().contains('basketball') ||
+      type.toLowerCase().contains('half court');
+
+  bool get isPickleball => !isBasketball;
 }
 ```
 
-#### Booking Entity
+#### Booking Model (`lib/models/booking_model.dart`)
 ```dart
 class BookingModel {
   final String id;
@@ -127,6 +249,13 @@ class BookingModel {
   final double durationHours;
   final double totalAmount;
   final String status;
+  final bool paddleRental;
+  final bool ballThrowerRental;
+  final bool basketballRental;
+  final bool scoreboardRental;
+  final String? paymentReference;
+  final String? venueName;
+  final String? courtName;
 
   BookingModel({
     required this.id,
@@ -137,128 +266,81 @@ class BookingModel {
     required this.durationHours,
     required this.totalAmount,
     required this.status,
+    this.paddleRental = false,
+    this.ballThrowerRental = false,
+    this.basketballRental = false,
+    this.scoreboardRental = false,
+    this.paymentReference,
+    this.venueName,
+    this.courtName,
   });
+
+  bool get isCancelled => status == 'cancelled';
+  bool get isConfirmed => status == 'confirmed';
 }
 ```
 
 ---
 
-## 3. Time Slot Grid & Multi-Selection Engine
+## 4. Time Slot Grid & Multi-Selection Engine
 
-### Slot Array Representation
-Operating hours (e.g., 6:00 AM to 10:00 PM) are defined as a list of `TimeOfDay` starting points:
+Operating hours are partitioned into 16 discrete one-hour indices:
 
 ```dart
 static const List<TimeOfDay> allStartTimes = [
-  TimeOfDay(hour: 6, minute: 0),  // Index 0: 6:00 AM - 7:00 AM
-  TimeOfDay(hour: 7, minute: 0),  // Index 1: 7:00 AM - 8:00 AM
-  TimeOfDay(hour: 8, minute: 0),  // Index 2: 8:00 AM - 9:00 AM
-  TimeOfDay(hour: 9, minute: 0),  // Index 3: 9:00 AM - 10:00 AM
-  TimeOfDay(hour: 10, minute: 0), // Index 4: 10:00 AM - 11:00 AM
-  TimeOfDay(hour: 11, minute: 0), // Index 5: 11:00 AM - 12:00 PM
-  TimeOfDay(hour: 12, minute: 0), // Index 6: 12:00 PM - 1:00 PM
-  TimeOfDay(hour: 13, minute: 0), // Index 7: 1:00 PM - 2:00 PM
-  TimeOfDay(hour: 14, minute: 0), // Index 8: 2:00 PM - 3:00 PM
-  TimeOfDay(hour: 15, minute: 0), // Index 9: 3:00 PM - 4:00 PM
-  TimeOfDay(hour: 16, minute: 0), // Index 10: 4:00 PM - 5:00 PM
-  TimeOfDay(hour: 17, minute: 0), // Index 11: 5:00 PM - 6:00 PM (Peak)
-  TimeOfDay(hour: 18, minute: 0), // Index 12: 6:00 PM - 7:00 PM (Peak)
-  TimeOfDay(hour: 19, minute: 0), // Index 13: 7:00 PM - 8:00 PM (Peak)
-  TimeOfDay(hour: 20, minute: 0), // Index 14: 8:00 PM - 9:00 PM (Peak)
-  TimeOfDay(hour: 21, minute: 0), // Index 15: 9:00 PM - 10:00 PM (Peak)
+  TimeOfDay(hour: 6, minute: 0),  // Slot 0:  06:00 - 07:00
+  TimeOfDay(hour: 7, minute: 0),  // Slot 1:  07:00 - 08:00
+  TimeOfDay(hour: 8, minute: 0),  // Slot 2:  08:00 - 09:00
+  TimeOfDay(hour: 9, minute: 0),  // Slot 3:  09:00 - 10:00
+  TimeOfDay(hour: 10, minute: 0), // Slot 4:  10:00 - 11:00
+  TimeOfDay(hour: 11, minute: 0), // Slot 5:  11:00 - 12:00
+  TimeOfDay(hour: 12, minute: 0), // Slot 6:  12:00 - 13:00
+  TimeOfDay(hour: 13, minute: 0), // Slot 7:  13:00 - 14:00
+  TimeOfDay(hour: 14, minute: 0), // Slot 8:  14:00 - 15:00
+  TimeOfDay(hour: 15, minute: 0), // Slot 9:  15:00 - 16:00
+  TimeOfDay(hour: 16, minute: 0), // Slot 10: 16:00 - 17:00
+  TimeOfDay(hour: 17, minute: 0), // Slot 11: 17:00 - 18:00 (Peak)
+  TimeOfDay(hour: 18, minute: 0), // Slot 12: 18:00 - 19:00 (Peak)
+  TimeOfDay(hour: 19, minute: 0), // Slot 13: 19:00 - 20:00 (Peak)
+  TimeOfDay(hour: 20, minute: 0), // Slot 14: 20:00 - 21:00 (Peak)
+  TimeOfDay(hour: 21, minute: 0), // Slot 15: 21:00 - 22:00 (Peak)
 ];
 ```
 
-### Multi-Slot Selection Modes
+### Set-Based Contiguity & Selection Handling
+User selections are tracked using `Set<int> _selectedSlotIndices`.
 
-You can handle slot selection in two primary ways depending on business rules:
-
-#### Mode A: Contiguous Range Expansion (e.g. In Modal / Quick Picker)
-When user selects a starting slot and specifies duration $N$:
-```dart
-void selectContiguousRange(int startSlotIndex, int durationHours) {
-  final maxIndex = allStartTimes.length - 1;
-  final clampedDuration = durationHours.clamp(1, allStartTimes.length);
-  
-  setState(() {
-    _selectedSlotIndices = {
-      for (int i = 0; i < clampedDuration; i++)
-        (startSlotIndex + i).clamp(0, maxIndex)
-    };
-  });
-}
-```
-
-#### Mode B: Independent / Additive Multi-Slot Toggle (e.g. 4x4 Quick Grid)
-Allows the user to tap individual slots directly to add or remove them from the selection:
-```dart
-void toggleSlot(int slotIndex) {
-  if (isSlotBooked(slotIndex)) return; // Disallow booked slots
-
-  setState(() {
-    if (_selectedSlotIndices.contains(slotIndex)) {
-      // Prevent emptying selection completely if at least 1 slot is required
-      if (_selectedSlotIndices.length > 1) {
-        _selectedSlotIndices.remove(slotIndex);
-      }
-    } else {
-      _selectedSlotIndices.add(slotIndex);
-    }
-  });
-}
-```
-
-### Deriving Overall Start, End, and Duration
-Given `_selectedSlotIndices`:
+- **Contiguous Expansion:** If a user selects 08:00 and chooses a 2-hour duration, indices `{2, 3}` are populated.
+- **Additive Toggle:** Users can tap to add adjacent slots directly.
+- **Validation:** When booking multi-hour sessions, all intermediate slots must be unreserved.
 
 ```dart
-int get earliestSlotIndex =>
-    _selectedSlotIndices.isEmpty ? 0 : _selectedSlotIndices.reduce((a, b) => a < b ? a : b);
-
-int get latestSlotIndex =>
-    _selectedSlotIndices.isEmpty ? 0 : _selectedSlotIndices.reduce((a, b) => a > b ? a : b);
-
-int get totalDurationHours => _selectedSlotIndices.length;
-
 DateTime get calculatedStartDateTime {
-  final time = allStartTimes[earliestSlotIndex];
-  return DateTime(
-    selectedDate.year,
-    selectedDate.month,
-    selectedDate.day,
-    time.hour,
-    time.minute,
-  );
+  final earliestIdx = _selectedSlotIndices.reduce((a, b) => a < b ? a : b);
+  final time = allStartTimes[earliestIdx];
+  return DateTime(selectedDate.year, selectedDate.month, selectedDate.day, time.hour, time.minute);
 }
 
 DateTime get calculatedEndDateTime {
-  final latestTime = allStartTimes[latestSlotIndex];
-  // End time is the conclusion of the latest 1-hour slot
-  return DateTime(
-    selectedDate.year,
-    selectedDate.month,
-    selectedDate.day,
-    latestTime.hour + 1,
-    latestTime.minute,
-  );
+  final latestIdx = _selectedSlotIndices.reduce((a, b) => a > b ? a : b);
+  final time = allStartTimes[latestIdx];
+  return DateTime(selectedDate.year, selectedDate.month, selectedDate.day, time.hour + 1, time.minute);
 }
 ```
 
 ---
 
-## 4. Availability & Conflict Detection Algorithm
+## 5. Availability & Conflict Detection Algorithm
 
-### Half-Open Interval Overlap Formula
-To determine if a candidate slot overlaps with an existing reservation:
+### Half-Open Interval Collision Formula
+All interval comparisons use the mathematical half-open interval $[start, end)$:
 
-$$\text{Overlap} \iff \text{newStart} < \text{existingEnd} \land \text{newEnd} > \text{existingStart}$$
+$$\text{Conflict} \iff \text{newStart} < \text{existingEnd} \land \text{newEnd} > \text{existingStart}$$
+
+Back-to-back bookings (e.g. 08:00–09:00 and 09:00–10:00) evaluate to `false` (no conflict), allowing continuous court usage without gaps.
 
 ```dart
 class Validators {
-  /// Validates half-open time interval overlaps: [newStart, newEnd) vs [existingStart, existingEnd).
-  ///
-  /// Back-to-back bookings (e.g. 8:00-9:00 AM and 9:00-10:00 AM) where
-  /// `newStart == existingEnd` or `newEnd == existingStart` evaluate to FALSE (no overlap / valid).
   static bool hasTimeOverlap({
     required DateTime newStart,
     required DateTime newEnd,
@@ -270,382 +352,128 @@ class Validators {
 }
 ```
 
-### Slot Availability Check Function
+---
 
-Each slot on the grid checks 3 conditions:
-1. **Closing Hour Boundary:** Does the slot exceed facility hours ($hour + 1 > 22$)?
-2. **Past Time Check:** If `selectedDate == today`, is `slotStart < DateTime.now()`?
-3. **Existing Reservations:** Does $[slotStart, slotEnd)$ overlap with any confirmed booking in `bookedSlotsForDay`?
+## 6. Dynamic Pricing Engine (Peak, Off-Peak & Equipment Add-ons)
+
+### Peak Hours Definition
+Peak hours run daily from **17:00 (5:00 PM) to 22:00 (10:00 PM)**.
 
 ```dart
-bool isSlotBooked(int slotIndex, DateTime selectedDate, List<BookingModel> existingBookings) {
-  if (slotIndex >= allStartTimes.length) return true;
-  final time = allStartTimes[slotIndex];
+bool isPeakHour(TimeOfDay time) {
+  return time.hour >= 17 && time.hour < 22;
+}
 
-  // 1. Operating boundary
-  if (time.hour + 1 > 22) return true;
+double getSlotRate(TimeOfDay time, CourtModel court) {
+  return isPeakHour(time) ? court.peakHourlyRate : court.hourlyRate;
+}
+```
 
-  final slotStart = DateTime(
-    selectedDate.year,
-    selectedDate.month,
-    selectedDate.day,
-    time.hour,
-    time.minute,
-  );
-  final slotEnd = slotStart.add(const Duration(hours: 1));
+### Comprehensive Cost Calculation
 
-  // 2. Past time for today
-  final now = DateTime.now();
-  final isToday = selectedDate.year == now.year &&
-      selectedDate.month == now.month &&
-      selectedDate.day == now.day;
-  if (isToday && slotStart.isBefore(now)) {
-    return true;
+```dart
+double calculateBookingTotal({
+  required CourtModel court,
+  required Set<int> selectedIndices,
+  required List<TimeOfDay> slotTimes,
+  bool paddleRental = false,       // ₱150 flat (Pickleball)
+  bool ballThrowerRental = false,  // ₱150/hr  (Pickleball)
+  bool basketballRental = false,   // ₱100 flat (Basketball)
+  bool scoreboardRental = false,   // ₱150/hr  (Basketball)
+}) {
+  // 1. Calculate court rental across selected slots
+  double courtSubtotal = 0.0;
+  for (final idx in selectedIndices) {
+    courtSubtotal += getSlotRate(slotTimes[idx], court);
   }
 
-  // 3. Check overlaps against active database bookings
-  for (final b in existingBookings) {
-    if (b.status == 'cancelled' || b.status == 'expired' || b.status == 'void') {
-      continue;
-    }
+  final durationHours = selectedIndices.length;
 
-    if (Validators.hasTimeOverlap(
-      newStart: slotStart,
-      newEnd: slotEnd,
-      existingStart: b.startTime,
-      existingEnd: b.endTime,
-    )) {
-      return true;
-    }
-  }
-  return false;
+  // 2. Calculate add-ons
+  double addons = 0.0;
+  if (paddleRental) addons += 150.0;
+  if (ballThrowerRental) addons += (150.0 * durationHours);
+  if (basketballRental) addons += 100.0;
+  if (scoreboardRental) addons += (150.0 * durationHours);
+
+  return courtSubtotal + addons;
 }
 ```
 
 ---
 
-## 5. Dynamic Pricing & Rate Engine (Peak / Off-Peak)
+## 7. Concurrency, Atomic Locks & Realtime Pub/Sub
 
-### Peak vs Off-Peak Logic
-Many booking apps charge different rates depending on peak hours (e.g., 5:00 PM – 10:00 PM).
+To guarantee zero double-bookings in high-traffic scenarios:
 
-```dart
-bool isPeakHour(TimeOfDay time, {int peakStart = 17, int peakEnd = 22}) {
-  return time.hour >= peakStart && time.hour < peakEnd;
-}
-
-double getSlotRate(
-  TimeOfDay time, {
-  required double standardRate,
-  required double peakRate,
-}) {
-  return isPeakHour(time) ? peakRate : standardRate;
-}
-```
-
-### Cumulative Price Computation with Add-Ons
-
-When multiple slots are selected, iterate across all chosen slots to sum exact slot rates + fixed or hourly equipment fees:
-
-```dart
-double calculateTotalPrice({
-  required Set<int> selectedSlotIndices,
-  required List<TimeOfDay> allTimes,
-  required double standardRate,
-  required double peakRate,
-  bool paddleRental = false,       // e.g. Flat +₱150
-  bool ballThrowerRental = false,  // e.g. +₱150/hr
-}) {
-  // Sum individual slot rates (accounting for peak hours)
-  double courtSubtotal = selectedSlotIndices.fold(0.0, (sum, idx) {
-    final time = allTimes[idx.clamp(0, allTimes.length - 1)];
-    return sum + getSlotRate(time, standardRate: standardRate, peakRate: peakRate);
-  });
-
-  final durationHours = selectedSlotIndices.length;
-  double flatAddons = paddleRental ? 150.0 : 0.0;
-  double hourlyAddons = ballThrowerRental ? (150.0 * durationHours) : 0.0;
-
-  return courtSubtotal + flatAddons + hourlyAddons;
-}
-```
-
----
-
-## 6. Realtime Synchronization & Race Condition Prevention
-
-### Supabase Realtime Listener Pattern
-When User A confirms a booking, User B's screen should immediately disable that slot without requiring a manual page refresh.
-
-```dart
-// Subscribe to postgres table changes on public:bookings
-void initRealtimeBookings(String currentCourtId, DateTime selectedDate, VoidCallback onUpdateNeeded) {
-  supabase.channel('public:bookings')
-    .onPostgresChanges(
-      event: PostgresChangeEvent.all,
-      schema: 'public',
-      table: 'bookings',
-      callback: (PostgresChangePayload payload) {
-        final record = payload.newRecord.isNotEmpty ? payload.newRecord : payload.oldRecord;
-        final courtId = record['court_id'];
-        final startTimeStr = record['start_time'];
-        
-        if (startTimeStr != null) {
-          final startTime = DateTime.parse(startTimeStr);
-          if (courtId == currentCourtId &&
-              startTime.year == selectedDate.year &&
-              startTime.month == selectedDate.month &&
-              startTime.day == selectedDate.day) {
-            onUpdateNeeded(); // Refresh availability cache & setState()
-          }
-        }
-      },
-    )
-    .subscribe();
-}
-```
-
-### 5-Minute Transient Lock Flow
-To avoid checkout collisions:
-1. User confirms time slot $\rightarrow$ Insert record with `status = 'pending_payment'`.
-2. Attach `expires_at = NOW() + INTERVAL '5 minutes'`.
-3. Other users' availability queries treat `pending_payment` with `expires_at > NOW()` as unavailable.
-4. If payment completes $\rightarrow$ update to `status = 'confirmed'`.
-5. Background cron / Edge function voids expired locks:
-   ```sql
-   UPDATE public.bookings 
-   SET status = 'expired' 
-   WHERE status = 'pending_payment' AND created_at < NOW() - INTERVAL '5 minutes';
+1. **Database Exclusion Constraint:** `exclude_overlapping_bookings` uses PostgreSQL's GiST index to reject intersecting timestamps at the engine level.
+2. **Supabase Realtime Channel:** Clients subscribe to Postgres table events:
+   ```dart
+   supabase.channel('public:bookings')
+     .onPostgresChanges(
+       event: PostgresChangeEvent.all,
+       schema: 'public',
+       table: 'bookings',
+       callback: (payload) => refreshAvailability(),
+     )
+     .subscribe();
    ```
+3. **Optimistic Offline Fallback:** When offline or unconfigured, the app falls back to in-memory mock reservation storage with full collision enforcement.
 
 ---
 
-## 7. UI/UX Interaction & Accessibility Blueprint
+## 8. Post-Checkout Fulfillment: Gate Pass, Receipts & Calendar Deep Links
 
-### 4x4 Grid UI Architecture
+### 1. Rolling 30s Dynamic QR Gate Pass (`CheckInQrModal`)
+- Displays an animated laser sweep and generates high-contrast QR codes encoding encrypted booking identifiers with 30-second time-based expiration.
+- Auto-boosts device screen brightness for turnstile kiosk scanners.
 
-```
-+-------------------------------------------------------------+
-| SCHEDULE MATCH TIME                         [Reset Choices] |
-| [<]                Mon, Sep 14, 2026                    [>] |
-+-------------------------------------------------------------+
-| [ 6:00 AM ]   [ 7:00 AM ]   [ 8:00 AM*]   [ 9:00 AM*]       |
-| [10:00 AM ]   [11:00 AM ]   [12:00 PM ]   [ 1:00 PM ]       |
-| [ 2:00 PM ]   [ 3:00 PM ]   [ 4:00 PM ]   [ 5:00 PM(P)]     |
-| [ 6:00 PM(P)] [ 7:00 PM(P)] [~8:00 PM~]   [ 9:00 PM(P)]     |
-+-------------------------------------------------------------+
-| (V) 8:00 AM – 10:00 AM (2h)                         ₱600    |
-+-------------------------------------------------------------+
-| [            RESERVE COURT • ₱600             ]             |
-+-------------------------------------------------------------+
-(* = Selected, (P) = Peak, ~Strikethrough~ = Booked)
-```
+### 2. RFC 5545 Multi-Calendar Deep Links (`CalendarLinkService`)
+- Generates 1-tap direct import links:
+  - **Google Calendar:** `https://calendar.google.com/calendar/render?action=TEMPLATE&...`
+  - **Apple Calendar & Outlook Web:** Direct web deep URLs.
+  - **Downloadable `.ics` File:** RFC 5545 compliant iCalendar string for native device calendar import.
 
-### Visual Token State Matrix
-
-| State | Background | Border | Text Style | Accessibility Semantics |
-| :--- | :--- | :--- | :--- | :--- |
-| **Available** | `surfaceHighlight` | `borderSubtle` (1.0px) | `textPrimary`, w600 | `enabled: true`, `selected: false` |
-| **Selected** | `textPrimary` (Neon) | `textPrimary` (1.5px) | `background` (contrast), w800 | `enabled: true`, `selected: true` |
-| **Peak Hour** | `amber.withAlpha(40)` | `amber.withAlpha(90)` | `amberAccent`, w700 | Label: `"6:00 PM, Peak Rate"` |
-| **Booked / Past**| `borderSubtleAlpha50` | `Colors.transparent` | `textMuted`, Strikethrough | `enabled: false`, Label: `"Booked"` |
-
-### Accessibility (WCAG AAA) Requirements
-1. **Target Dimensions:** Ensure each slot button maintains a minimum of `48x48dp` tap target area.
-2. **Haptic Feedback:** Trigger `HapticFeedback.selectionClick()` on every slot toggle.
-3. **Screen Reader Traits:** Wrap in `Semantics(button: true, selected: isSelected, enabled: !isBooked, label: '$timeFormatted, $status')`.
+### 3. Itemized Digital Receipt (`DownloadableReceiptModal`)
+- Perforated luxury receipt display with VAT breakdowns, payment transaction IDs, court numbers, and direct PNG/PDF sharing.
 
 ---
 
-## 8. Portable Implementation Boilerplate
+## 9. Navigation Hierarchy & UI/UX Architecture
 
-Here is a ready-to-use, standalone Flutter widget module implementing the entire multi-selection time slot grid:
+The app navigation structure consists of **4 primary tabs**:
+
+1. **Arena (Tab 1):**
+   - 4-slide Hero Action Carousel with transparent navigation buttons and 5-second automatic progression (Pickleball, Basketball, Events Place, Cafe).
+2. **Reservation (Tab 2):**
+   - 3-segment switcher: **Pickleball**, **Basketball (Half Court)**, and **Events Place**.
+   - Court selector, time slot grid, and equipment add-ons.
+3. **My Bookings (Tab 3):**
+   - Dedicated reservations management screen.
+   - Filter tabs: **Upcoming** (with live countdown) and **Past**.
+   - Direct triggers for QR Gate Pass, digital receipts, calendar sync, and cancellations.
+4. **Profile (Tab 4):**
+   - DUPR skill rating telemetry, match stats, membership tiers, and theme switcher (Dark / Light).
+
+---
+
+## 10. Cancellation & Refund Rules (24-Hour Policy)
+
+The booking engine enforces a strict **24-hour cancellation rule**:
+
+$$\text{Can Cancel} \iff (\text{startTime} - \text{now}) \ge 24\text{ hours}$$
+
+- Confirmed bookings scheduled within 24 hours cannot be cancelled via the client application (contact club concierge).
+- Pending or unpaid reservations can be released immediately without fee penalties.
 
 ```dart
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
-class StandaloneMultiTimeSlotPicker extends StatefulWidget {
-  final DateTime selectedDate;
-  final List<TimeOfDay> operatingSlots;
-  final List<DateTimeRange> bookedIntervals;
-  final double standardHourlyRate;
-  final double peakHourlyRate;
-  final int peakStartHour;
-  final int peakEndHour;
-  final void Function(DateTime start, DateTime end, double totalFee) onSelectionChanged;
-
-  const StandaloneMultiTimeSlotPicker({
-    super.key,
-    required this.selectedDate,
-    required this.operatingSlots,
-    required this.bookedIntervals,
-    this.standardHourlyRate = 300.0,
-    this.peakHourlyRate = 350.0,
-    this.peakStartHour = 17,
-    this.peakEndHour = 22,
-    required this.onSelectionChanged,
-  });
-
-  @override
-  State<StandaloneMultiTimeSlotPicker> createState() => _StandaloneMultiTimeSlotPickerState();
-}
-
-class _StandaloneMultiTimeSlotPickerState extends State<StandaloneMultiTimeSlotPicker> {
-  final Set<int> _selectedIndices = {};
-
-  bool _isPeak(TimeOfDay time) =>
-      time.hour >= widget.peakStartHour && time.hour < widget.peakEndHour;
-
-  double _getSlotRate(TimeOfDay time) =>
-      _isPeak(time) ? widget.peakHourlyRate : widget.standardHourlyRate;
-
-  bool _isSlotBooked(int index) {
-    if (index >= widget.operatingSlots.length) return true;
-    final time = widget.operatingSlots[index];
-
-    final slotStart = DateTime(
-      widget.selectedDate.year,
-      widget.selectedDate.month,
-      widget.selectedDate.day,
-      time.hour,
-      time.minute,
-    );
-    final slotEnd = slotStart.add(const Duration(hours: 1));
-
-    // Past time check
-    if (slotStart.isBefore(DateTime.now())) return true;
-
-    // Overlap check [start, end)
-    for (final booked in widget.bookedIntervals) {
-      if (slotStart.isBefore(booked.end) && slotEnd.isAfter(booked.start)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  void _notifyParent() {
-    if (_selectedIndices.isEmpty) return;
-
-    final earliestIdx = _selectedIndices.reduce((a, b) => a < b ? a : b);
-    final latestIdx = _selectedIndices.reduce((a, b) => a > b ? a : b);
-
-    final startTimeOfDay = widget.operatingSlots[earliestIdx];
-    final latestTimeOfDay = widget.operatingSlots[latestIdx];
-
-    final start = DateTime(
-      widget.selectedDate.year,
-      widget.selectedDate.month,
-      widget.selectedDate.day,
-      startTimeOfDay.hour,
-      startTimeOfDay.minute,
-    );
-    final end = DateTime(
-      widget.selectedDate.year,
-      widget.selectedDate.month,
-      widget.selectedDate.day,
-      latestTimeOfDay.hour + 1,
-      latestTimeOfDay.minute,
-    );
-
-    final totalFee = _selectedIndices.fold<double>(
-      0.0,
-      (sum, idx) => sum + _getSlotRate(widget.operatingSlots[idx]),
-    );
-
-    widget.onSelectionChanged(start, end, totalFee);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: widget.operatingSlots.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            childAspectRatio: 2.2,
-          ),
-          itemBuilder: (context, idx) {
-            final time = widget.operatingSlots[idx];
-            final booked = _isSlotBooked(idx);
-            final selected = _selectedIndices.contains(idx);
-            final peak = _isPeak(time);
-
-            Color bg = const Color(0xFF1E2923);
-            Color textCol = Colors.white;
-            Color border = Colors.white24;
-
-            if (booked) {
-              bg = Colors.black26;
-              textCol = Colors.white38;
-              border = Colors.transparent;
-            } else if (selected) {
-              bg = const Color(0xFFCCFF00); // Brand Neon Accent
-              textCol = Colors.black;
-              border = const Color(0xFFCCFF00);
-            } else if (peak) {
-              border = Colors.amber.withOpacity(0.5);
-            }
-
-            final timeLabel = '${time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour)}:00 ${time.hour >= 12 ? 'PM' : 'AM'}';
-
-            return InkWell(
-              onTap: booked
-                  ? null
-                  : () {
-                      HapticFeedback.selectionClick();
-                      setState(() {
-                        if (_selectedIndices.contains(idx)) {
-                          if (_selectedIndices.length > 1) {
-                            _selectedIndices.remove(idx);
-                          }
-                        } else {
-                          _selectedIndices.add(idx);
-                        }
-                      });
-                      _notifyParent();
-                    },
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: border, width: selected ? 1.5 : 1.0),
-                ),
-                child: Text(
-                  timeLabel,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: selected ? FontWeight.bold : FontWeight.w500,
-                    color: textCol,
-                    decoration: booked ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
+static bool canCancelBooking(DateTime startTime) {
+  return startTime.difference(DateTime.now()).inHours >= 24;
 }
 ```
 
 ---
 
-## 9. Summary & Adaptation Checklist for Another App
+## 11. Portable Implementation Boilerplate
 
-When integrating this into a new app:
-- [ ] **Define slot interval & boundary:** E.g., 30-min vs 60-min slots; set daily start & end time limits.
-- [ ] **Implement Half-Open Overlap Check:** Always use $newStart < existingEnd \land newEnd > existingStart$.
-- [ ] **Use Set<int> for selection:** Keeps multi-selection flexible, high-performance, and contiguous.
-- [ ] **Enforce DB-level exclusion constraint:** Use PostgreSQL `EXCLUDE USING gist (resource_id WITH =, tsrange(start, end) WITH &&)` to guarantee zero race-condition double bookings.
-- [ ] **Subscribe to Realtime Events:** Broadcast new bookings to instantly update the slot grid for other active users.
+For teams adapting this architecture to another platform (React Native, Next.js, or Flutter), see the standalone multi-slot picker implementation in `lib/widgets/time_player_picker_modal.dart` and the comprehensive test suite in `test/offline_mock_resilience_test.dart`.

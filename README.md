@@ -89,53 +89,63 @@ flowchart LR
     AuthGate -->|Authenticated| MainNav[MainNavigationScreen]
     Login -->|Sign Up| SignUp[SignupScreen]
     
-    MainNav --> TabHome[Home Tab]
-    MainNav --> TabCourts[Courts Tab]
-    MainNav --> TabBookings[Bookings Tab]
-    MainNav --> TabInsights[Insights Tab]
-    MainNav --> TabProfile[Profile Tab]
+    MainNav --> TabArena[1. Arena Tab]
+    MainNav --> TabReservation[2. Reservation Tab]
+    MainNav --> TabBookings[3. My Bookings Tab]
+    MainNav --> TabProfile[4. Profile Tab]
 
-    TabCourts --> Reservation[CourtReservationScreen]
-    Reservation --> TimePicker[TimePlayerPickerModal]
+    TabArena --> HeroCarousel[Hero Action Carousel: Pickleball, Basketball, Events, Cafe]
+    TabReservation --> PickleballReservation[Pickleball Courts 1-4]
+    TabReservation --> BasketballReservation[Basketball Half-Courts Hoops 1-2]
+    TabReservation --> EventPlaceReservation[Events Place Pavilions]
+    
+    PickleballReservation --> TimePicker[Time Slot Grid]
+    BasketballReservation --> TimePicker
     TimePicker --> Review[BookingReviewScreen]
     Review --> SuccessModal[BookingSuccessModal]
     SuccessModal --> CalendarSync[CalendarLinkService]
-    TabBookings --> QRModal[CheckInQrModal]
+    
+    TabBookings --> QRModal[CheckInQrModal: Rolling 30s Pass]
     TabBookings --> ReceiptModal[DownloadableReceiptModal]
 ```
 
 ### A. Authentication & Onboarding (`lib/screens/auth/`)
-* **`login_screen.dart`:** High-contrast login interface with email/password authentication, biometric login trigger simulation, real-time input validation, and password visibility toggling.
+* **`login_screen.dart`:** High-contrast login interface with email/password authentication, guest login fallback, real-time NIST input validation, and password visibility toggling.
 * **`signup_screen.dart`:** User registration with live password complexity indicators (length, casing, digits, special characters), full name formatting, and initial skill level (DUPR) selection.
 
-### B. Main Navigation & Home Shell (`lib/screens/home/`)
-* **`main_navigation_screen.dart`:** Hosts the persistent floating `CustomBottomNavBar` featuring glassmorphic blur and neon active glow indicators. Manages indexed stack navigation between:
-  1. **Home:** Upcoming reservations, favorite courts, and quick action cards.
-  2. **Courts:** Venue exploration and court reservation timeline.
-  3. **Bookings:** Active, upcoming, and past booking history with QR pass and receipt modals.
-  4. **Insights:** Comprehensive player telemetry and match stats.
-  5. **Profile:** Account management, membership tiers, and theme switcher.
+### B. Main Navigation & Shell (`lib/screens/home/`)
+* **`main_navigation_screen.dart`:** Hosts the persistent floating `CustomBottomNavBar` featuring glassmorphic blur and neon active glow indicators. Manages indexed navigation across 4 primary tabs:
+  1. **Arena:** Interactive 4-slide Hero Action Carousel (Pickleball, Basketball, Events Place, Cafe) with 5-second automatic progression and transparent back/forth navigation arrows.
+  2. **Reservation:** 3-segment switcher for Pickleball, Basketball (Half Court), and Events Place reservations.
+  3. **My Bookings (`MyBookingsScreen`):** Dedicated bookings dashboard with Upcoming (live countdown) and Past filters, QR gate pass trigger, itemized receipt modal, and calendar sync.
+  4. **Profile:** Account management, DUPR telemetry metrics, membership tiers, and Dark/Light theme switcher.
 
-### C. Court Reservation & Timeline Flow (`lib/screens/booking/court_reservation.dart`)
-* **Multi-Court Visual Timeline:** Interactive horizontal court lanes displaying real-time occupancy across different court surfaces (cushioned acrylic, indoor hardwood, outdoor asphalt).
-* **Date & Venue Filters:** Instant venue switching via `VenuePickerModal` and date interval selection via `DateRangePickerModal`.
-* **Surface Badging:** Indicates specific court amenities such as LED night lighting, covered roofs, air conditioning, and referee stations.
+### C. Multi-Sport Court Reservation Flow (`lib/screens/booking/court_reservation.dart`)
+* **3-Segment Sport Switcher:** Seamless switching between **Pickleball**, **Basketball (Half Court)**, and **Events Place**.
+* **Court & Hoop Selection:**
+  * **Pickleball:** Courts 1 to 4 with cushioned acrylic, indoor hardwood, and outdoor asphalt options.
+  * **Basketball (Half Court):** Hoops 1 & Hoops 2 with polyurethane and FIBA-spec shock-absorbent half courts.
+* **Sport-Specific Add-ons:**
+  * Pickleball: Carbon fiber paddle rentals (+₱150 flat) and ball thrower machine (+₱150/hr).
+  * Basketball: Official game basketballs (+₱100 flat) and digital scoreboard/shot clock remote (+₱150/hr).
+* **Discrete 16-Hour Slot Grid:** 06:00 to 22:00 operating hours with automated peak-hour surcharge calculations (17:00–22:00) and instant half-open interval collision prevention $[start, end)$.
 
 ### D. Booking Review, Pricing & PayMongo Checkout (`lib/screens/booking/booking_review_screen.dart`)
 * **Dynamic Fee Calculation:** Itemized price breakdown displaying:
-  $$\text{Total} = (\text{Base Hourly Rate} \times \text{Hours}) + \text{Peak Hour Surcharge} + \text{Service Tax}$$
+  $$\text{Total} = \sum (\text{Base Hourly Rate} \times \text{Hours}) + \text{Peak Surcharge} + \text{Equipment Add-ons} + \text{Taxes}$$
 * **PayMongo Multi-Channel Selection:**
   * **E-Wallets:** GCash, Maya, GrabPay
   * **Cards:** Visa, MasterCard, JCB
-* **Confirmation Trigger:** Creates atomic booking records in Supabase (or offline cache) and presents the post-checkout success modal.
+* **Atomic Double-Booking Defense:** Enforces PostgreSQL `btree_gist` exclusion constraints at the database level and broadcasts updates via Supabase Realtime.
 
-### E. Telemetry Analytics & DUPR Insights (`lib/screens/insights/insights.dart`)
-* **DUPR Rating Progression Gauge:** Visual metric tracking historical skill rating changes (e.g., 4.12 DUPR) with trend velocity indicators.
-* **Training Load & Intensity Metrics:** Visual charts summarizing weekly court hours, match count, calories burned, and win/loss percentages.
-* **Time Horizon Switching:** Segmented controls allowing instant zero-jank filtering across **Weekly**, **Monthly**, and **Yearly** views.
+### E. Dedicated My Bookings Dashboard (`lib/screens/booking/my_bookings_screen.dart`)
+* **Upcoming & Past Tabs:** Real-time filtering with reactive countdown clocks until match start.
+* **24-Hour Cancellation Policy:** Enforces strict cancellation cutoffs ($\ge 24\text{ hours}$ before match start).
+* **Instant Action Hub:** Direct access to laser-sweep QR gate passes, itemized receipts, and 1-tap calendar sync.
 
 ### F. Player Profile, Membership Perks & Theme Engine (`lib/screens/profile/profile_screen.dart`)
-* **Membership Tiers:** Displays tier status (e.g. *Black Obsidian Elite* or *Gold Club Member*) with associated booking discounts.
+* **DUPR Telemetry & Metrics:** Historical rating progression with skill velocity indicators.
+* **Membership Tiers:** Displays tier status (e.g. *Black Obsidian Elite* or *Gold Club Member*) with booking perks.
 * **Theme Switching:** Direct toggle between Dark, Light, and System modes powered by `ThemeService` (`ChangeNotifier`).
 
 ---
@@ -342,10 +352,9 @@ Pickleball/
 │   ├── models/              # Domain models (Court, Booking, Venue, Profile)
 │   ├── screens/             # UI feature screens
 │   │   ├── auth/            # Login, Signup, Forgot Password
-│   │   ├── booking/         # Court reservation & review checkout
-│   │   ├── home/            # Main navigation shell & Home tab
-│   │   ├── insights/        # Player telemetry, DUPR & match analytics
-│   │   └── profile/         # User profile, perks & theme toggle
+│   │   ├── booking/         # Court reservation, Events place, Review & My Bookings
+│   │   ├── home/            # Main navigation shell & Arena tab
+│   │   └── profile/         # User profile, perks, DUPR & theme toggle
 │   ├── services/            # Supabase API, Auth, and Calendar link services
 │   ├── widgets/             # Reusable widgets, cards, and modal dialogs
 │   └── main.dart            # Application bootstrap & AuthGate entrypoint
