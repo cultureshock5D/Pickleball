@@ -5,7 +5,7 @@ import '../../services/auth_service.dart';
 import '../../widgets/custom_bottom_nav_bar.dart';
 import '../../widgets/custom_top_app_bar.dart';
 import '../booking/court_reservation.dart';
-import '../insights/insights.dart';
+import '../booking/my_bookings_screen.dart';
 import '../profile/profile_screen.dart';
 import 'landing_home_screen.dart';
 
@@ -52,7 +52,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 1:
         return 'Court Reservation';
       case 2:
-        return 'Performance Hub';
+        return 'My Bookings';
       case 3:
         return 'Account & Profile';
       default:
@@ -65,9 +65,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 0:
         return 'Championship Club';
       case 1:
-        return 'Booking & Schedule';
+        return 'Pickleball, Basketball & Events';
       case 2:
-        return 'Analytics & Insights';
+        return 'Passes & Reservation History';
       case 3:
         return 'Preferences & Membership';
       default:
@@ -102,12 +102,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               setState(() => _currentIndex = 1);
             },
           ),
-          const CourtReservationScreen(),
-          InsightsScreen(
-            onBookCourtPressed: () {
-              setState(() => _currentIndex = 1);
+          CourtReservationScreen(
+            onViewBookings: () {
+              setState(() => _currentIndex = 2);
             },
           ),
+          const MyBookingsScreen(),
           const ProfileScreen(),
         ],
       ),
@@ -130,9 +130,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: 'Reservation',
           ),
           CustomBottomNavItem(
-            icon: Icons.insights_outlined,
-            activeIcon: Icons.insights_rounded,
-            label: 'Insights',
+            icon: Icons.calendar_month_outlined,
+            activeIcon: Icons.calendar_month_rounded,
+            label: 'My Bookings',
           ),
           CustomBottomNavItem(
             icon: Icons.person_outline_rounded,

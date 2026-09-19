@@ -3,18 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../core/pagination/pagination_controller.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
-import '../../data/repositories/booking_repository.dart';
+import '../../data/mock_data.dart';
 import '../../models/booking_model.dart';
 import '../../models/court_model.dart';
 import '../../services/booking_service.dart';
 import '../../widgets/date_range_picker_modal.dart';
-import '../../widgets/paginated_list_view.dart';
-import '../../widgets/reservation_card.dart';
-import '../../widgets/skeleton_loader.dart';
 import '../../widgets/tap_collapse.dart';
 import '../../widgets/time_player_picker_modal.dart';
 import 'booking_review_screen.dart';
@@ -22,11 +18,13 @@ import 'event_place_booking_screen.dart';
 import '../../core/utils/responsive_layout.dart';
 
 class CourtReservationScreen extends StatefulWidget {
-  final int initialSubTab; // 0 = Reserve Court, 1 = My Reservations
+  final int initialSubTab; // 0 = Pickleball, 1 = Basketball, 2 = Events Place
+  final VoidCallback? onViewBookings;
 
   const CourtReservationScreen({
     super.key,
     this.initialSubTab = 0,
+    this.onViewBookings,
   });
 
   @override
@@ -40,20 +38,34 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
 
   final BookingService _bookingService = BookingService.instance;
   StreamSubscription<BookingRealtimeEvent>? _realtimeSubscription;
-  late final PaginationController<BookingModel> _bookingsPaginationController;
 
-  // View state: 0 = Reserve Court, 1 = My Reservations
+  // View state: 0 = Pickleball, 1 = Basketball (Half Court), 2 = Events Place
   late int _activeModeIndex;
-
-  // Reservations state
-  List<BookingModel> _upcomingBookings = [];
-  List<BookingModel> _pastBookings = [];
-  int _myReservationsFilterIndex = 0; // 0 = Upcoming, 1 = Past
 
   // Courts state
   List<CourtModel> _courts = [];
   bool _isLoadingCourts = true;
   int _selectedCourtIndex = 0;
+
+  List<CourtModel> get _pickleballCourts {
+    final list = _courts.where((c) => c.isPickleball).toList();
+    return list.isNotEmpty ? list : MockData.defaultCourts;
+  }
+
+  List<CourtModel> get _basketballCourts {
+    final list = _courts.where((c) => c.isBasketball).toList();
+    return list.isNotEmpty ? list : MockData.defaultBasketballCourts;
+  }
+
+  List<CourtModel> get _currentSportCourts =>
+      _activeModeIndex == 1 ? _basketballCourts : _pickleballCourts;
+
+  CourtModel? get _currentCourt {
+    final list = _currentSportCourts;
+    if (list.isEmpty) return null;
+    if (_selectedCourtIndex >= list.length) return list.first;
+    return list[_selectedCourtIndex];
+  }
 
   // Booking details state
   DateTime _selectedDate = DateTime.now();
@@ -87,15 +99,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   @override
   void initState() {
     super.initState();
-    _activeModeIndex = widget.initialSubTab == 1 ? 2 : widget.initialSubTab;
-    _bookingsPaginationController = PaginationController<BookingModel>(
-      fetchPageChunk: (cursor, pageSize) =>
-          BookingRepository.forFlavor().fetchPaginatedCustomerBookings(
-        cursor: cursor,
-        pageSize: pageSize,
-      ),
-      idExtractor: (b) => b.id,
-    );
+    _activeModeIndex = widget.initialSubTab.clamp(0, 2);
     _initializeData();
     _initRealtimeSubscription();
   }
@@ -129,34 +133,10 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     if (shouldReloadAvailability) {
       _loadCourtAvailability();
     }
-
-    final user = _bookingService.currentUser;
-    final b = event.booking;
-    final affectsUser = b == null ||
-        (user != null &&
-            (b.userId == user.id ||
-                (b.guestEmail.isNotEmpty && b.guestEmail == user.email))) ||
-        _activeModeIndex == 1;
-
-    if (affectsUser) {
-      if (b != null) {
-        if (event.type == BookingRealtimeEventType.inserted) {
-          _bookingsPaginationController.insertItem(b);
-        } else if (event.type == BookingRealtimeEventType.updated) {
-          _bookingsPaginationController.updateItem(b);
-        } else if (event.type == BookingRealtimeEventType.deleted) {
-          _bookingsPaginationController.removeItem(b.id);
-        }
-      }
-      _loadCustomerBookings();
-    }
   }
 
   Future<void> _initializeData() async {
-    await Future.wait([
-      _loadCourts(),
-      _loadCustomerBookings(),
-    ]);
+    await _loadCourts();
   }
 
   Future<void> _loadCourts() async {
@@ -170,30 +150,6 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
         _isLoadingCourts = false;
       });
       _loadCourtAvailability();
-    }
-  }
-
-  Future<void> _loadCustomerBookings() async {
-    final bookings = await _bookingService.fetchCustomerBookings();
-    final now = DateTime.now();
-
-    final upcoming = bookings.where((b) {
-      return b.endTime.isAfter(now) &&
-          b.status != 'cancelled' &&
-          b.status != 'expired';
-    }).toList(growable: false);
-
-    final past = bookings.where((b) {
-      return b.endTime.isBefore(now) ||
-          b.status == 'cancelled' ||
-          b.status == 'expired';
-    }).toList(growable: false);
-
-    if (mounted) {
-      setState(() {
-        _upcomingBookings = upcoming;
-        _pastBookings = past;
-      });
     }
   }
 
@@ -236,11 +192,6 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     }
   }
 
-  CourtModel? get _currentCourt {
-    if (_courts.isEmpty) return null;
-    if (_selectedCourtIndex >= _courts.length) return _courts.first;
-    return _courts[_selectedCourtIndex];
-  }
 
   int get _selectedDurationHours => _selectedSlotIndices.length;
 
@@ -414,11 +365,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           paddleRental: _paddleRental,
           ballThrowerRental: _ballThrowerRental,
           onViewBookings: () {
-            _loadCustomerBookings();
             _loadCourtAvailability();
-            setState(() {
-              _activeModeIndex = 2; // Switch to My Reservations view
-            });
+            widget.onViewBookings?.call();
           },
         ),
       ),
@@ -443,16 +391,12 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             // Content Area
             Expanded(
               child: AdaptiveContainer(
-                child: _activeModeIndex == 0
-                    ? _buildReserveCourtContent()
-                    : _activeModeIndex == 1
-                        ? EventPlaceBookingScreen(
-                            showAppBar: false,
-                            onBookingCompleted: () {
-                              setState(() => _activeModeIndex = 2);
-                            },
-                          )
-                        : _buildMyReservationsContent(),
+                child: _activeModeIndex == 2
+                    ? EventPlaceBookingScreen(
+                        showAppBar: false,
+                        onBookingCompleted: widget.onViewBookings,
+                      )
+                    : _buildReserveCourtContent(),
               ),
             ),
           ],
@@ -483,27 +427,27 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             Expanded(
               child: _buildModeTab(
                 index: 0,
-                label: 'Courts',
+                label: 'Pickleball',
                 icon: Icons.sports_tennis_rounded,
-                badgeText: '${_courts.length}',
+                badgeText: '${_pickleballCourts.length}',
               ),
             ),
             const SizedBox(width: 4),
             Expanded(
               child: _buildModeTab(
                 index: 1,
-                label: 'Events Place',
-                icon: Icons.celebration_rounded,
-                badgeText: 'New',
+                label: 'Basketball',
+                icon: Icons.sports_basketball_rounded,
+                badgeText: 'Half Court',
               ),
             ),
             const SizedBox(width: 4),
             Expanded(
               child: _buildModeTab(
                 index: 2,
-                label: 'My Bookings',
-                icon: Icons.calendar_month_rounded,
-                badgeCount: _upcomingBookings.length,
+                label: 'Events Place',
+                icon: Icons.celebration_rounded,
+                badgeText: '500 sqm',
               ),
             ),
           ],
@@ -528,8 +472,16 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
       label: label,
       child: InkWell(
         onTap: () {
+          if (_activeModeIndex == index) return;
           HapticFeedback.selectionClick();
-          setState(() => _activeModeIndex = index);
+          setState(() {
+            _activeModeIndex = index;
+            _selectedCourtIndex = 0;
+            _selectedSlotIndices = {2};
+          });
+          if (index == 0 || index == 1) {
+            _loadCourtAvailability();
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
@@ -666,7 +618,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                   : () => _openTimePicker(),
               child: Text(
                 isSlotAvailable
-                    ? 'Reserve Court • ₱${_totalAmount.toStringAsFixed(0)}'
+                    ? 'Reserve ${_activeModeIndex == 1 ? "Half Court" : "Court"} • ₱${_totalAmount.toStringAsFixed(0)}'
                     : 'Choose Available Time Slot',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 15,
@@ -683,7 +635,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   }
 
   Widget _buildCourtPickerTabs(AppPalette colors) {
-    if (_courts.isEmpty) {
+    final sportCourts = _currentSportCourts;
+    if (sportCourts.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -706,7 +659,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           children: [
             Flexible(
               child: Text(
-                'SELECT COURT',
+                _activeModeIndex == 1 ? 'SELECT HALF COURT' : 'SELECT COURT',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
@@ -719,7 +672,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             ),
             const SizedBox(width: 8),
             Text(
-              '${_courts.length} Pro Courts Available',
+              '${sportCourts.length} ${_activeModeIndex == 1 ? "Half Courts" : "Pro Courts"} Available',
               maxLines: 1,
               style: GoogleFonts.inter(
                 fontSize: 11,
@@ -730,9 +683,9 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
           ],
         ),
         const SizedBox(height: 10),
-        _courts.length <= 2
+        sportCourts.length <= 2
             ? Row(
-                children: _courts.asMap().entries.map((entry) {
+                children: sportCourts.asMap().entries.map((entry) {
                   final index = entry.key;
                   final court = entry.value;
                   final isSel = _selectedCourtIndex == index;
@@ -752,7 +705,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                   return Expanded(
                     child: Padding(
                       padding: EdgeInsets.only(
-                        right: index < _courts.length - 1 ? 6 : 0,
+                        right: index < sportCourts.length - 1 ? 6 : 0,
                         left: index > 0 ? 6 : 0,
                       ),
                       child: _buildCourtPickerCard(colors, index, isSel, displayName, surfaceName, court),
@@ -764,7 +717,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: Row(
-                  children: _courts.asMap().entries.map((entry) {
+                  children: sportCourts.asMap().entries.map((entry) {
                     final index = entry.key;
                     final court = entry.value;
                     final isSel = _selectedCourtIndex == index;
@@ -785,7 +738,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                       width: 175,
                       child: Padding(
                         padding: EdgeInsets.only(
-                          right: index < _courts.length - 1 ? 8 : 0,
+                          right: index < sportCourts.length - 1 ? 8 : 0,
                         ),
                         child: _buildCourtPickerCard(colors, index, isSel, displayName, surfaceName, court),
                       ),
@@ -1199,6 +1152,8 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   }
 
   Widget _buildAddonsCard(AppPalette colors) {
+    final isBasketball = _activeModeIndex == 1;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1210,7 +1165,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'EQUIPMENT RENTAL ADD-ONS',
+            isBasketball ? 'BASKETBALL RENTAL ADD-ONS' : 'EQUIPMENT RENTAL ADD-ONS',
             style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -1225,13 +1180,14 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
             color: Colors.transparent,
             child: Column(
               children: [
-                // Paddle bundle switch
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   activeThumbColor: colors.textPrimary,
                   activeTrackColor: colors.textPrimary.withValues(alpha: 0.38),
                   title: Text(
-                    'Pro Carbon Paddle Bundle (+₱150)',
+                    isBasketball
+                        ? 'Official FIBA Basketball Bundle (+₱150)'
+                        : 'Pro Carbon Paddle Bundle (+₱150)',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -1239,7 +1195,9 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                     ),
                   ),
                   subtitle: Text(
-                    'Includes 2× Pro Paddles + 3× Match Pickleballs (flat fee)',
+                    isBasketball
+                        ? 'Includes 2× Official Game Basketballs (flat fee)'
+                        : 'Includes 2× Pro Paddles + 3× Match Pickleballs (flat fee)',
                     style: GoogleFonts.inter(
                       fontSize: 11.5,
                       color: colors.textMuted,
@@ -1248,14 +1206,14 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                   value: _paddleRental,
                   onChanged: (v) => setState(() => _paddleRental = v),
                 ),
-
-                // Ball thrower machine switch
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   activeThumbColor: colors.textPrimary,
                   activeTrackColor: colors.textPrimary.withValues(alpha: 0.38),
                   title: Text(
-                    'Ball Thrower Machine (+₱150/hr)',
+                    isBasketball
+                        ? 'Scoreboard & Shot Clock Remote (+₱150/hr)'
+                        : 'Ball Thrower Machine (+₱150/hr)',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -1263,7 +1221,9 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
                     ),
                   ),
                   subtitle: Text(
-                    'Automated training ball machine for the duration of match',
+                    isBasketball
+                        ? 'Digital display console + wireless remote for duration of match'
+                        : 'Automated training ball machine for the duration of match',
                     style: GoogleFonts.inter(
                       fontSize: 11.5,
                       color: colors.textMuted,
@@ -1280,130 +1240,9 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
     );
   }
 
-  // ==========================================
-  // VIEW 2: MY BOOKINGS
-  // ==========================================
-  Widget _buildMyReservationsContent() {
-    final colors = context.colors;
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildSubTab(
-                  index: 0,
-                  label: 'Upcoming (${_upcomingBookings.length})',
-                  colors: colors,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildSubTab(
-                  index: 1,
-                  label: 'Past / Cancelled (${_pastBookings.length})',
-                  colors: colors,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: PaginatedListView<BookingModel>(
-            controller: _bookingsPaginationController,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            skeletonBuilder: (_, __) => const SkeletonReservationCard(
-              margin: EdgeInsets.symmetric(vertical: 6),
-            ),
-            itemBuilder: (context, item, index) {
-              final isUpcoming = item.endTime.isAfter(DateTime.now()) &&
-                  item.status != 'cancelled' &&
-                  item.status != 'expired';
-
-              if (_myReservationsFilterIndex == 0 && !isUpcoming) {
-                return const SizedBox.shrink();
-              }
-              if (_myReservationsFilterIndex == 1 && isUpcoming) {
-                return const SizedBox.shrink();
-              }
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: ReservationCard(
-                  booking: item,
-                  isUpcoming: isUpcoming,
-                  onRefresh: () async {
-                    await _loadCustomerBookings();
-                    await _bookingsPaginationController.refresh();
-                  },
-                ),
-              );
-            },
-            emptyBuilder: (context) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.calendar_month_outlined,
-                        size: 48, color: colors.textMuted),
-                    const SizedBox(height: 12),
-                    Text(
-                      _myReservationsFilterIndex == 0
-                          ? 'No upcoming court reservations'
-                          : 'No past booking records',
-                      style: GoogleFonts.inter(
-                        color: colors.textSecondary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSubTab({
-    required int index,
-    required String label,
-    required AppPalette colors,
-  }) {
-    final isSelected = _myReservationsFilterIndex == index;
-    return InkWell(
-      onTap: () => setState(() => _myReservationsFilterIndex = index),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected ? colors.textPrimary : colors.surfaceElevated,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? colors.textPrimary : colors.borderSubtle,
-          ),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? colors.background : colors.textMuted,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _realtimeSubscription?.cancel();
-    _bookingsPaginationController.dispose();
     super.dispose();
   }
 }

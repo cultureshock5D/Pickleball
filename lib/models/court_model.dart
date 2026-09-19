@@ -28,8 +28,18 @@ class CourtModel {
   /// Whether this court is available for reservations
   bool get isAvailableForBooking => status.toLowerCase() == 'active';
 
+  /// Whether this court is for basketball
+  bool get isBasketball =>
+      name.toLowerCase().contains('half court') ||
+      name.toLowerCase().contains('basketball') ||
+      name.toLowerCase().contains('hoops');
+
+  /// Whether this court is for pickleball
+  bool get isPickleball => !isBasketball;
+
   /// Returns surface/feature description badge based on type/name
   String get surfaceDescription {
+    if (isBasketball) return 'Polyurethane Half Court';
     if (name.contains('Pro Cushion')) return 'Pro Cushion Surface';
     if (isIndoor) return 'Pro Cushion Hardcourt';
     return 'All-Weather Acrylic';
@@ -37,6 +47,7 @@ class CourtModel {
 
   /// Returns lighting / court badge
   String get courtBadge {
+    if (isBasketball) return 'FIBA Half Court';
     if (isIndoor) return 'Indoor Championship';
     return 'Outdoor Lighted';
   }

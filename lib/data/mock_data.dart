@@ -76,6 +76,20 @@ class MockData {
     ),
   ];
 
+  // --- Basketball Half Courts ---
+  static const List<CourtModel> defaultBasketballCourts = [
+    CourtModel(
+      id: 'court-bb-1-half-poly',
+      name: 'Hoops 1 — Half Court (Polyurethane)',
+      hourlyRate: 350.0,
+    ),
+    CourtModel(
+      id: 'court-bb-2-half-spec',
+      name: 'Hoops 2 — Half Court (FIBA Spec)',
+      hourlyRate: 400.0,
+    ),
+  ];
+
   /// Active courts getter alias
   static List<CourtModel> get courts => getMockActiveCourts();
 
