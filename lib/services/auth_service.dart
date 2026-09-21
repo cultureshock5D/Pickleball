@@ -106,12 +106,13 @@ class AuthService {
 
     if (!isSupabaseReady || _supabase == null) {
       final name = cleanEmail.split('@').first;
+      final isCashierAcc = cleanEmail == 'cashier@pickleball.com';
       final user = User(
         id: 'mock-user-${cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '')}',
         appMetadata: const {},
         userMetadata: {
           'full_name': name,
-          'role': 'client',
+          'role': isCashierAcc ? 'cashier' : 'client',
         },
         aud: 'authenticated',
         email: cleanEmail,
@@ -395,11 +396,14 @@ class AuthService {
       if (liveUser != null && (uid == null || liveUser.id == uid)) {
         final metaName =
             (liveUser.userMetadata?['full_name'] as String?)?.trim();
+        final email = liveUser.email?.trim().toLowerCase();
+        final isCashierEmail = email == 'cashier@pickleball.com';
+        final metaRole = liveUser.userMetadata?['role'] as String?;
         return UserProfile(
           id: liveUser.id,
           fullName: metaName ?? liveUser.email?.split('@').first ?? 'Player',
           email: liveUser.email,
-          role: (liveUser.userMetadata?['role'] as String?) ?? 'client',
+          role: isCashierEmail ? 'cashier' : (metaRole ?? 'client'),
         );
       }
     }
@@ -409,12 +413,15 @@ class AuthService {
     if (mockUser != null && (uid == null || mockUser.id == uid)) {
       final metaName =
           (mockUser.userMetadata?['full_name'] as String?)?.trim();
+      final email = mockUser.email?.trim().toLowerCase();
+      final isCashierEmail = email == 'cashier@pickleball.com';
+      final metaRole = mockUser.userMetadata?['role'] as String?;
       return UserProfile(
         id: mockUser.id,
         fullName: metaName ?? mockUser.email?.split('@').first ?? MockData.mockUserProfile.fullName,
         email: mockUser.email ?? MockData.mockUserProfile.email,
         phone: mockUser.phone ?? MockData.mockUserProfile.phone,
-        role: (mockUser.userMetadata?['role'] as String?) ?? 'client',
+        role: isCashierEmail ? 'cashier' : (metaRole ?? 'client'),
       );
     }
 

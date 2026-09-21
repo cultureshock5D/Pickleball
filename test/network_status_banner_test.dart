@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pickleball_app/core/network/network_connectivity_watcher.dart';
+import 'package:pickleball_app/services/connectivity_service.dart';
 import 'package:pickleball_app/widgets/network_status_banner.dart';
 
 void main() {
@@ -139,6 +140,71 @@ void main() {
       expect(find.byIcon(Icons.wifi_rounded), findsOneWidget);
       expect(find.text("You're offline • Showing cached data"), findsOneWidget);
       expect(find.text('Back online • Syncing data'), findsOneWidget);
+    });
+
+    testWidgets('NetworkStatusPill renders 3-state POS sync pills with icons and spinners', (tester) async {
+      var retryTapped = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const NetworkStatusPill(
+                    isOffline: true,
+                    syncState: SyncState.idle,
+                  ),
+                  const NetworkStatusPill(
+                    isOffline: false,
+                    syncState: SyncState.syncing,
+                  ),
+                  const NetworkStatusPill(
+                    isOffline: false,
+                    syncState: SyncState.idle,
+                  ),
+                  NetworkStatusPill(
+                    isOffline: false,
+                    syncState: SyncState.error,
+                    errorMessage: 'Connection timed out',
+                    onRetry: () {
+                      retryTapped = true;
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // 1. Offline persistent banner
+      expect(
+        find.text('Offline Mode — Transactions saving locally to SQLite'),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.cloud_off_rounded), findsOneWidget);
+
+      // 2. Syncing transient banner with spinner
+      expect(
+        find.text('Online — Syncing pending records to Supabase...'),
+        findsOneWidget,
+      );
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // 3. Synced confirmation banner
+      expect(find.text('Connected & Synced'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+
+      // 4. Sync error with manual retry tap action
+      expect(
+        find.text('Sync issue: Connection timed out • Tap to retry'),
+        findsOneWidget,
+      );
+      expect(find.byIcon(Icons.sync_problem_rounded), findsOneWidget);
+
+      await tester.tap(find.text('Sync issue: Connection timed out • Tap to retry'));
+      expect(retryTapped, isTrue);
     });
   });
 }

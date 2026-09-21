@@ -182,13 +182,10 @@ void main() {
         ),
       );
 
-      expect(find.text('C&J CHAMPIONSHIP ARENA'), findsOneWidget);
       expect(find.text('SERVE WITH FORCE.\nOWN THE COURT.'), findsOneWidget);
-      expect(find.text('FEATURED TOURNAMENT COURTS'), findsOneWidget);
-      expect(find.text('Court 1 — Pro Cushion'), findsOneWidget);
-      expect(find.text('Court 2 — Tournament Spec'), findsOneWidget);
-      expect(find.text('PRO SHOP ADD-ONS'), findsOneWidget);
-      expect(find.text('THE KITCHEN HAS RULES. PLAY BY THEM.'), findsOneWidget);
+      expect(find.text('POPULAR CLUBS'), findsOneWidget);
+      expect(find.text('DISCOVER ARENAS'), findsOneWidget);
+      expect(find.text('FREQUENTLY ASKED QUESTIONS'), findsOneWidget);
       expect(find.text('POLICIES & VENUE GUIDELINES'), findsOneWidget);
 
       // Tap Book Court

@@ -9,6 +9,7 @@ import '../../widgets/brand_logo_painter.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
 import 'signup_screen.dart';
+import '../pos/pos_auth_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -345,6 +346,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
+
+                    // Staff POS Terminal Switch
+                    Center(
+                      child: Semantics(
+                        button: true,
+                        label: 'Staff Cashier POS Terminal',
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.point_of_sale, size: 16, color: AppTheme.accentColor),
+                          label: Text(
+                            'Staff Cashier POS Terminal',
+                            style: GoogleFonts.inter(
+                              color: AppTheme.accentColor,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const PosAuthScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),

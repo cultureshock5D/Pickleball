@@ -80,6 +80,7 @@ class AppPalette {
 
   Color get neonYellowAlpha14 => neonYellow.withValues(alpha: 0.14);
   Color get neonYellowAlpha28 => neonYellow.withValues(alpha: 0.28);
+  Color get card => surfaceElevated;
 }
 
 class AppTheme {
@@ -98,6 +99,7 @@ class AppTheme {
   static const Color neonGreenLight = Color(0xFF34D399);
   static const Color neonGreenDark = Color(0xFF059669);
   static const Color neonLime = Color(0xFFCCFF00);
+  static const Color accentColor = neonLime;
   static const Color neonYellow = Color(0xFFFACC15);
   static const Color errorRed = Color(0xFFEF4444);
 
@@ -486,7 +488,7 @@ class AppTheme {
           backgroundColor: neonLime,
           foregroundColor: const Color(0xFF111111),
           elevation: 0,
-          minimumSize: const Size.fromHeight(48),
+          minimumSize: const Size(64, 48),
           shape: const StadiumBorder(),
           textStyle: GoogleFonts.inter(
             fontSize: 13,
@@ -498,7 +500,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(48),
+          minimumSize: const Size(64, 48),
           side: const BorderSide(color: border),
           shape: const StadiumBorder(),
           textStyle: GoogleFonts.inter(
@@ -644,7 +646,7 @@ class AppTheme {
           backgroundColor: AppColors.ink,
           foregroundColor: AppColors.canvas,
           elevation: 0,
-          minimumSize: const Size.fromHeight(48),
+          minimumSize: const Size(64, 48),
           shape: const StadiumBorder(),
           textStyle: GoogleFonts.inter(
             fontSize: 13,
@@ -656,7 +658,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.ink,
-          minimumSize: const Size.fromHeight(48),
+          minimumSize: const Size(64, 48),
           side: const BorderSide(color: AppColors.hairline),
           shape: const StadiumBorder(),
           textStyle: GoogleFonts.inter(
