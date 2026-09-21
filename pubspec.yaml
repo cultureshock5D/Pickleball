@@ -31,3 +31,5 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - cashier_pos/
+    - cashier_pos/coffee/

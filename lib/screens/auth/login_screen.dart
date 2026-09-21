@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/auth_gate.dart';
 import '../../widgets/brand_logo_painter.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
@@ -47,6 +48,12 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text,
         password: _passwordController.text,
       );
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const AuthGate()),
+          (route) => false,
+        );
+      }
     } on AuthException catch (e) {
       setState(() {
         _errorMessage = e.message;
@@ -57,6 +64,36 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = 'An unexpected error occurred. Please try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleGuestSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      _authService.signInAsGuest(
+        email: 'alex.morgan@pickleball.dev',
+        fullName: 'Alex Morgan',
+      );
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const AuthGate()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to start demo session: $e';
       });
     } finally {
       if (mounted) {
@@ -291,6 +328,32 @@ class _LoginScreenState extends State<LoginScreen> {
                           isLoading: _isLoading,
                           icon: Icons.login_rounded,
                           onPressed: _handleSignIn,
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: colors.neonGreen,
+                              side: BorderSide(
+                                color: colors.neonGreen.withValues(alpha: 0.5),
+                                width: 1.2,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            icon: const Icon(Icons.sports_tennis_rounded, size: 18),
+                            label: Text(
+                              'Explore as Demo Player (Instant Access)',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            onPressed: _isLoading ? null : _handleGuestSignIn,
+                          ),
                         ),
                       ],
                     ),

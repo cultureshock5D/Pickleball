@@ -9,7 +9,7 @@ import '../../models/pos_product_model.dart';
 import 'controllers/pos_cart_controller.dart';
 import 'controllers/pos_catalog_controller.dart';
 import '../../services/auth_service.dart';
-import '../auth/login_screen.dart';
+import '../../widgets/auth_gate.dart';
 import '../home/main_navigation_screen.dart';
 import 'widgets/cash_tender_modal.dart';
 import 'widgets/pos_printer_debug_modal.dart';
@@ -219,7 +219,7 @@ class _PosScreenState extends State<PosScreen> {
                 await AuthService.instance.signOut();
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(builder: (context) => const AuthGate()),
                     (route) => false,
                   );
                 }
@@ -1328,7 +1328,26 @@ class _PosScreenState extends State<PosScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
+
+                  // Product Image Thumbnail
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                      child: Image.asset(
+                        product.effectiveImagePath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          'cashier_pos/cj-brand-badge.png',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
 
                   // Name
                   Expanded(
@@ -1523,7 +1542,7 @@ class _PosScreenState extends State<PosScreen> {
             maxCrossAxisExtent: 220,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: 0.82,
+            childAspectRatio: 0.68,
           ),
           itemCount: products.length,
           itemBuilder: (context, index) {
@@ -1536,7 +1555,7 @@ class _PosScreenState extends State<PosScreen> {
               onTap: isOos ? null : () => _handleAddToCart(product),
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF0F172A) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -1550,6 +1569,25 @@ class _PosScreenState extends State<PosScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Product Image Banner
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        height: 82,
+                        width: double.infinity,
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        child: Image.asset(
+                          product.effectiveImagePath,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Image.asset(
+                            'cashier_pos/cj-brand-badge.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
                     // SKU & Cart Badge
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1587,27 +1625,29 @@ class _PosScreenState extends State<PosScreen> {
                           ),
                       ],
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 4),
 
                     // Name
                     Text(
                       product.name,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: isOos ? colors.textSecondary : colors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
 
                     // Category
                     Text(
                       product.category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(fontSize: 10, color: colors.textSecondary),
                     ),
-                    const SizedBox(height: 8),
+                    const Spacer(),
 
                     // Stock & Price Row
                     Row(
@@ -1648,7 +1688,7 @@ class _PosScreenState extends State<PosScreen> {
                             child: Text(
                               '₱${product.price.toStringAsFixed(2)}',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w800,
                                 color: colors.textPrimary,
                               ),
@@ -2076,6 +2116,25 @@ class _PosScreenState extends State<PosScreen> {
       ),
       child: Row(
         children: [
+          // Cart Item Thumbnail
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              width: 34,
+              height: 34,
+              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+              child: Image.asset(
+                item.product.effectiveImagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  'cashier_pos/cj-brand-badge.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

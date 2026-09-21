@@ -9,6 +9,7 @@ class PosProductModel {
   final int stockLevel;
   final int reorderThreshold;
   final bool isActive;
+  final String? imagePath;
 
   const PosProductModel({
     required this.id,
@@ -21,6 +22,7 @@ class PosProductModel {
     this.stockLevel = 0,
     this.reorderThreshold = 10,
     this.isActive = true,
+    this.imagePath,
   });
 
   bool get isOutOfStock => stockLevel <= 0;
@@ -51,14 +53,67 @@ class PosProductModel {
     return 'Supplies';
   }
 
+  String get effectiveImagePath =>
+      (imagePath != null && imagePath!.isNotEmpty) ? imagePath! : resolveImagePath(name, category);
+
+  /// Automatically matches product to authentic image asset inside cashier_pos/
+  static String resolveImagePath(String name, String category) {
+    final lowerName = name.toLowerCase().trim();
+    final lowerCat = category.toLowerCase().trim();
+
+    // Coffee & Barista Drinks
+    if (lowerName.contains('americano') || lowerName.contains('long black')) return 'cashier_pos/long-black.jpg';
+    if (lowerName.contains('capuccino') || lowerName.contains('cappuccino') || lowerName.contains('flat white')) {
+      return 'cashier_pos/cappuccino.jpg';
+    }
+    if (lowerName.contains('spanish latte') || lowerName.contains('vanilla')) return 'cashier_pos/spanish-latte.jpg';
+    if (lowerName.contains('seasalt latte')) return 'cashier_pos/seasalt-latte.jpg';
+    if (lowerName.contains('caramel macchiato')) return 'cashier_pos/caramel-macchiato.jpg';
+    if (lowerName.contains('brown sugar')) return 'cashier_pos/brown-sugar-latte.jpg';
+    if (lowerName.contains('mocha')) return 'cashier_pos/mocha-latte.jpg';
+    if (lowerName.contains('choco hazelnut') || lowerName.contains('hazelnut')) return 'cashier_pos/choco-hazelnut.jpg';
+    if (lowerName.contains('butterscotch') || lowerName.contains('salted caramel')) {
+      return 'cashier_pos/seasalt-butterscotch.jpg';
+    }
+
+    // Pickleball Equipment & Pro Shop
+    if (lowerName.contains('paddle') || lowerCat.contains('paddle') || lowerCat.contains('equipment') || lowerCat.contains('pro shop')) {
+      return 'cashier_pos/gear-paddle.jpg';
+    }
+    if (lowerName.contains('thrower') || lowerName.contains('machine')) {
+      return 'cashier_pos/gear-ball-thrower.png';
+    }
+    if (lowerName.contains('ball') || lowerCat.contains('gear') || lowerCat.contains('accessory')) {
+      return 'cashier_pos/gear-balls.jpg';
+    }
+
+    // Court & Facility Services
+    if (lowerName.contains('court') || lowerCat.contains('court')) return 'cashier_pos/service-court.jpg';
+    if (lowerName.contains('event') || lowerName.contains('hall') || lowerName.contains('pavilion') || lowerCat.contains('event')) {
+      return 'cashier_pos/service-events.jpg';
+    }
+    if (lowerName.contains('deck') || lowerName.contains('lounge') || lowerName.contains('viewdeck')) {
+      return 'cashier_pos/service-viewdeck.jpg';
+    }
+
+    // Category fallbacks
+    if (lowerCat.contains('coffee') || lowerCat.contains('espresso') || lowerCat.contains('brew')) {
+      return 'cashier_pos/cappuccino.jpg';
+    }
+
+    // Default brand logo
+    return 'cashier_pos/cj-brand-badge.png';
+  }
+
   factory PosProductModel.fromJson(Map<String, dynamic> json) {
     final cat = json['category'] as String? ?? 'General';
     final dept = json['department'] as String? ?? resolveDepartment(cat);
+    final name = json['name'] as String? ?? 'Item';
 
     return PosProductModel(
       id: json['id'] as String,
       sku: json['sku'] as String?,
-      name: json['name'] as String,
+      name: name,
       price: (json['price'] as num).toDouble(),
       costPrice: (json['cost_price'] as num?)?.toDouble() ?? 0.0,
       category: cat,
@@ -66,6 +121,7 @@ class PosProductModel {
       stockLevel: json['stock_level'] as int? ?? 0,
       reorderThreshold: json['reorder_threshold'] as int? ?? 10,
       isActive: json['is_active'] as bool? ?? true,
+      imagePath: json['image_path'] as String? ?? resolveImagePath(name, cat),
     );
   }
 
@@ -81,6 +137,7 @@ class PosProductModel {
       'stock_level': stockLevel,
       'reorder_threshold': reorderThreshold,
       'is_active': isActive,
+      if (imagePath != null) 'image_path': imagePath,
     };
   }
 
@@ -95,6 +152,7 @@ class PosProductModel {
     int? stockLevel,
     int? reorderThreshold,
     bool? isActive,
+    String? imagePath,
   }) {
     return PosProductModel(
       id: id ?? this.id,
@@ -107,6 +165,7 @@ class PosProductModel {
       stockLevel: stockLevel ?? this.stockLevel,
       reorderThreshold: reorderThreshold ?? this.reorderThreshold,
       isActive: isActive ?? this.isActive,
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 }

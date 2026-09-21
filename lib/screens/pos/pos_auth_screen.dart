@@ -5,10 +5,10 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/auth_gate.dart';
 import '../../widgets/brand_logo_painter.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
-import '../auth/login_screen.dart';
 import 'pos_screen.dart';
 
 class PosAuthScreen extends StatefulWidget {
@@ -346,7 +346,7 @@ class _PosAuthScreenState extends State<PosAuthScreen> {
                             Navigator.of(context).pop();
                           } else {
                             Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (_) => const LoginScreen()),
+                              MaterialPageRoute(builder: (_) => const AuthGate()),
                             );
                           }
                         },

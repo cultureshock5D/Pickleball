@@ -906,7 +906,7 @@ class MockPosData {
       vatAmount: 0.0,
       vatExemptSales: 321.43,
       totalAmount: 257.14,
-      paymentMethod: 'GCash / QR Ph',
+      paymentMethod: 'Cash',
       createdAt: DateTime.now().subtract(const Duration(hours: 1)),
       items: const [
         PosTransactionItemModel(
