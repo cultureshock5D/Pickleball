@@ -1,4 +1,4 @@
-# E2E Test Infra: Pickleball Lazy Loading & Resilient Data Synchronization
+2# E2E Test Infra: Pickleball Lazy Loading & Resilient Data Synchronization
 
 ## Test Philosophy
 - Opaque-box, requirement-driven testing derived from `ORIGINAL_REQUEST.md` and user requirements.

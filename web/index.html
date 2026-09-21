@@ -37,14 +37,117 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <script>
+    // Direct Driverless Web Serial and Local Bridge for Thermal Receipt Printers (JP58H-0A4B)
+    window.posThermalPrinter = {
+      port: null,
+      async isSupported() {
+        return 'serial' in navigator;
+      },
+      async getStatus() {
+        // 1. Check if local Python bridge server is running
+        try {
+          const resp = await fetch('http://127.0.0.1:5858/', { method: 'GET', signal: AbortSignal.timeout(1000) });
+          if (resp.ok) {
+            return {
+              supported: true,
+              connected: true,
+              mode: 'local_bridge',
+              message: 'Local Python COM4 Bridge Active'
+            };
+          }
+        } catch (e) {}
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+        // 2. Check Web Serial API in Edge / Chrome
+        if ('serial' in navigator) {
+          try {
+            const ports = await navigator.serial.getPorts();
+            return {
+              supported: true,
+              connected: this.port !== null || ports.length > 0,
+              mode: 'web_serial',
+              portCount: ports.length,
+              message: ports.length > 0 ? 'Web Serial Paired (' + ports.length + ' port)' : 'Web Serial Ready to Connect'
+            };
+          } catch (e) {
+            return { supported: true, connected: false, mode: 'web_serial', message: e.message };
+          }
+        }
+
+        return { supported: false, connected: false, mode: 'none', message: 'Web Serial not supported in this browser' };
+      },
+      async connect() {
+        // Test local bridge first
+        try {
+          const resp = await fetch('http://127.0.0.1:5858/', { method: 'GET', signal: AbortSignal.timeout(1000) });
+          if (resp.ok) {
+            return { success: true, message: 'Connected to Local Python COM4 Bridge!' };
+          }
+        } catch (e) {}
+
+        if (!('serial' in navigator)) {
+          throw new Error('Web Serial is only supported in Microsoft Edge or Google Chrome.');
+        }
+
+        if (this.port) {
+          try { await this.port.close(); } catch (e) {}
+        }
+        this.port = await navigator.serial.requestPort();
+        await this.port.open({ baudRate: 9600 });
+        return { success: true, message: 'Web Serial port opened at 9600 baud.' };
+      },
+      async printRawBytes(base64Data) {
+        // 1. Try local bridge server first
+        try {
+          const resp = await fetch('http://127.0.0.1:5858/print', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payload: base64Data }),
+            signal: AbortSignal.timeout(4000)
+          });
+          if (resp.ok) {
+            const json = await resp.json();
+            return { success: true, message: 'Printed ' + (json.bytesPrinted || '') + ' bytes via Local COM4 Bridge!' };
+          }
+        } catch (e) {}
+
+        // 2. Fallback to Web Serial API
+        if (!('serial' in navigator)) {
+          throw new Error('Web Serial API is not supported in this browser.');
+        }
+
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        if (!this.port || !this.port.writable) {
+          const ports = await navigator.serial.getPorts();
+          if (ports.length > 0) {
+            this.port = ports[0];
+            try {
+              await this.port.open({ baudRate: 9600 });
+            } catch (e) {}
+          } else {
+            this.port = await navigator.serial.requestPort();
+            await this.port.open({ baudRate: 9600 });
+          }
+        }
+
+        const writer = this.port.writable.getWriter();
+        try {
+          await Promise.race([
+            writer.write(bytes),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Serial write timed out after 5s')), 5000))
+          ]);
+        } finally {
+          try { writer.releaseLock(); } catch (_) {}
+        }
+        return { success: true, message: 'Printed ' + bytes.length + ' bytes via Edge Web Serial to JP58H-0A4B!' };
+      }
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

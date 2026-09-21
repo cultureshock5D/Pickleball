@@ -6,6 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants/supabase_config.dart';
 import 'core/services/theme_service.dart';
 import 'core/theme/app_theme.dart';
+import 'services/connectivity_service.dart';
+import 'services/pos_database.dart';
+import 'services/sync_service.dart';
 import 'widgets/auth_gate.dart';
 import 'widgets/network_status_banner.dart';
 
@@ -42,6 +45,15 @@ Future<void> main() async {
     }
   } catch (e) {
     debugPrint('Supabase initialization notice: $e');
+  }
+
+  // Initialize offline SQLite POS database, immediate sync pipeline, and connectivity watcher
+  try {
+    await PosDatabase.instance.initialize();
+    SyncService.instance.initialize();
+    await ConnectivityService.instance.initialize();
+  } catch (e) {
+    debugPrint('Offline POS & Connectivity init notice: $e');
   }
 
   runApp(const MyApp());

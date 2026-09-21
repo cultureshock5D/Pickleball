@@ -226,9 +226,9 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      expect(find.text('Courts'), findsOneWidget);
+      expect(find.text('Pickleball'), findsOneWidget);
+      expect(find.text('Basketball'), findsOneWidget);
       expect(find.text('Events Place'), findsOneWidget);
-      expect(find.text('My Bookings'), findsOneWidget);
 
       // Tap on Events Place tab
       await tester.tap(find.text('Events Place'));

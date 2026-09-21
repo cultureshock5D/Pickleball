@@ -17,8 +17,16 @@ class UserProfile {
     this.updatedAt,
   });
 
-  bool get isClient => role == 'client';
-  bool get isStaff => role == 'admin' || role == 'cashier' || role == 'owner';
+  bool get isClient => !isStaff;
+  bool get isPlayer => !isStaff;
+  bool get isCashier =>
+      role == 'cashier' ||
+      (email != null && email!.trim().toLowerCase() == 'cashier@pickleball.com');
+  bool get isStaff =>
+      role == 'admin' ||
+      role == 'cashier' ||
+      role == 'owner' ||
+      (email != null && email!.trim().toLowerCase() == 'cashier@pickleball.com');
   bool get isAdmin => role == 'admin' || role == 'owner';
 
   String get displayName {

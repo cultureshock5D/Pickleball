@@ -24,6 +24,31 @@ if ($Content -match '(?m)^version:\s*(\d+)\.(\d+)\.(\d+)(?:\+(\d+))?') {
 
     Write-Host "Building APK..." -ForegroundColor Cyan
     flutter build apk
+
+    $SourceApk = Join-Path $RepoRoot "build\app\outputs\flutter-apk\app-release.apk"
+    if (Test-Path $SourceApk) {
+        $ReleasesDir = Join-Path $RepoRoot "releases"
+        if (!(Test-Path $ReleasesDir)) {
+            New-Item -ItemType Directory -Path $ReleasesDir -Force | Out-Null
+        }
+        $DestApk = Join-Path $ReleasesDir "Pickleball-v$Major.$Minor.$Patch.apk"
+        Copy-Item -Path $SourceApk -Destination $DestApk -Force
+        $ApkSizeMB = [math]::Round((Get-Item $DestApk).Length / 1MB, 2)
+
+        Write-Host "`n=======================================================" -ForegroundColor Green
+        Write-Host "  [SUCCESS] APK BUILT & READY!" -ForegroundColor Green
+        Write-Host "=======================================================" -ForegroundColor Green
+        Write-Host "Version   : $Major.$Minor.$Patch+$Build" -ForegroundColor White
+        Write-Host "File Size : $ApkSizeMB MB" -ForegroundColor White
+        Write-Host "Saved to  : $DestApk" -ForegroundColor Cyan
+        Write-Host "Original  : $SourceApk" -ForegroundColor Gray
+        Write-Host "=======================================================`n" -ForegroundColor Green
+
+        # Open folder and highlight the new APK
+        Start-Process explorer.exe -ArgumentList "/select,`"$DestApk`""
+    } else {
+        Write-Error "Build finished but app-release.apk was not found."
+    }
 } else {
     Write-Error "Could not find 'version:' line in pubspec.yaml"
 }
