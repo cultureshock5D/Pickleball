@@ -55,7 +55,8 @@ class PosCartController extends ChangeNotifier {
   /// Change due when paying cash
   double get changeDue {
     if (_paymentMethod != 'Cash') return 0.0;
-    return max(0.0, _tenderAmount - taxBreakdown.netPayable);
+    final diff = ((_tenderAmount - taxBreakdown.netPayable) * 100).round() / 100.0;
+    return max(0.0, diff);
   }
 
   /// Quantity of a product currently in the cart
@@ -193,7 +194,7 @@ class PosCartController extends ChangeNotifier {
     }
 
     if (checkTender && _paymentMethod == 'Cash') {
-      if (_tenderAmount < taxBreakdown.netPayable) {
+      if (_tenderAmount < (taxBreakdown.netPayable - 0.001)) {
         return 'Tender amount is less than total net payable (₱${taxBreakdown.netPayable.toStringAsFixed(2)}).';
       }
     }

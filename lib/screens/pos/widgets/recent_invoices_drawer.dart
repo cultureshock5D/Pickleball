@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -27,12 +28,28 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
   List<PosTransactionModel> _transactions = [];
   bool _isLoading = true;
   String _filter = 'all'; // 'all', 'completed', 'voided'
+  String _sortBy = 'time_added'; // 'time_added', 'invoice_no', 'recently_voided', 'amount'
+  bool _isAscending = false;
   String _searchQuery = '';
+
+  StreamSubscription<void>? _realtimeSub;
 
   @override
   void initState() {
     super.initState();
     _loadTransactions();
+    _posService.initRealtimeSubscription();
+    _realtimeSub = _posService.onPosUpdates.listen((_) {
+      if (mounted) {
+        _loadTransactions();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _realtimeSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadTransactions() async {
@@ -53,7 +70,7 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
   }
 
   List<PosTransactionModel> get _filteredTransactions {
-    return _transactions.where((tx) {
+    final list = _transactions.where((tx) {
       if (_filter == 'completed' && !tx.isCompleted) return false;
       if (_filter == 'voided' && !tx.isVoided) return false;
 
@@ -66,6 +83,37 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
       }
       return true;
     }).toList();
+
+    list.sort((a, b) {
+      int cmp;
+      switch (_sortBy) {
+        case 'invoice_no':
+          cmp = a.invoiceNumber.compareTo(b.invoiceNumber);
+          break;
+        case 'recently_voided':
+          // Prioritize voided transactions
+          if (a.isVoided && !b.isVoided) {
+            return _isAscending ? 1 : -1;
+          }
+          if (!a.isVoided && b.isVoided) {
+            return _isAscending ? -1 : 1;
+          }
+          final aTime = a.voidedAt ?? a.createdAt;
+          final bTime = b.voidedAt ?? b.createdAt;
+          cmp = aTime.compareTo(bTime);
+          break;
+        case 'amount':
+          cmp = a.totalAmount.compareTo(b.totalAmount);
+          break;
+        case 'time_added':
+        default:
+          cmp = a.createdAt.compareTo(b.createdAt);
+          break;
+      }
+      return _isAscending ? cmp : -cmp;
+    });
+
+    return list;
   }
 
   Future<void> _handleVoidTransaction(PosTransactionModel tx) async {
@@ -78,9 +126,24 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
 
     if (pinResult == null || !pinResult.authorized) return;
 
+    final reason = pinResult.voidReason ?? 'Supervisor Void Authorization';
+
+    // Optimistically reflect voided status immediately in the UI
+    final txIndex = _transactions.indexWhere((t) => t.id == tx.id);
+    if (txIndex != -1) {
+      setState(() {
+        _transactions[txIndex] = tx.copyWith(
+          status: 'voided',
+          voidReason: reason,
+          voidedAt: DateTime.now(),
+          voidedBy: widget.currentCashierId,
+        );
+      });
+    }
+
     final success = await _posService.voidTransaction(
       transactionId: tx.id,
-      voidReason: pinResult.voidReason ?? 'Supervisor Void Authorization',
+      voidReason: reason,
       voidedBy: widget.currentCashierId,
     );
 
@@ -92,6 +155,7 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
       _loadTransactions();
     } else {
       AppSnackBar.error(context, 'Failed to void transaction. Please try again.');
+      _loadTransactions();
     }
   }
 
@@ -187,7 +251,72 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
                       IconButton(
                         icon: const Icon(Icons.refresh, size: 18),
                         color: colors.textSecondary,
+                        tooltip: 'Refresh Invoices',
                         onPressed: _loadTransactions,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Sort Options & Asc/Desc Toggle Bar
+                  Row(
+                    children: [
+                      Text(
+                        'SORT:',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildSortChip('Time Added', 'time_added', colors),
+                              const SizedBox(width: 6),
+                              _buildSortChip('Invoice #', 'invoice_no', colors),
+                              const SizedBox(width: 6),
+                              _buildSortChip('Recently Voided', 'recently_voided', colors),
+                              const SizedBox(width: 6),
+                              _buildSortChip('Amount', 'amount', colors),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () => setState(() => _isAscending = !_isAscending),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: colors.border),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                size: 13,
+                                color: AppTheme.accentColor,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                _isAscending ? 'ASC' : 'DESC',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.accentColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -251,6 +380,55 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected ? AppTheme.accentColor : colors.textPrimary,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortChip(String label, String value, dynamic colors) {
+    final isSelected = _sortBy == value;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          if (_sortBy == value) {
+            _isAscending = !_isAscending;
+          } else {
+            _sortBy = value;
+          }
+        });
+      },
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.accentColor.withValues(alpha: 0.15)
+              : colors.surface,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isSelected ? AppTheme.accentColor : colors.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppTheme.accentColor : colors.textPrimary,
+              ),
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 4),
+              Icon(
+                _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                size: 12,
+                color: AppTheme.accentColor,
+              ),
+            ],
+          ],
         ),
       ),
     );

@@ -213,24 +213,28 @@ class _PosAuthScreenState extends State<PosAuthScreen> {
                     // Brand Logo & Badge
                     Center(
                       child: Container(
-                        padding: const EdgeInsets.all(16),
+                        height: 64,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                         decoration: BoxDecoration(
-                          color: colors.surfaceElevated,
-                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: AppTheme.neonLime.withValues(alpha: 0.3),
+                            color: AppTheme.neonLime.withValues(alpha: 0.4),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.neonLime.withValues(alpha: 0.15),
-                              blurRadius: 20,
+                              color: AppTheme.neonLime.withValues(alpha: 0.2),
+                              blurRadius: 18,
                             ),
                           ],
                         ),
-                        child: const CustomPaint(
-                          size: Size(44, 44),
-                          painter: BrandLogoPainter(color: AppTheme.neonLime),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.asset(
+                            'cashier_pos/cj-logo.png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ),

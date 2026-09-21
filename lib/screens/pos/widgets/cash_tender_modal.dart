@@ -32,11 +32,12 @@ class _CashTenderModalState extends State<CashTenderModal> {
   }
 
   double get _changeDue {
-    return (_currentTender - widget.netPayable).clamp(0.0, 999999.0);
+    final diff = ((_currentTender - widget.netPayable) * 100).round() / 100.0;
+    return diff.clamp(0.0, 999999.0);
   }
 
   bool get _isSufficient {
-    return _currentTender >= widget.netPayable;
+    return _currentTender >= (widget.netPayable - 0.001);
   }
 
   @override
@@ -63,6 +64,17 @@ class _CashTenderModalState extends State<CashTenderModal> {
     setState(() {
       if (_tenderStr.isNotEmpty) {
         _tenderStr = _tenderStr.substring(0, _tenderStr.length - 1);
+      }
+    });
+  }
+
+  void _onDot() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      if (_tenderStr.isEmpty) {
+        _tenderStr = '0.';
+      } else if (!_tenderStr.contains('.')) {
+        _tenderStr += '.';
       }
     });
   }
@@ -293,12 +305,14 @@ class _CashTenderModalState extends State<CashTenderModal> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildActionKey(label: 'C', onTap: _onClear, colors: colors),
-                      _buildNumericKey('0', colors),
+                      _buildActionKey(label: 'C', onTap: _onClear, colors: colors, width: 68),
+                      _buildNumericKey('0', colors, width: 68),
+                      _buildActionKey(label: '.', onTap: _onDot, colors: colors, width: 68),
                       _buildActionKey(
                         icon: Icons.backspace_outlined,
                         onTap: _onBackspace,
                         colors: colors,
+                        width: 68,
                       ),
                     ],
                   ),
@@ -364,9 +378,9 @@ class _CashTenderModalState extends State<CashTenderModal> {
     );
   }
 
-  Widget _buildNumericKey(String digit, dynamic colors) {
+  Widget _buildNumericKey(String digit, dynamic colors, {double width = 72}) {
     return SizedBox(
-      width: 72,
+      width: width,
       height: 44,
       child: Material(
         color: colors.surface,
@@ -394,12 +408,13 @@ class _CashTenderModalState extends State<CashTenderModal> {
     IconData? icon,
     required VoidCallback onTap,
     required dynamic colors,
+    double width = 72,
   }) {
     return SizedBox(
-      width: 72,
+      width: width,
       height: 44,
       child: Material(
-        color: colors.surface.withOpacity(0.6),
+        color: colors.surface.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
@@ -409,7 +424,7 @@ class _CashTenderModalState extends State<CashTenderModal> {
                 ? Text(
                     label,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                       color: colors.textSecondary,
                     ),

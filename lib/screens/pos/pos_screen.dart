@@ -317,7 +317,9 @@ class _PosScreenState extends State<PosScreen> {
             if (showPermanentSidebar)
               SizedBox(
                 width: 220,
-                child: _buildSidebarContent(colors, isDark),
+                child: SingleChildScrollView(
+                  child: _buildSidebarContent(colors, isDark),
+                ),
               ),
 
             if (showPermanentSidebar)
@@ -379,208 +381,250 @@ class _PosScreenState extends State<PosScreen> {
 
   // --- TOP HEADER BAR ---
   Widget _buildHeaderBar(dynamic colors, bool isDark, bool hasSidebar) {
-    return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      color: isDark ? const Color(0xFF0F172A) : Colors.white,
-      child: Row(
-        children: [
-          if (!hasSidebar) ...[
-            IconButton(
-              icon: Icon(Icons.menu_rounded, color: colors.textPrimary),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
-            const SizedBox(width: 4),
-          ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 750;
+        final isVeryCompact = constraints.maxWidth < 450;
 
-          // C&J Brand logo & Active Pill
-          Row(
-            mainAxisSize: MainAxisSize.min,
+        return Container(
+          height: 60,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+          child: Row(
             children: [
               if (!hasSidebar) ...[
-                Text(
-                  'C&J',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFFE11D48),
-                    letterSpacing: -0.5,
-                  ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(Icons.menu_rounded, color: colors.textPrimary),
+                  tooltip: 'Navigation Menu',
+                  onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 2),
               ],
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'C&J ARENA',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
+
+              // C&J Brand logo & Active Pill
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!hasSidebar) ...[
                     Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Cashier Console Active',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF10B981),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const Spacer(),
-
-          // Thermal Printer Setup & Diagnostics Button
-          OutlinedButton.icon(
-            icon: const Icon(Icons.print_outlined, size: 16, color: Color(0xFF00E599)),
-            label: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'JP58H Printer',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF00E599),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: const Color(0xFF00E599).withValues(alpha: 0.4)),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () {
-              PosPrinterDebugModal.show(context);
-            },
-          ),
-
-          const SizedBox(width: 8),
-
-          // Dark/Light Theme Switcher
-          IconButton(
-            tooltip: isDark ? 'Switch to Cockpit Light Mode' : 'Switch to Dark Mode',
-            icon: Icon(
-              isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-              size: 20,
-              color: colors.textSecondary,
-            ),
-            onPressed: () {
-              ThemeService.instance.toggleTheme();
-            },
-          ),
-
-          const SizedBox(width: 8),
-
-          // Cashier profile info (show name only if not already in sidebar)
-          if (!hasSidebar) ...[
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.cashierName,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      height: 30,
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(4),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        widget.cashierRole.toUpperCase(),
-                        style: GoogleFonts.inter(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: colors.textSecondary,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Image.asset(
+                          'cashier_pos/cj-logo.png',
+                          fit: BoxFit.contain,
                         ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (!isVeryCompact) ...[
+                          Text(
+                            hasSidebar ? 'C&J ARENA' : 'ARENA',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                        ],
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        if (!isCompact) ...[
+                          const SizedBox(width: 5),
+                          Text(
+                            'Cashier Console Active',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF10B981),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const Spacer(),
+
+              // Thermal Printer Setup & Diagnostics Button
+              if (!isCompact)
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.print_outlined, size: 16, color: Color(0xFF00E599)),
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'JP58H Printer',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF00E599),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: const Color(0xFF00E599).withValues(alpha: 0.4)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () => PosPrinterDebugModal.show(context),
+                )
+              else
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'JP58H Thermal Printer',
+                  icon: const Icon(Icons.print_outlined, size: 20, color: Color(0xFF00E599)),
+                  onPressed: () => PosPrinterDebugModal.show(context),
+                ),
+
+              const SizedBox(width: 2),
+
+              // Dark/Light Theme Switcher
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                tooltip: isDark ? 'Switch to Cockpit Light Mode' : 'Switch to Dark Mode',
+                icon: Icon(
+                  isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                  size: 20,
+                  color: colors.textSecondary,
+                ),
+                onPressed: () => ThemeService.instance.toggleTheme(),
+              ),
+
+              const SizedBox(width: 2),
+
+              // Cashier profile info (show if wide and not in sidebar)
+              if (!hasSidebar && !isCompact) ...[
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.cashierName,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                            ),
+                          ),
+                          child: Text(
+                            widget.cashierRole.toUpperCase(),
+                            style: GoogleFonts.inter(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      'cashier@pickleball.com',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
                 ),
-                Text(
-                  'cashier@pickleball.com',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    color: colors.textSecondary,
-                  ),
-                ),
+                const SizedBox(width: 8),
               ],
-            ),
-            const SizedBox(width: 12),
-          ],
 
-          // Sign Out Button
-          OutlinedButton.icon(
-            icon: const Icon(Icons.logout_rounded, size: 15, color: Colors.redAccent),
-            label: Text(
-              'Sign Out',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.redAccent,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 34),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              side: BorderSide(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-              ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: _handleLogout,
+              // Sign Out Button (Compact icon on mobile, outlined button on wide screens)
+              if (isCompact)
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Sign Out / Close Register',
+                  icon: const Icon(Icons.logout_rounded, size: 20, color: Colors.redAccent),
+                  onPressed: _handleLogout,
+                )
+              else
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.logout_rounded, size: 15, color: Colors.redAccent),
+                  label: Text(
+                    'Sign Out',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 34),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    side: BorderSide(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: _handleLogout,
+                ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -589,7 +633,9 @@ class _PosScreenState extends State<PosScreen> {
     return Drawer(
       backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
       child: SafeArea(
-        child: _buildSidebarContent(colors, isDark),
+        child: SingleChildScrollView(
+          child: _buildSidebarContent(colors, isDark),
+        ),
       ),
     );
   }
@@ -604,13 +650,29 @@ class _PosScreenState extends State<PosScreen> {
         children: [
           // Top Logo
           Center(
-            child: Text(
-              'C&J',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFFE11D48),
-                letterSpacing: -1,
+            child: Container(
+              height: 46,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.asset(
+                  'cashier_pos/cj-logo.png',
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),
@@ -752,41 +814,29 @@ class _PosScreenState extends State<PosScreen> {
             isDark: isDark,
             colors: colors,
           ),
-          _buildSidebarNavItem(
-            icon: Icons.calendar_month_outlined,
-            label: 'Daily Court Schedule',
-            isActive: false,
-            isDark: isDark,
-            colors: colors,
-          ),
 
           const SizedBox(height: 24),
-
-          // Section: SHORTCUTS
-          Text(
-            'SHORTCUTS',
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.0,
-              color: colors.textSecondary,
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.logout_rounded, size: 16, color: Colors.redAccent),
+              label: Text(
+                'Sign Out / Close Register',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.redAccent,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                side: const BorderSide(color: Colors.redAccent),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: _handleLogout,
             ),
-          ),
-          const SizedBox(height: 8),
-
-          _buildSidebarNavItem(
-            icon: Icons.calendar_today_outlined,
-            label: 'Public Booking',
-            isActive: false,
-            isDark: isDark,
-            colors: colors,
-          ),
-          _buildSidebarNavItem(
-            icon: Icons.home_outlined,
-            label: 'Arena Homepage',
-            isActive: false,
-            isDark: isDark,
-            colors: colors,
           ),
         ],
       ),
@@ -904,13 +954,17 @@ class _PosScreenState extends State<PosScreen> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  'ARENA COCKPIT TERMINAL • ACTIVE SHIFT',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                    color: const Color(0xFFEF4444),
+                Flexible(
+                  child: Text(
+                    'ARENA COCKPIT TERMINAL • ACTIVE SHIFT',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: const Color(0xFFEF4444),
+                    ),
                   ),
                 ),
               ],
@@ -939,7 +993,7 @@ class _PosScreenState extends State<PosScreen> {
               label: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Recent Invoices & Void'),
+                  Text(isNarrow ? 'Invoices & Void' : 'Recent Invoices & Void'),
                   const SizedBox(width: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -1341,7 +1395,7 @@ class _PosScreenState extends State<PosScreen> {
                         product.effectiveImagePath,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Image.asset(
-                          'cashier_pos/cj-brand-badge.png',
+                          'cashier_pos/cj-logo.png',
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -1580,7 +1634,7 @@ class _PosScreenState extends State<PosScreen> {
                           product.effectiveImagePath,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Image.asset(
-                            'cashier_pos/cj-brand-badge.png',
+                            'cashier_pos/cj-logo.png',
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -1732,13 +1786,17 @@ class _PosScreenState extends State<PosScreen> {
                 children: [
                   const Icon(Icons.verified_user_outlined, size: 15, color: Color(0xFF10B981)),
                   const SizedBox(width: 6),
-                  Text(
-                    'PHILIPPINE BIR EOPT & STATUTORY DISCOUNTS',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
-                      color: colors.textPrimary,
+                  Expanded(
+                    child: Text(
+                      'PHILIPPINE BIR EOPT & STATUTORY DISCOUNTS',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                        color: colors.textPrimary,
+                      ),
                     ),
                   ),
                 ],
@@ -2127,7 +2185,7 @@ class _PosScreenState extends State<PosScreen> {
                 item.product.effectiveImagePath,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Image.asset(
-                  'cashier_pos/cj-brand-badge.png',
+                  'cashier_pos/cj-logo.png',
                   fit: BoxFit.contain,
                 ),
               ),

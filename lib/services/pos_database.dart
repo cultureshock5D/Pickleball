@@ -255,6 +255,30 @@ class PosDatabase {
     }
   }
 
+  /// Mark a local transaction as voided in SQLite / memory store.
+  Future<void> voidLocalTransaction({
+    required String transactionId,
+    required String voidReason,
+    String? voidedBy,
+  }) async {
+    if (!_isInitialized) await initialize();
+
+    final db = _db;
+    if (db != null) {
+      await db.update(
+        'local_transactions',
+        {'status': 'voided'},
+        where: 'id = ?',
+        whereArgs: [transactionId],
+      );
+    }
+
+    final index = _memTransactions.indexWhere((t) => t['id'] == transactionId);
+    if (index != -1) {
+      _memTransactions[index]['status'] = 'voided';
+    }
+  }
+
   /// Total count of pending or failed queue items.
   Future<int> getPendingQueueCount() async {
     if (!_isInitialized) await initialize();

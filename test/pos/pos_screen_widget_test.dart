@@ -98,5 +98,50 @@ void main() {
       expect(find.text('Access Denied'), findsOneWidget);
       expect(find.text('Cashier & Pro Shop Staff register only.'), findsOneWidget);
     });
+
+    testWidgets('PosScreen renders mobile logout button in header bar and sidebar drawer', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: PosScreen(
+            cashierId: 'cashier-test-01',
+            cashierName: 'Maria Santos',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify compact header contains direct Sign Out icon button
+      final headerLogoutBtn = find.byTooltip('Sign Out / Close Register');
+      expect(headerLogoutBtn, findsOneWidget);
+
+      // Tap header logout button and verify confirmation dialog appears
+      await tester.tap(headerLogoutBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Close Cashier Register?'), findsOneWidget);
+      expect(find.text('You will be signed out of the POS terminal.'), findsOneWidget);
+
+      // Dismiss dialog
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Close Cashier Register?'), findsNothing);
+
+      // Open mobile drawer
+      final menuBtn = find.byTooltip('Navigation Menu');
+      expect(menuBtn, findsOneWidget);
+      await tester.tap(menuBtn);
+      await tester.pumpAndSettle();
+
+      // Drawer contains "Sign Out / Close Register"
+      expect(find.text('Sign Out / Close Register'), findsOneWidget);
+    });
   });
 }
+

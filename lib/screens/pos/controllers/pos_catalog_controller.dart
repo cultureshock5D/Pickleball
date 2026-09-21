@@ -1,12 +1,25 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../models/pos_product_model.dart';
 import '../../../services/pos_service.dart';
 
 class PosCatalogController extends ChangeNotifier {
   final PosService _posService;
+  StreamSubscription<void>? _realtimeSub;
 
   PosCatalogController({PosService? posService})
-      : _posService = posService ?? PosService.instance;
+      : _posService = posService ?? PosService.instance {
+    _posService.initRealtimeSubscription();
+    _realtimeSub = _posService.onPosUpdates.listen((_) {
+      loadCatalog();
+    });
+  }
+
+  @override
+  void dispose() {
+    _realtimeSub?.cancel();
+    super.dispose();
+  }
 
   List<PosProductModel> _allProducts = [];
   bool _isLoading = false;

@@ -102,7 +102,7 @@ class PosProductModel {
     }
 
     // Default brand logo
-    return 'cashier_pos/cj-brand-badge.png';
+    return 'cashier_pos/cj-logo.png';
   }
 
   factory PosProductModel.fromJson(Map<String, dynamic> json) {

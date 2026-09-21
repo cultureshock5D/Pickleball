@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -28,6 +29,51 @@ class PosService {
   }
 
   bool get isSupabaseActive => _supabase != null;
+
+  RealtimeChannel? _posChannel;
+  StreamController<void>? _posUpdatesController;
+  StreamController<void> get _controller =>
+      _posUpdatesController ??= StreamController<void>.broadcast();
+  Stream<void> get onPosUpdates => _controller.stream;
+
+  /// Initialize Supabase Realtime channel on pos_transactions and pos_products
+  void initRealtimeSubscription() {
+    final client = _supabase;
+    if (client == null || _posChannel != null) return;
+
+    try {
+      _posChannel = client.channel('public:pos_realtime')
+        ..onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'pos_transactions',
+          callback: (payload) {
+            debugPrint('Realtime: pos_transactions changed (${payload.eventType})');
+            _controller.add(null);
+          },
+        )
+        ..onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'pos_products',
+          callback: (payload) {
+            debugPrint('Realtime: pos_products changed (${payload.eventType})');
+            _controller.add(null);
+          },
+        )
+        ..subscribe((status, [error]) {
+          if (status == RealtimeSubscribeStatus.subscribed) {
+            debugPrint('Supabase Realtime pos_realtime channel connected.');
+          }
+        });
+    } catch (e) {
+      debugPrint('Error initializing POS Realtime channel: $e');
+    }
+  }
+
+  void notifyPosUpdates() {
+    _controller.add(null);
+  }
 
   /// Fetch all active products
   Future<List<PosProductModel>> fetchProducts() async {
@@ -272,58 +318,83 @@ class PosService {
     required String voidReason,
     required String voidedBy,
   }) async {
+    // 1. Immediately reflect in local SQLite and in-memory mock store
+    await PosDatabase.instance.voidLocalTransaction(
+      transactionId: transactionId,
+      voidReason: voidReason,
+      voidedBy: voidedBy,
+    );
+    MockPosData.voidTransaction(
+      transactionId: transactionId,
+      voidReason: voidReason,
+      voidedBy: voidedBy,
+    );
+    notifyPosUpdates();
+
     final client = _supabase;
     if (client == null) {
-      return MockPosData.voidTransaction(
-        transactionId: transactionId,
-        voidReason: voidReason,
-        voidedBy: voidedBy,
-      );
+      return true;
     }
 
     try {
-      // 1. Get transaction items to restore stock
-      final itemsRes = await client
-          .from('pos_transaction_items')
-          .select('product_id, quantity')
-          .eq('transaction_id', transactionId);
+      // 2. Validate UUID format before passing to PostgreSQL UUID column
+      final isValidUuid = RegExp(
+        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+      ).hasMatch(voidedBy);
 
-      // 2. Mark transaction as voided
-      await client.from('pos_transactions').update({
-        'status': 'voided',
-        'void_reason': voidReason,
-        'voided_at': DateTime.now().toUtc().toIso8601String(),
-        'voided_by': voidedBy,
-      }).eq('id', transactionId);
+      // 3. Prefer security-definer RPC for atomic voiding & stock restoration
+      try {
+        await client.rpc('void_pos_transaction', params: {
+          'p_transaction_id': transactionId,
+          'p_void_reason': voidReason,
+          if (isValidUuid) 'p_voided_by': voidedBy,
+        });
+      } catch (rpcErr) {
+        debugPrint('RPC void_pos_transaction notice: $rpcErr. Falling back to direct update.');
+        final updatePayload = <String, dynamic>{
+          'status': 'voided',
+          'void_reason': voidReason,
+          'voided_at': DateTime.now().toUtc().toIso8601String(),
+          if (isValidUuid) 'voided_by': voidedBy,
+        };
 
-      // 3. Restore stock in pos_products
-      for (final item in (itemsRes as List<dynamic>)) {
-        final prodId = item['product_id'] as String;
-        final qty = item['quantity'] as int;
+        await client
+            .from('pos_transactions')
+            .update(updatePayload)
+            .eq('id', transactionId);
 
-        final prodRes = await client
-            .from('pos_products')
-            .select('stock_level')
-            .eq('id', prodId)
-            .maybeSingle();
+        // 4. Get transaction items to restore stock in pos_products
+        final itemsRes = await client
+            .from('pos_transaction_items')
+            .select('product_id, quantity')
+            .eq('transaction_id', transactionId);
 
-        if (prodRes != null && prodRes['stock_level'] != null) {
-          final current = prodRes['stock_level'] as int;
-          await client
+        // 5. Restore stock in pos_products
+        for (final item in (itemsRes as List<dynamic>)) {
+          final prodId = item['product_id'] as String;
+          final qty = item['quantity'] as int;
+
+          final prodRes = await client
               .from('pos_products')
-              .update({'stock_level': current + qty})
-              .eq('id', prodId);
+              .select('stock_level')
+              .eq('id', prodId)
+              .maybeSingle();
+
+          if (prodRes != null && prodRes['stock_level'] != null) {
+            final current = prodRes['stock_level'] as int;
+            await client
+                .from('pos_products')
+                .update({'stock_level': current + qty})
+                .eq('id', prodId);
+          }
         }
       }
 
+      notifyPosUpdates();
       return true;
     } catch (e) {
-      debugPrint('PosService.voidTransaction fallback: $e');
-      return MockPosData.voidTransaction(
-        transactionId: transactionId,
-        voidReason: voidReason,
-        voidedBy: voidedBy,
-      );
+      debugPrint('PosService.voidTransaction Supabase notice: $e');
+      return true;
     }
   }
 

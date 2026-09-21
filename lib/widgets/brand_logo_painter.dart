@@ -102,12 +102,67 @@ class BrandLogoPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+/// Official C&J Brand Logotype Widget rendering 'cashier_pos/cj-logo.png'.
+class CjLogoWidget extends StatelessWidget {
+  final double height;
+  final double? width;
+  final BorderRadius? borderRadius;
+  final EdgeInsetsGeometry? padding;
+  final bool inPill;
+
+  const CjLogoWidget({
+    super.key,
+    this.height = 32.0,
+    this.width,
+    this.borderRadius,
+    this.padding,
+    this.inPill = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final image = Image.asset(
+      'cashier_pos/cj-logo.png',
+      height: height,
+      width: width,
+      fit: BoxFit.contain,
+    );
+
+    if (!inPill) {
+      return image;
+    }
+
+    return Container(
+      height: height,
+      width: width,
+      padding: padding ?? const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: borderRadius ?? BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: image,
+      ),
+    );
+  }
+}
+
 class BrandLogoWidget extends StatelessWidget {
   final double size;
   final Color color;
   final bool inverted;
   final bool withSubtitle;
   final bool showText;
+  final bool useAssetLogo;
 
   const BrandLogoWidget({
     super.key,
@@ -116,10 +171,15 @@ class BrandLogoWidget extends StatelessWidget {
     this.inverted = false,
     this.withSubtitle = false,
     this.showText = false,
+    this.useAssetLogo = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (useAssetLogo) {
+      return CjLogoWidget(height: size);
+    }
+
     final primaryColor = inverted ? AppColors.canvas : color;
     final secondaryColor = inverted ? AppColors.hairline : AppColors.mute;
 
@@ -188,3 +248,4 @@ class BrandLogoWidget extends StatelessWidget {
     );
   }
 }
+
