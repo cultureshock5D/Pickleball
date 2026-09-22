@@ -80,7 +80,7 @@ class MyApp extends StatelessWidget {
         );
 
         return MaterialApp(
-          title: 'Pickleball Luxury Club & Booking',
+          title: 'C&J',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,

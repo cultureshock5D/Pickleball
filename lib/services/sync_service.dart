@@ -153,14 +153,24 @@ class SyncService {
     final txData = payload['transaction'] as Map<String, dynamic>;
     final itemsData = (payload['items'] as List<dynamic>?) ?? [];
 
+    // Resolve valid UUID for transaction
+    final rawTxId = txData['id'] as String?;
+    final txId = isValidUuid(rawTxId) ? rawTxId! : generateUuidV4();
+
+    // Resolve valid UUID for cashier; if demo string or invalid, fallback to authenticated user or null
+    final rawCashierId = txData['cashier_id'] as String?;
+    final cashierId = isValidUuid(rawCashierId)
+        ? rawCashierId
+        : (isValidUuid(client.auth.currentUser?.id) ? client.auth.currentUser!.id : null);
+
     // 1. Upsert transaction record into pos_transactions
     await client.from('pos_transactions').upsert({
-      'id': txData['id'],
+      'id': txId,
       'invoice_number': txData['invoice_number'],
-      'cashier_id': txData['cashier_id'],
+      'cashier_id': cashierId,
       'customer_name': txData['customer_name'],
       'customer_tin': txData['customer_tin'],
-      'discount_type': txData['discount_type'],
+      'discount_type': txData['discount_type'] ?? 'none',
       'discount_id_number': txData['discount_id_number'],
       'gross_amount': txData['gross_amount'],
       'discount_amount': txData['discount_amount'],
@@ -177,16 +187,19 @@ class SyncService {
     // 2. Insert line items & update stock
     for (final rawItem in itemsData) {
       final item = rawItem as Map<String, dynamic>;
-      final prodId = item['product_id'] as String;
-      final qty = item['quantity'] as int;
-      final price = (item['price_at_time'] as num).toDouble();
+      final rawItemId = item['id'] as String?;
+      final itemId = isValidUuid(rawItemId) ? rawItemId! : generateUuidV4();
+      final rawProdId = item['product_id'] as String?;
+      final prodId = isValidUuid(rawProdId) ? rawProdId : null;
+      final qty = (item['quantity'] as num?)?.toInt() ?? 1;
+      final price = (item['price_at_time'] as num?)?.toDouble() ?? 0.0;
       final name = item['product_name'] as String? ?? 'Item';
 
       try {
         await client.from('pos_transaction_items').upsert({
-          'id': item['id'],
-          'transaction_id': txData['id'],
-          'product_id': prodId,
+          'id': itemId,
+          'transaction_id': txId,
+          if (prodId != null) 'product_id': prodId,
           'product_name': name,
           'quantity': qty,
           'price_at_time': price,
@@ -196,23 +209,25 @@ class SyncService {
       }
 
       // Decrement stock in Supabase pos_products if product exists
-      try {
-        final prodRes = await client
-            .from('pos_products')
-            .select('stock_level')
-            .eq('id', prodId)
-            .maybeSingle();
-
-        if (prodRes != null && prodRes['stock_level'] != null) {
-          final currentStock = prodRes['stock_level'] as int;
-          final updatedStock = (currentStock - qty).clamp(0, 999999);
-          await client
+      if (prodId != null) {
+        try {
+          final prodRes = await client
               .from('pos_products')
-              .update({'stock_level': updatedStock})
-              .eq('id', prodId);
+              .select('stock_level')
+              .eq('id', prodId)
+              .maybeSingle();
+
+          if (prodRes != null && prodRes['stock_level'] != null) {
+            final currentStock = prodRes['stock_level'] as int;
+            final updatedStock = (currentStock - qty).clamp(0, 999999);
+            await client
+                .from('pos_products')
+                .update({'stock_level': updatedStock})
+                .eq('id', prodId);
+          }
+        } catch (stockErr) {
+          debugPrint('SyncService: Stock update notice: $stockErr');
         }
-      } catch (stockErr) {
-        debugPrint('SyncService: Stock update notice: $stockErr');
       }
     }
 

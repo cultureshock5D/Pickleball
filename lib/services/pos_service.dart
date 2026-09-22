@@ -6,6 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/constants/paymongo_config.dart';
 import '../core/utils/bir_tax_breakdown.dart';
 import '../data/mock_pos_data.dart';
+import '../models/daily_expense_model.dart';
+import '../models/cashier_duty_session_model.dart';
 import '../models/pos_product_model.dart';
 import '../models/pos_transaction_model.dart';
 import 'auth_service.dart';
@@ -61,6 +63,24 @@ class PosService {
             _controller.add(null);
           },
         )
+        ..onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'daily_expenses',
+          callback: (payload) {
+            debugPrint('Realtime: daily_expenses changed (${payload.eventType})');
+            _controller.add(null);
+          },
+        )
+        ..onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'cashier_duty_sessions',
+          callback: (payload) {
+            debugPrint('Realtime: cashier_duty_sessions changed (${payload.eventType})');
+            _controller.add(null);
+          },
+        )
         ..subscribe((status, [error]) {
           if (status == RealtimeSubscribeStatus.subscribed) {
             debugPrint('Supabase Realtime pos_realtime channel connected.');
@@ -102,6 +122,215 @@ class PosService {
       debugPrint('PosService.fetchProducts fallback notice: $e');
       return MockPosData.getProducts();
     }
+  }
+
+  /// Fetch all inventory products (for table view and stock adjustments)
+  Future<List<PosProductModel>> fetchInventoryProducts() async {
+    final client = _supabase;
+    if (client == null) {
+      return MockPosData.getProducts();
+    }
+
+    try {
+      final response = await client
+          .from('pos_products')
+          .select()
+          .order('category')
+          .order('name');
+
+      final list = (response as List<dynamic>)
+          .map((item) => PosProductModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      if (list.isEmpty) {
+        return MockPosData.getProducts();
+      }
+      return list;
+    } catch (e) {
+      debugPrint('PosService fetchInventoryProducts fallback notice: $e');
+      return MockPosData.getProducts();
+    }
+  }
+
+  /// Update product stock level in Supabase & local cache
+  Future<bool> updateProductStock(String productId, int newStock) async {
+    MockPosData.updateProductStock(productId, newStock);
+    final client = _supabase;
+    if (client == null) {
+      notifyPosUpdates();
+      return true;
+    }
+
+    try {
+      await client
+          .from('pos_products')
+          .update({'stock_level': newStock})
+          .eq('id', productId);
+      notifyPosUpdates();
+      return true;
+    } catch (e) {
+      debugPrint('PosService updateProductStock error: $e');
+      notifyPosUpdates();
+      return false;
+    }
+  }
+
+  /// Fetch daily expenses from Supabase with offline fallback
+  Future<List<DailyExpenseModel>> fetchDailyExpenses({DateTime? date}) async {
+    final client = _supabase;
+    if (client == null) {
+      return MockPosData.getDailyExpenses(date: date);
+    }
+
+    try {
+      var query = client.from('daily_expenses').select();
+      if (date != null) {
+        final dateStr =
+            "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        query = query.eq('expense_date', dateStr);
+      }
+      final response = await query
+          .order('expense_date', ascending: false)
+          .order('created_at', ascending: false);
+
+      final list = (response as List<dynamic>)
+          .map((item) => DailyExpenseModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      if (list.isEmpty && date == null) {
+        return MockPosData.getDailyExpenses();
+      }
+      return list;
+    } catch (e) {
+      debugPrint('PosService fetchDailyExpenses fallback notice: $e');
+      return MockPosData.getDailyExpenses(date: date);
+    }
+  }
+
+  /// Record a new daily expense in Supabase
+  Future<DailyExpenseModel?> createDailyExpense(DailyExpenseModel expense) async {
+    MockPosData.addDailyExpense(expense);
+    final client = _supabase;
+    if (client == null) {
+      notifyPosUpdates();
+      return expense;
+    }
+
+    try {
+      final payload = expense.toJson();
+      if (expense.id.isEmpty) {
+        payload.remove('id');
+      }
+      final response = await client
+          .from('daily_expenses')
+          .insert(payload)
+          .select()
+          .single();
+
+      final created =
+          DailyExpenseModel.fromJson(response);
+      notifyPosUpdates();
+      return created;
+    } catch (e) {
+      debugPrint('PosService createDailyExpense error: $e');
+      notifyPosUpdates();
+      return expense;
+    }
+  }
+
+  /// Fetch transactions (alias for fetchRecentTransactions with larger limit)
+  Future<List<PosTransactionModel>> fetchTransactions({int limit = 500}) async {
+    return fetchRecentTransactions(limit: limit);
+  }
+
+  /// Fetch cashier duty sessions
+  Future<List<CashierDutySessionModel>> fetchDutySessions() async {
+    final client = _supabase;
+    if (client == null) {
+      return MockPosData.getDutySessions();
+    }
+
+    try {
+      final response = await client
+          .from('cashier_duty_sessions')
+          .select()
+          .order('started_at', ascending: false);
+
+      final list = (response as List<dynamic>)
+          .map((item) =>
+              CashierDutySessionModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      if (list.isEmpty) {
+        return MockPosData.getDutySessions();
+      }
+      return list;
+    } catch (e) {
+      debugPrint('PosService fetchDutySessions fallback notice: $e');
+      return MockPosData.getDutySessions();
+    }
+  }
+
+  /// Compute Daily Financial Margins (Gross Revenue, COGS, Gross Profit, Operating Expenses, Net Profit)
+  Future<Map<String, dynamic>> computeDailyMargins({DateTime? date}) async {
+    final targetDate = date ?? DateTime.now();
+    final transactions = await fetchTransactions();
+    final products = await fetchInventoryProducts();
+    final expenses = await fetchDailyExpenses(date: targetDate);
+
+    // Create a product map for fast cost_price lookup
+    final productMap = {for (final p in products) p.id: p};
+
+    // Filter non-voided transactions for the day
+    final dayTxs = transactions.where((t) {
+      if (t.isVoided) return false;
+      return t.createdAt.year == targetDate.year &&
+          t.createdAt.month == targetDate.month &&
+          t.createdAt.day == targetDate.day;
+    }).toList();
+
+    double grossRevenue = 0.0;
+    double cogs = 0.0;
+    int itemsSold = 0;
+
+    for (final tx in dayTxs) {
+      grossRevenue += tx.totalAmount;
+      for (final item in tx.items) {
+        itemsSold += item.quantity;
+        final product = productMap[item.productId];
+        final cost = product?.costPrice ?? (item.priceAtTime * 0.5);
+        cogs += cost * item.quantity;
+      }
+    }
+
+    double totalOperatingExpenses = 0.0;
+    final expensesByCategory = <String, double>{};
+    for (final exp in expenses) {
+      totalOperatingExpenses += exp.amount;
+      expensesByCategory[exp.category] =
+          (expensesByCategory[exp.category] ?? 0.0) + exp.amount;
+    }
+
+    final grossProfit = grossRevenue - cogs;
+    final grossMarginPercent =
+        grossRevenue > 0 ? (grossProfit / grossRevenue) * 100 : 0.0;
+    final netProfit = grossProfit - totalOperatingExpenses;
+    final netMarginPercent =
+        grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0.0;
+
+    return {
+      'date': targetDate,
+      'grossRevenue': grossRevenue,
+      'cogs': cogs,
+      'grossProfit': grossProfit,
+      'grossMarginPercent': grossMarginPercent,
+      'totalOperatingExpenses': totalOperatingExpenses,
+      'expensesByCategory': expensesByCategory,
+      'netProfit': netProfit,
+      'netMarginPercent': netMarginPercent,
+      'transactionCount': dayTxs.length,
+      'itemsSold': itemsSold,
+    };
   }
 
   /// Verify supervisor master PIN against system_settings or fallback
@@ -181,9 +410,13 @@ class PosService {
     try {
       final invoiceNum = await generateInvoiceNumber();
 
+      final resolvedCashierId = isValidUuid(cashierId)
+          ? cashierId
+          : (isValidUuid(client.auth.currentUser?.id) ? client.auth.currentUser!.id : null);
+
       final txInsert = await client.from('pos_transactions').insert({
         'invoice_number': invoiceNum,
-        'cashier_id': cashierId,
+        'cashier_id': resolvedCashierId,
         'customer_name': customerName?.trim().isEmpty ?? true ? null : customerName!.trim(),
         'customer_tin': customerTin?.trim().isEmpty ?? true ? null : customerTin!.trim(),
         'discount_type': discountType,
@@ -205,6 +438,7 @@ class PosService {
       final transactionItems = <PosTransactionItemModel>[];
       for (final item in items) {
         final prodId = item['product_id'] as String;
+        final resolvedProdId = isValidUuid(prodId) ? prodId : null;
         final qty = item['quantity'] as int;
         final price = (item['price_at_time'] as num).toDouble();
         final rawName = item['product_name'] as String?;
@@ -214,7 +448,7 @@ class PosService {
         try {
           itemInsert = await client.from('pos_transaction_items').insert({
             'transaction_id': txId,
-            'product_id': prodId,
+            if (resolvedProdId != null) 'product_id': resolvedProdId,
             'product_name': name,
             'quantity': qty,
             'price_at_time': price,
@@ -224,7 +458,7 @@ class PosService {
         }
 
         transactionItems.add(PosTransactionItemModel(
-          id: itemInsert?['id'] as String? ?? 'item-${DateTime.now().millisecondsSinceEpoch}',
+          id: itemInsert?['id'] as String? ?? generateUuidV4(),
           transactionId: txId,
           productId: prodId,
           productName: name,
@@ -285,31 +519,44 @@ class PosService {
     return await SyncService.instance.saveOrderAndPush(tx);
   }
 
-  /// Fetch recent transactions for audit and receipt reprinting
+  /// Fetch recent transactions for audit and receipt reprinting.
+  /// Automatically fetches past invoices from Supabase and caches them to local SQLite
+  /// so transaction history persists across application restarts and reinstalls.
   Future<List<PosTransactionModel>> fetchRecentTransactions({int limit = 50}) async {
     final client = _supabase;
-    if (client == null) {
-      return MockPosData.getTransactions();
+    List<PosTransactionModel> remoteList = [];
+
+    if (client != null) {
+      try {
+        final response = await client
+            .from('pos_transactions')
+            .select('*, pos_transaction_items(*)')
+            .order('created_at', ascending: false)
+            .limit(limit);
+
+        remoteList = (response as List<dynamic>)
+            .map((item) => PosTransactionModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+
+        if (remoteList.isNotEmpty) {
+          await PosDatabase.instance.upsertLocalTransactions(remoteList);
+        }
+      } catch (e) {
+        debugPrint('PosService.fetchRecentTransactions query notice: $e');
+      }
     }
 
-    try {
-      final response = await client
-          .from('pos_transactions')
-          .select('''
-            *,
-            profiles!pos_transactions_cashier_id_fkey(full_name),
-            pos_transaction_items(*, pos_products(name))
-          ''')
-          .order('created_at', ascending: false)
-          .limit(limit);
-
-      return (response as List<dynamic>)
-          .map((item) => PosTransactionModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      debugPrint('PosService.fetchRecentTransactions fallback to mock: $e');
-      return MockPosData.getTransactions();
+    // Check local database (which now has auto-fetched remote transactions + locally created transactions)
+    final localList = await PosDatabase.instance.getLocalTransactions(limit: limit);
+    if (localList.isNotEmpty) {
+      return localList;
     }
+
+    if (remoteList.isNotEmpty) {
+      return remoteList;
+    }
+
+    return MockPosData.getTransactions();
   }
 
   /// Void an existing transaction and restore product stock

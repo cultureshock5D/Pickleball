@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:intl/intl.dart';
 import '../core/utils/bir_tax_breakdown.dart';
+import '../models/daily_expense_model.dart';
+import '../models/cashier_duty_session_model.dart';
 import '../models/pos_product_model.dart';
 import '../models/pos_transaction_model.dart';
 
@@ -959,7 +961,7 @@ class MockPosData {
     required List<Map<String, dynamic>> items,
   }) {
     final invoiceNumber = generateInvoiceNumber();
-    final txId = 'tx-pos-${DateTime.now().millisecondsSinceEpoch}';
+    final txId = generateUuidV4();
 
     final transactionItems = items.map((item) {
       final prodId = item['product_id'] as String;
@@ -976,7 +978,7 @@ class MockPosData {
       }
 
       return PosTransactionItemModel(
-        id: 'item-${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(1000)}',
+        id: generateUuidV4(),
         transactionId: txId,
         productId: prodId,
         productName: name,
@@ -1040,4 +1042,121 @@ class MockPosData {
 
     return true;
   }
+
+  static void updateProductStock(String productId, int newStock) {
+    final pIndex = _products.indexWhere((p) => p.id == productId);
+    if (pIndex != -1) {
+      _products[pIndex] = _products[pIndex].copyWith(stockLevel: newStock);
+    }
+  }
+
+  static final List<DailyExpenseModel> _dailyExpenses = [
+    DailyExpenseModel(
+      id: 'de-001',
+      expenseDate: DateTime.now(),
+      category: 'supplies',
+      title: 'Cup lids, paper straws & stirrers',
+      amount: 450.00,
+      receiptReference: 'OR-88219',
+      notes: 'Replenishment from MegaMart',
+      recordedBy: 'Cashier On-Duty',
+      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+    ),
+    DailyExpenseModel(
+      id: 'de-002',
+      expenseDate: DateTime.now(),
+      category: 'maintenance',
+      title: 'Espresso machine descaling & filter kit',
+      amount: 680.00,
+      receiptReference: 'INV-4412',
+      notes: 'Scheduled monthly maintenance',
+      recordedBy: 'Shift Supervisor',
+      createdAt: DateTime.now().subtract(const Duration(hours: 3)),
+    ),
+    DailyExpenseModel(
+      id: 'de-003',
+      expenseDate: DateTime.now(),
+      category: 'packaging',
+      title: 'Takeout paper bags & seal stickers',
+      amount: 320.00,
+      paymentMethod: 'gcash',
+      receiptReference: 'GC-99201',
+      notes: 'Pro shop branding stickers',
+      recordedBy: 'Cashier On-Duty',
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+    ),
+    DailyExpenseModel(
+      id: 'de-004',
+      expenseDate: DateTime.now().subtract(const Duration(days: 1)),
+      category: 'utilities',
+      title: 'Emergency ice block delivery',
+      amount: 250.00,
+      receiptReference: 'VCH-0019',
+      notes: 'For cafe ice bin peak demand',
+      recordedBy: 'Cashier On-Duty',
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+    DailyExpenseModel(
+      id: 'de-005',
+      expenseDate: DateTime.now().subtract(const Duration(days: 1)),
+      category: 'general',
+      title: 'Court cleaning detergents & microfiber cloths',
+      amount: 540.00,
+      receiptReference: 'RCP-5510',
+      notes: 'Pro shop floor care',
+      recordedBy: 'Manager',
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+  ];
+
+  static List<DailyExpenseModel> getDailyExpenses({DateTime? date}) {
+    if (date == null) {
+      return List.unmodifiable(_dailyExpenses);
+    }
+    return _dailyExpenses.where((e) {
+      return e.expenseDate.year == date.year &&
+          e.expenseDate.month == date.month &&
+          e.expenseDate.day == date.day;
+    }).toList();
+  }
+
+  static void addDailyExpense(DailyExpenseModel expense) {
+    _dailyExpenses.insert(0, expense);
+  }
+
+  static final List<CashierDutySessionModel> _dutySessions = [
+    CashierDutySessionModel(
+      id: 'session-live-01',
+      cashierId: 'cashier-001',
+      startedAt: DateTime.now().subtract(const Duration(hours: 5, minutes: 20)),
+      openingFloat: 1000.00,
+      notes: 'Morning to afternoon shift. Drawer verified with ₱1,000 float.',
+      createdAt: DateTime.now().subtract(const Duration(hours: 5, minutes: 20)),
+    ),
+    CashierDutySessionModel(
+      id: 'session-past-02',
+      cashierId: 'cashier-002',
+      startedAt: DateTime.now().subtract(const Duration(days: 1, hours: 10)),
+      endedAt: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
+      status: 'closed',
+      openingFloat: 1000.00,
+      closingCash: 14820.00,
+      notes: 'Evening shift. Fully balanced drawer.',
+      createdAt: DateTime.now().subtract(const Duration(days: 1, hours: 10)),
+    ),
+  ];
+
+  static List<CashierDutySessionModel> getDutySessions() {
+    return List.unmodifiable(_dutySessions);
+  }
+
+  static void addOrUpdateDutySession(CashierDutySessionModel session) {
+    final index = _dutySessions.indexWhere((s) => s.id == session.id);
+    if (index != -1) {
+      _dutySessions[index] = session;
+    } else {
+      _dutySessions.insert(0, session);
+    }
+  }
 }
+

@@ -113,11 +113,18 @@ class _PosPayMongoModalState extends State<PosPayMongoModal> {
   Future<void> _launchCheckoutUrl(String url) async {
     try {
       final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      bool launched = await launchUrl(uri);
+      if (!launched) {
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      if (!launched) {
+        await launchUrl(uri);
       }
     } catch (e) {
       debugPrint('Could not launch PayMongo URL: $e');
+      try {
+        await launchUrl(Uri.parse(url));
+      } catch (_) {}
     }
   }
 

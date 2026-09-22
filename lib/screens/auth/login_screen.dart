@@ -141,6 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               size: 34,
                               showText: true,
                               withSubtitle: true,
+                              useAssetLogo: true,
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(

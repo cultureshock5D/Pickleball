@@ -206,5 +206,84 @@ void main() {
       await tester.tap(find.text('Sync issue: Connection timed out • Tap to retry'));
       expect(retryTapped, isTrue);
     });
+
+    testWidgets('NetworkStatusPill renders compact circular logos without text labels', (tester) async {
+      var offlineTapped = false;
+      var onlineTapped = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                NetworkStatusPill(
+                  isOffline: true,
+                  isCompact: true,
+                  onTap: () => offlineTapped = true,
+                ),
+                NetworkStatusPill(
+                  isOffline: false,
+                  isCompact: true,
+                  onTap: () => onlineTapped = true,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Offline compact: only the cloud slash logo, no text
+      expect(find.byIcon(Icons.cloud_off_rounded), findsOneWidget);
+      expect(find.text("You're offline • Showing cached data"), findsNothing);
+
+      // Online compact: cloud with green background logo, no text
+      expect(find.byIcon(Icons.cloud_rounded), findsOneWidget);
+      expect(find.text('Back online • Syncing data'), findsNothing);
+
+      // Verify tap callbacks work on compact badges
+      await tester.tap(find.byIcon(Icons.cloud_off_rounded));
+      expect(offlineTapped, isTrue);
+
+      await tester.tap(find.byIcon(Icons.cloud_rounded));
+      expect(onlineTapped, isTrue);
+    });
+
+    testWidgets('Overlay collapses to compact cloud slash logo after 5 seconds of offline', (tester) async {
+      final offlineWatcher = FakeNetworkConnectivityWatcher(initialConnected: false);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: NetworkStatusOverlay(
+            connectivityWatcher: offlineWatcher,
+            child: const Scaffold(
+              body: Text('Main Screen'),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Initially expanded: text is visible
+      expect(find.text("You're offline • Showing cached data"), findsOneWidget);
+
+      // Advance time by 5 seconds
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // After 5 seconds: text is gone, compact cloud slash logo is visible
+      expect(find.text("You're offline • Showing cached data"), findsNothing);
+      expect(find.byIcon(Icons.cloud_off_rounded), findsOneWidget);
+
+      // Tapping the compact logo expands it again
+      await tester.tap(find.byIcon(Icons.cloud_off_rounded));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text("You're offline • Showing cached data"), findsOneWidget);
+
+      offlineWatcher.dispose();
+    });
   });
 }
+

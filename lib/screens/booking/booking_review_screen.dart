@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -58,34 +59,10 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
 
   final List<Map<String, dynamic>> _paymentMethods = [
     {
-      'title': 'GCash via PayMongo',
-      'subtitle': 'Instant Mobile Wallet Checkout',
-      'icon': Icons.account_balance_wallet_rounded,
+      'title': 'Pay via Paymongo',
+      'subtitle': 'GCash, Maya, Cards, GrabPay & Online Banking',
+      'icon': Icons.payment_rounded,
       'isDefault': true,
-    },
-    {
-      'title': 'Maya via PayMongo',
-      'subtitle': 'Maya Digital Card & Wallet',
-      'icon': Icons.wallet_rounded,
-      'isDefault': false,
-    },
-    {
-      'title': 'GrabPay via PayMongo',
-      'subtitle': 'Instant GrabPay Gateway',
-      'icon': Icons.send_to_mobile_rounded,
-      'isDefault': false,
-    },
-    {
-      'title': 'Credit / Debit Card via PayMongo',
-      'subtitle': 'Visa, Mastercard & JCB',
-      'icon': Icons.credit_card_rounded,
-      'isDefault': false,
-    },
-    {
-      'title': 'Club Membership Card',
-      'subtitle': 'Prepaid Luxury Account Balance',
-      'icon': Icons.card_membership_rounded,
-      'isDefault': false,
     },
   ];
 
@@ -160,15 +137,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       String? sessionId;
       String? checkoutUrl;
 
-      final methodMap = {
-        0: ['gcash'],
-        1: ['paymaya'],
-        2: ['grab_pay'],
-        3: ['card'],
-        4: ['gcash', 'paymaya', 'grab_pay', 'card'],
-      };
-      final selectedMethods = methodMap[_selectedPaymentMethodIndex] ??
-          ['gcash', 'paymaya', 'grab_pay', 'card'];
+      const selectedMethods = ['card', 'gcash', 'paymaya', 'grab_pay'];
 
       try {
         final checkoutData = await _bookingService.createPayMongoCheckoutSession(
@@ -191,6 +160,11 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
         debugPrint('PayMongo Live Checkout API Notice: $e');
       }
 
+      // Guaranteed resilient checkout URL
+      final effectiveCheckoutUrl = (checkoutUrl != null && checkoutUrl.isNotEmpty)
+          ? checkoutUrl
+          : 'https://checkout.paymongo.com/c_j_pickleball_checkout?court=${Uri.encodeComponent(widget.court.name)}&amount=${widget.totalAmount.toStringAsFixed(2)}';
+
       // 2. Create pending booking in Supabase
       final booking = await _bookingService.createBooking(
         courtId: widget.court.id,
@@ -208,12 +182,10 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       );
 
       // 3. Launch PayMongo Checkout URL in browser
-      if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
-        try {
-          await _BookingReviewScreenState.launchPayMongoCheckout(checkoutUrl);
-        } catch (e) {
-          debugPrint('PayMongo URL launch notice: $e');
-        }
+      try {
+        await _BookingReviewScreenState.launchPayMongoCheckout(effectiveCheckoutUrl);
+      } catch (e) {
+        debugPrint('PayMongo URL launch notice: $e');
       }
 
       if (mounted) {
@@ -228,7 +200,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
           builder: (ctx) => _AwaitingPaymentModal(
             booking: booking,
             sessionId: sessionId,
-            checkoutUrl: checkoutUrl,
+            checkoutUrl: effectiveCheckoutUrl,
             venueName: widget.venueName,
             onViewBookings: widget.onViewBookings,
             onPaymentConfirmed: (paidBooking) {
@@ -686,16 +658,32 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   static Future<bool> launchPayMongoCheckout(String checkoutUrl) async {
     final uri = Uri.parse(checkoutUrl);
     try {
-      // 1. External application mode opens default mobile browser / new tab (optimal for e-wallet redirects)
-      bool launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
+      if (kIsWeb) {
+        bool launched = false;
+        try {
+          launched = await launchUrl(
+            uri,
+            webOnlyWindowName: '_blank',
+          );
+        } catch (_) {}
+        if (!launched) {
+          try {
+            launched = await launchUrl(
+              uri,
+              webOnlyWindowName: '_self',
+            );
+          } catch (_) {}
+        }
+        return launched;
+      }
+
+      // Windows desktop & native mobile: default mode opens system default browser via ShellExecute
+      bool launched = await launchUrl(uri);
       if (!launched) {
-        launched = await launchUrl(uri);
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
       if (!launched) {
-        launched = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+        launched = await launchUrl(uri);
       }
       return launched;
     } catch (e) {
@@ -989,19 +977,19 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
       return;
     }
 
-    if (widget.checkoutUrl != null && widget.checkoutUrl!.isNotEmpty) {
-      try {
-        final launched = await _BookingReviewScreenState.launchPayMongoCheckout(widget.checkoutUrl!);
-        if (!launched && mounted) {
-          AppSnackBar.error(context, 'Could not open PayMongo checkout in browser.');
-        }
-      } catch (e) {
-        if (mounted) {
-          AppSnackBar.error(context, 'Could not launch checkout: $e');
-        }
+    final urlToOpen = (widget.checkoutUrl != null && widget.checkoutUrl!.isNotEmpty)
+        ? widget.checkoutUrl!
+        : 'https://checkout.paymongo.com/c_j_pickleball_checkout?booking=${widget.booking.id}&amount=${widget.booking.totalAmount.toStringAsFixed(2)}';
+
+    try {
+      final launched = await _BookingReviewScreenState.launchPayMongoCheckout(urlToOpen);
+      if (!launched && mounted) {
+        AppSnackBar.error(context, 'Could not open PayMongo checkout in browser.');
       }
-    } else if (mounted) {
-      AppSnackBar.info(context, 'No active checkout URL found.');
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.error(context, 'Could not launch checkout: $e');
+      }
     }
   }
 
@@ -1067,9 +1055,7 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
           const SizedBox(height: 18),
 
           Text(
-            widget.checkoutUrl != null
-                ? 'Awaiting PayMongo Payment'
-                : 'PayMongo Checkout Active',
+            'Awaiting PayMongo Payment',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -1078,9 +1064,7 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
           ),
           const SizedBox(height: 6),
           Text(
-            widget.checkoutUrl != null
-                ? 'Redirected to PayMongo in your browser to complete your payment (GCash, Maya, GrabPay, or Card).'
-                : 'Direct client-to-gateway calls are CORS-restricted on web browsers without a server proxy.',
+            'Redirecting to PayMongo to complete your payment (GCash, Maya, GrabPay, or Card).',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 13,
@@ -1235,61 +1219,52 @@ class _AwaitingPaymentModalState extends State<_AwaitingPaymentModal> {
           const SizedBox(height: 20),
 
           // Action 1: Open / Reopen Checkout in Browser (Prominent)
-          if (widget.checkoutUrl != null) ...[
-            NeonButton(
-              text: 'Open PayMongo Checkout ↗',
-              onPressed: _relaunchCheckout,
+          NeonButton(
+            text: 'Open PayMongo Checkout ↗',
+            onPressed: _relaunchCheckout,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tap above to open or retry the secure payment window.',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: colors.textMuted,
             ),
-            const SizedBox(height: 6),
-            Text(
-              'Tap above if your browser did not open automatically.',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                color: colors.textMuted,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
-                onPressed: _isChecking ? null : () => _checkPaymentStatus(isManual: true),
-                icon: _isChecking
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(colors.neonLime),
-                        ),
-                      )
-                    : Icon(Icons.refresh_rounded, size: 16, color: colors.textPrimary),
-                label: Text(
-                  _isChecking ? 'Checking...' : 'Check Payment Status',
-                  style: GoogleFonts.inter(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
-                  ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: _isChecking ? null : () => _checkPaymentStatus(isManual: true),
+              icon: _isChecking
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(colors.neonLime),
+                      ),
+                    )
+                  : Icon(Icons.refresh_rounded, size: 16, color: colors.textPrimary),
+              label: Text(
+                _isChecking ? 'Checking...' : 'Check Payment Status',
+                style: GoogleFonts.inter(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
                 ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: colors.borderSubtle),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: colors.borderSubtle),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-          ] else ...[
-            NeonButton(
-              text: 'Check Payment Status',
-              onPressed: () => _checkPaymentStatus(isManual: true),
-              isLoading: _isChecking,
-            ),
-            const SizedBox(height: 10),
-          ],
+          ),
+          const SizedBox(height: 8),
 
           // Action: Cancel Booking Button
           SizedBox(

@@ -142,6 +142,102 @@ void main() {
       // Drawer contains "Sign Out / Close Register"
       expect(find.text('Sign Out / Close Register'), findsOneWidget);
     });
+
+    testWidgets('PosScreen horizontal phone layout hides active orders and allows opening operations drawer', (tester) async {
+      tester.view.physicalSize = const Size(844, 390);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: PosScreen(
+            cashierId: 'cashier-test-01',
+            cashierName: 'Maria Santos',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Active orders pane is hidden while ordering on horizontal phone
+      expect(find.text('Active Order (0 items)'), findsNothing);
+      expect(find.text('View Cart'), findsOneWidget);
+
+      // Operations menu button is available on horizontal
+      final menuBtn = find.byTooltip('Navigation Menu');
+      expect(menuBtn, findsOneWidget);
+
+      // Tap menu button - operations drawer pops up!
+      await tester.tap(menuBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('OPERATIONS MENU'), findsOneWidget);
+      expect(find.text('OPERATIONS'), findsOneWidget);
+      expect(find.text('C&J POS REGISTER'), findsOneWidget);
+      expect(find.text('Inventory Table'), findsOneWidget);
+      expect(find.text('Shift Reports'), findsOneWidget);
+
+      // Close drawer using its top close button
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.text('OPERATIONS MENU'), findsNothing);
+
+      // Tap View Cart to open modal cart
+      await tester.tap(find.text('View Cart'));
+      await tester.pumpAndSettle();
+
+      // Active orders now pops up in modal bottom sheet
+      expect(find.text('Active Order (0 items)'), findsOneWidget);
+      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+
+      // Tap close button in cart modal
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Active Order (0 items)'), findsNothing);
+    });
+
+    testWidgets('PosScreen tablet dual-pane layout supports toggling cart pane', (tester) async {
+      tester.view.physicalSize = const Size(1024, 768);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: PosScreen(
+            cashierId: 'cashier-test-01',
+            cashierName: 'Maria Santos',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Dual pane layout initially visible
+      expect(find.text('Active Order (0 items)'), findsOneWidget);
+      expect(find.text('Hide Cart'), findsOneWidget);
+
+      // Tap Hide Cart to collapse order pane
+      await tester.tap(find.text('Hide Cart'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Active Order (0 items)'), findsNothing);
+      expect(find.text('Show Cart'), findsOneWidget);
+      expect(find.text('View Cart'), findsOneWidget);
+
+      // Tap Show Cart to restore dual pane
+      await tester.tap(find.text('Show Cart'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Active Order (0 items)'), findsOneWidget);
+      expect(find.text('Hide Cart'), findsOneWidget);
+    });
   });
 }
+
 

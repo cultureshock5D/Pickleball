@@ -30,7 +30,7 @@ if ($Content -match '(?m)^version:\s*(\d+)\.(\d+)\.(\d+)(?:\+(\d+))?') {
         if (!(Test-Path $ReleasesDir)) {
             New-Item -ItemType Directory -Path $ReleasesDir -Force | Out-Null
         }
-        $DestApk = Join-Path $ReleasesDir "Pickleball-v$Major.$Minor.$Patch.apk"
+        $DestApk = Join-Path $ReleasesDir "C&J-v$Major.$Minor.$Patch.apk"
         Copy-Item -Path $SourceApk -Destination $DestApk -Force
         $ApkSizeMB = [math]::Round((Get-Item $DestApk).Length / 1MB, 2)
 

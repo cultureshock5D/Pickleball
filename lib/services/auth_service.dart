@@ -48,26 +48,56 @@ class AuthService {
 
   /// Stream of authentication state changes
   Stream<AuthState> get authStateChanges {
-    if (isSupabaseReady && _supabase != null) {
-      return _supabase!.auth.onAuthStateChange;
-    }
-    return _mockAuthStateController.stream;
+    late StreamController<AuthState> controller;
+    StreamSubscription<AuthState>? sub1;
+    StreamSubscription<AuthState>? sub2;
+
+    controller = StreamController<AuthState>.broadcast(
+      onListen: () {
+        controller.add(AuthState(
+          currentSession != null ? AuthChangeEvent.signedIn : AuthChangeEvent.signedOut,
+          currentSession,
+        ));
+        if (isSupabaseReady && _supabase != null) {
+          sub1 = _supabase!.auth.onAuthStateChange.listen(
+            controller.add,
+            onError: controller.addError,
+          );
+        }
+        sub2 = _mockAuthStateController.stream.listen(
+          controller.add,
+          onError: controller.addError,
+        );
+      },
+      onCancel: () {
+        sub1?.cancel();
+        sub2?.cancel();
+      },
+    );
+
+    return controller.stream;
   }
 
-  /// Current authenticated Supabase user
+  /// Current authenticated user
   User? get currentUser {
+    if (_mockSession != null) {
+      return _mockSession!.user;
+    }
     if (isSupabaseReady && _supabase != null) {
       return _supabase!.auth.currentUser;
     }
-    return _mockSession?.user;
+    return null;
   }
 
   /// Current active session
   Session? get currentSession {
+    if (_mockSession != null) {
+      return _mockSession;
+    }
     if (isSupabaseReady && _supabase != null) {
       return _supabase!.auth.currentSession;
     }
-    return _mockSession;
+    return null;
   }
 
   /// Whether a valid session exists
@@ -439,18 +469,14 @@ class AuthService {
   Future<void> signOut() async {
     BookingService.instance.invalidateAvailabilityCache();
 
-    if (_mockSession != null) {
-      _mockSession = null;
-      _mockAuthStateController.add(const AuthState(AuthChangeEvent.signedOut, null));
-    }
+    _mockSession = null;
+    _mockAuthStateController.add(const AuthState(AuthChangeEvent.signedOut, null));
 
     if (isSupabaseReady && _supabase != null) {
       try {
         await _supabase!.auth.signOut();
-      } on AuthException {
-        rethrow;
       } catch (e) {
-        throw AuthException('Failed to sign out: $e');
+        debugPrint('AuthService.signOut notice: $e');
       }
     }
   }

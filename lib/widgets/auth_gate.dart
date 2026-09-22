@@ -20,25 +20,26 @@ class AuthGate extends StatelessWidget {
       stream: authService.authStateChanges,
       builder: (context, snapshot) {
         final session = snapshot.data?.session ?? authService.currentSession;
+        final event = snapshot.data?.event;
 
-        if (session != null) {
-          final email = session.user.email?.trim().toLowerCase() ?? '';
-          final role = (session.user.userMetadata?['role'] as String?)?.toLowerCase();
-          final isCashier = email == 'cashier@pickleball.com' || role == 'cashier';
-
-          if (isCashier) {
-            final name = (session.user.userMetadata?['full_name'] as String?) ??
-                (email.isNotEmpty ? email.split('@').first : 'Cashier Staff');
-            return PosScreen(
-              cashierId: session.user.id,
-              cashierName: name,
-            );
-          }
-
-          return const MainNavigationScreen();
-        } else {
+        if (event == AuthChangeEvent.signedOut || session == null) {
           return const LoginScreen();
         }
+
+        final email = session.user.email?.trim().toLowerCase() ?? '';
+        final role = (session.user.userMetadata?['role'] as String?)?.toLowerCase();
+        final isCashier = email == 'cashier@pickleball.com' || role == 'cashier';
+
+        if (isCashier) {
+          final name = (session.user.userMetadata?['full_name'] as String?) ??
+              (email.isNotEmpty ? email.split('@').first : 'Cashier Staff');
+          return PosScreen(
+            cashierId: session.user.id,
+            cashierName: name,
+          );
+        }
+
+        return const MainNavigationScreen();
       },
     );
   }

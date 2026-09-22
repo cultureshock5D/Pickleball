@@ -184,7 +184,7 @@ class CalendarLinkService {
     BuildContext? context,
   }) async {
     final uri = Uri.tryParse(url);
-    if (uri == null) {
+    if (uri == null || (uri.scheme != 'https' && uri.scheme != 'http')) {
       if (context != null && context.mounted) {
         AppSnackBar.error(context, 'Invalid calendar URL format.');
       }

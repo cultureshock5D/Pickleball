@@ -17,6 +17,7 @@ class NetworkStatusOverlay extends StatefulWidget {
   final NetworkConnectivityWatcher? connectivityWatcher;
   final ConnectivityService? connectivityService;
   final Duration autoDismissDelay;
+  final Duration expandedDuration;
 
   const NetworkStatusOverlay({
     super.key,
@@ -24,6 +25,7 @@ class NetworkStatusOverlay extends StatefulWidget {
     this.connectivityWatcher,
     this.connectivityService,
     this.autoDismissDelay = const Duration(seconds: 3),
+    this.expandedDuration = const Duration(seconds: 5),
   });
 
   @override
@@ -39,10 +41,12 @@ class _NetworkStatusOverlayState extends State<NetworkStatusOverlay> {
   ConnectivityService? _service;
 
   Timer? _dismissTimer;
+  Timer? _collapseTimer;
 
   bool _isOffline = false;
   bool _showBanner = false;
   bool _wasOffline = false;
+  bool _isCompact = false;
   SyncState _currentSyncState = SyncState.idle;
   String? _syncError;
 
@@ -69,16 +73,20 @@ class _NetworkStatusOverlayState extends State<NetworkStatusOverlay> {
     if (!online) {
       _isOffline = true;
       _showBanner = true;
+      _isCompact = false;
       _wasOffline = true;
       _currentSyncState = syncState;
+      _startCollapseTimer();
     } else if (syncState == SyncState.syncing || syncState == SyncState.error) {
       _isOffline = false;
       _showBanner = true;
+      _isCompact = false;
       _currentSyncState = syncState;
       _syncError = s.lastSyncError;
     } else {
       _isOffline = false;
       _showBanner = false;
+      _isCompact = true;
       _currentSyncState = syncState;
     }
   }
@@ -92,6 +100,7 @@ class _NetworkStatusOverlayState extends State<NetworkStatusOverlay> {
     final error = s.lastSyncError;
 
     _dismissTimer?.cancel();
+    _collapseTimer?.cancel();
 
     setState(() {
       _currentSyncState = syncState;
@@ -100,29 +109,52 @@ class _NetworkStatusOverlayState extends State<NetworkStatusOverlay> {
       if (!online) {
         _isOffline = true;
         _showBanner = true;
+        _isCompact = false;
         _wasOffline = true;
+        _startCollapseTimer();
       } else if (syncState == SyncState.syncing) {
         _isOffline = false;
         _showBanner = true;
+        _isCompact = false;
       } else if (syncState == SyncState.error) {
         _isOffline = false;
         _showBanner = true;
+        _isCompact = false;
       } else if (_wasOffline || _showBanner) {
         // Just came back online and finished syncing
         _isOffline = false;
         _showBanner = true;
+        _isCompact = false;
         _wasOffline = false;
 
-        _dismissTimer = Timer(widget.autoDismissDelay, () {
-          if (mounted) {
-            setState(() {
-              _showBanner = false;
-            });
-          }
-        });
+        // Auto-collapse to compact green cloud logo after expandedDuration (5 seconds)
+        _startCollapseTimer();
       } else {
         _isOffline = false;
         _showBanner = false;
+        _isCompact = true;
+      }
+    });
+  }
+
+  void _startCollapseTimer() {
+    _collapseTimer?.cancel();
+    _collapseTimer = Timer(widget.expandedDuration, () {
+      if (mounted) {
+        setState(() {
+          _isCompact = true;
+        });
+      }
+    });
+  }
+
+  void _toggleCompact() {
+    _collapseTimer?.cancel();
+    setState(() {
+      _isCompact = !_isCompact;
+      if (!_isCompact) {
+        // Auto-collapse again after expandedDuration
+        _startCollapseTimer();
       }
     });
   }
@@ -135,25 +167,31 @@ class _NetworkStatusOverlayState extends State<NetworkStatusOverlay> {
       setState(() {
         _isOffline = true;
         _showBanner = true;
+        _isCompact = false;
         _wasOffline = true;
       });
+      _startCollapseTimer();
     }
 
     _subscription = _watcher!.onConnectivityChanged.listen((connected) {
       if (!mounted) return;
 
       _dismissTimer?.cancel();
+      _collapseTimer?.cancel();
 
       if (!connected) {
         setState(() {
           _isOffline = true;
           _showBanner = true;
+          _isCompact = false;
           _wasOffline = true;
         });
+        _startCollapseTimer();
       } else if (_wasOffline) {
         setState(() {
           _isOffline = false;
           _showBanner = true;
+          _isCompact = false;
           _wasOffline = false;
         });
 
@@ -161,13 +199,17 @@ class _NetworkStatusOverlayState extends State<NetworkStatusOverlay> {
           if (mounted) {
             setState(() {
               _showBanner = false;
+              _isCompact = true;
             });
           }
         });
+
+        _startCollapseTimer();
       } else {
         setState(() {
           _isOffline = false;
           _showBanner = false;
+          _isCompact = true;
         });
       }
     });
@@ -176,6 +218,7 @@ class _NetworkStatusOverlayState extends State<NetworkStatusOverlay> {
   @override
   void dispose() {
     _dismissTimer?.cancel();
+    _collapseTimer?.cancel();
     _subscription?.cancel();
     _service?.removeListener(_onServiceStateChanged);
     super.dispose();
@@ -204,11 +247,17 @@ class _NetworkStatusOverlayState extends State<NetworkStatusOverlay> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Center(
-                      child: NetworkStatusPill(
-                        isOffline: _isOffline,
-                        syncState: _service != null ? _currentSyncState : null,
-                        errorMessage: _syncError,
-                        onRetry: () => _service?.retrySync(),
+                      child: AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOutCubic,
+                        child: NetworkStatusPill(
+                          isOffline: _isOffline,
+                          syncState: _service != null ? _currentSyncState : null,
+                          errorMessage: _syncError,
+                          isCompact: _isCompact,
+                          onRetry: () => _service?.retrySync(),
+                          onTap: _toggleCompact,
+                        ),
                       ),
                     ),
                   ),
@@ -223,13 +272,16 @@ class _NetworkStatusOverlayState extends State<NetworkStatusOverlay> {
 }
 
 /// Standalone visual pill displaying network status badge.
-/// Displays accessible semantic tokens, icons, and micro-spinners for synchronization.
+/// Supports both expanded pill with full status text and compact icon badge
+/// (e.g., cloud slash for offline, green cloud for online) to prevent overlapping buttons.
 class NetworkStatusPill extends StatelessWidget {
   final bool isOffline;
   final SyncState? syncState;
   final String? customLabel;
   final String? errorMessage;
   final VoidCallback? onRetry;
+  final bool isCompact;
+  final VoidCallback? onTap;
 
   const NetworkStatusPill({
     super.key,
@@ -238,6 +290,8 @@ class NetworkStatusPill extends StatelessWidget {
     this.customLabel,
     this.errorMessage,
     this.onRetry,
+    this.isCompact = false,
+    this.onTap,
   });
 
   @override
@@ -325,6 +379,104 @@ class NetworkStatusPill extends StatelessWidget {
           : (isDark ? AppTheme.neonLime : AppColors.courtSuccess);
     }
 
+    // 1. Compact Icon Badge (prevents overlapping buttons)
+    // - Offline: Only the cloud slash logo
+    // - Online: Cloud with green background logo
+    if (isCompact) {
+      final Widget iconWidget;
+      final Color compactBg;
+      final Color compactBorder;
+      final List<BoxShadow> compactShadow;
+
+      if (isOffline) {
+        iconWidget = const Icon(
+          Icons.cloud_off_rounded,
+          size: 20,
+          color: AppColors.warningAmber,
+        );
+        compactBg = isDark ? const Color(0xFF2A1710) : const Color(0xFFFFF3E0);
+        compactBorder = AppColors.warningAmber.withValues(alpha: 0.8);
+        compactShadow = [
+          BoxShadow(
+            color: Colors.orange.withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ];
+      } else if (syncState == SyncState.syncing) {
+        iconWidget = const SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.lightBlueAccent),
+          ),
+        );
+        compactBg = isDark ? const Color(0xFF0D1E2A) : const Color(0xFFE1F5FE);
+        compactBorder = Colors.lightBlueAccent.withValues(alpha: 0.8);
+        compactShadow = const [];
+      } else if (syncState == SyncState.error) {
+        iconWidget = const Icon(
+          Icons.sync_problem_rounded,
+          size: 20,
+          color: AppColors.saleRed,
+        );
+        compactBg = isDark ? const Color(0xFF2E1215) : const Color(0xFFFFEBEE);
+        compactBorder = AppColors.saleRed.withValues(alpha: 0.8);
+        compactShadow = [
+          BoxShadow(
+            color: Colors.red.withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ];
+      } else {
+        // Online: Cloud with green background logo
+        iconWidget = const Icon(
+          Icons.cloud_rounded,
+          size: 20,
+          color: Colors.white,
+        );
+        compactBg = const Color(0xFF10B981);
+        compactBorder = const Color(0xFF34D399);
+        compactShadow = [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.35),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ];
+      }
+
+      Widget compactContent = Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: compactBg,
+          border: Border.all(color: compactBorder, width: 1.5),
+          boxShadow: compactShadow,
+        ),
+        child: Center(child: iconWidget),
+      );
+
+      if (onTap != null) {
+        compactContent = GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: compactContent,
+        );
+      }
+
+      return Semantics(
+        label: '$label. Tap to expand.',
+        liveRegion: true,
+        button: onTap != null,
+        child: compactContent,
+      );
+    }
+
+    // 2. Expanded Pill Content (with text label)
     Widget content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
@@ -382,9 +534,15 @@ class NetworkStatusPill extends StatelessWidget {
     );
 
     if (onRetry != null && syncState == SyncState.error) {
-      content = InkWell(
+      content = GestureDetector(
         onTap: onRetry,
-        borderRadius: BorderRadius.circular(9999),
+        behavior: HitTestBehavior.opaque,
+        child: content,
+      );
+    } else if (onTap != null) {
+      content = GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: content,
       );
     }
@@ -392,7 +550,7 @@ class NetworkStatusPill extends StatelessWidget {
     return Semantics(
       label: label,
       liveRegion: true,
-      button: onRetry != null && syncState == SyncState.error,
+      button: (onRetry != null && syncState == SyncState.error) || onTap != null,
       child: content,
     );
   }

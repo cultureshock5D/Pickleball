@@ -9,6 +9,7 @@ import '../../services/auth_service.dart';
 import '../../services/booking_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
+import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -221,6 +222,12 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     if (confirmed == true) {
       await _authService.signOut();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      }
     }
   }
 

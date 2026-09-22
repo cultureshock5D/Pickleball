@@ -330,14 +330,11 @@ void main() {
       expect(find.text('Price Breakdown'), findsOneWidget);
       expect(find.text('₱300.00'), findsWidgets);
 
-      // PayMongo Multi-Channel Payment Options
-      expect(find.text('GCash via PayMongo'), findsOneWidget);
-      expect(find.text('Maya via PayMongo'), findsOneWidget);
-      expect(find.text('GrabPay via PayMongo'), findsOneWidget);
-      expect(find.text('Credit / Debit Card via PayMongo'), findsOneWidget);
+      // PayMongo Payment Option
+      expect(find.text('Pay via Paymongo'), findsOneWidget);
 
-      // Select Maya Payment Option
-      await tester.tap(find.text('Maya via PayMongo'));
+      // Select PayMongo Payment Option
+      await tester.tap(find.text('Pay via Paymongo'));
       await tester.pumpAndSettle();
 
       // Bottom Checkout Bar

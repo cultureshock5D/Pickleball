@@ -124,6 +124,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       const BrandLogoWidget(
                         size: 32,
                         showText: true,
+                        useAssetLogo: true,
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(

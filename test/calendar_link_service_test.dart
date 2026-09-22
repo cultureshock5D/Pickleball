@@ -242,6 +242,13 @@ void main() {
       final result = await CalendarLinkService.launchCalendarLink('::not-a-valid-uri::');
       expect(result, isFalse);
     });
+
+    test('launchCalendarLink rejects unsafe non-http/https URI schemes', () async {
+      expect(await CalendarLinkService.launchCalendarLink('javascript:alert(1)'), isFalse);
+      expect(await CalendarLinkService.launchCalendarLink('file:///etc/passwd'), isFalse);
+      expect(await CalendarLinkService.launchCalendarLink('intent://example.com#Intent;action=VIEW;end'), isFalse);
+      expect(await CalendarLinkService.launchCalendarLink('content://com.example.provider/data'), isFalse);
+    });
   });
 
   group('Booking Confirmation Widget Tests', () {

@@ -1,3 +1,23 @@
+import 'dart:math';
+
+final RegExp _uuidPattern = RegExp(
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+);
+
+bool isValidUuid(String? str) {
+  if (str == null || str.trim().isEmpty) return false;
+  return _uuidPattern.hasMatch(str.trim());
+}
+
+String generateUuidV4() {
+  final rnd = Random();
+  final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant
+  final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}';
+}
+
 class PosTransactionItemModel {
   final String id;
   final String transactionId;

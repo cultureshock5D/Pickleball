@@ -6,7 +6,6 @@ import '../../core/utils/snackbar_helper.dart';
 import '../../core/utils/validators.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/auth_gate.dart';
-import '../../widgets/brand_logo_painter.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/neon_button.dart';
 import 'pos_screen.dart';

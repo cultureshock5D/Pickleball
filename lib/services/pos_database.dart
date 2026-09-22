@@ -1,17 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 import '../models/pos_transaction_model.dart';
+import 'pos_database_ffi_stub.dart' if (dart.library.io) 'pos_database_ffi.dart';
 
 /// Local SQLite database interface and implementation for offline POS transactions and sync queue.
-/// Supports native SQLite via `sqflite` and provides a robust in-memory fallback for Web & unit tests.
+/// Supports native SQLite via `sqflite` with FFI on Windows/Linux/macOS,
+/// and provides a persistent storage fallback for Web & unit tests.
 class PosDatabase {
   PosDatabase._internal();
   static final PosDatabase instance = PosDatabase._internal();
 
   sqflite.Database? _db;
   bool _isInitialized = false;
+
+  static const String _prefTransactionsKey = 'c_and_j_pos_transactions_cache';
+  static const String _prefSyncQueueKey = 'c_and_j_pos_sync_queue_cache';
 
   // In-memory fallback stores for web / headless test environments
   final List<Map<String, dynamic>> _memTransactions = [];
@@ -28,11 +34,14 @@ class PosDatabase {
     if (forceMemory || kIsWeb) {
       _isInitialized = true;
       _db = null;
-      debugPrint('PosDatabase: Initialized with in-memory storage fallback (Web/Test).');
+      await _loadWebFallbackFromPrefs();
+      debugPrint('PosDatabase: Initialized with persistent storage fallback (Web/Test).');
       return;
     }
 
     try {
+      initSqfliteFfi();
+
       final dbPath = await sqflite.getDatabasesPath();
       final path = '$dbPath/c_and_j_pos.db';
 
@@ -86,6 +95,44 @@ class PosDatabase {
       debugPrint('PosDatabase: Failed to open native SQLite ($e). Falling back to memory storage.');
       _db = null;
       _isInitialized = true;
+      await _loadWebFallbackFromPrefs();
+    }
+  }
+
+  Future<void> _loadWebFallbackFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final txString = prefs.getString(_prefTransactionsKey);
+      if (txString != null && txString.isNotEmpty) {
+        final List<dynamic> decoded = jsonDecode(txString);
+        _memTransactions.clear();
+        for (final item in decoded) {
+          _memTransactions.add(Map<String, dynamic>.from(item as Map));
+        }
+        debugPrint('PosDatabase: Loaded ${_memTransactions.length} transactions from persistent web cache.');
+      }
+      final queueString = prefs.getString(_prefSyncQueueKey);
+      if (queueString != null && queueString.isNotEmpty) {
+        final List<dynamic> decodedQueue = jsonDecode(queueString);
+        _memSyncQueue.clear();
+        for (final item in decodedQueue) {
+          _memSyncQueue.add(Map<String, dynamic>.from(item as Map));
+        }
+        debugPrint('PosDatabase: Loaded ${_memSyncQueue.length} pending mutations from persistent web cache.');
+      }
+    } catch (e) {
+      debugPrint('PosDatabase: Failed loading web cache prefs: $e');
+    }
+  }
+
+  Future<void> _saveWebFallbackToPrefs() async {
+    if (_db != null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefTransactionsKey, jsonEncode(_memTransactions));
+      await prefs.setString(_prefSyncQueueKey, jsonEncode(_memSyncQueue));
+    } catch (e) {
+      debugPrint('PosDatabase: Failed saving web cache prefs: $e');
     }
   }
 
@@ -175,6 +222,7 @@ class PosDatabase {
         'created_at': nowIso,
         'error_message': null,
       });
+      unawaited(_saveWebFallbackToPrefs());
     }
   }
 
@@ -229,6 +277,7 @@ class PosDatabase {
       await db.delete('sync_queue', where: 'id = ?', whereArgs: [queueId]);
     } else {
       _memSyncQueue.removeWhere((item) => item['id'] == queueId);
+      unawaited(_saveWebFallbackToPrefs());
     }
   }
 
@@ -251,6 +300,7 @@ class PosDatabase {
         _memSyncQueue[index]['status'] = 'failed';
         _memSyncQueue[index]['attempts'] = (_memSyncQueue[index]['attempts'] as int? ?? 0) + 1;
         _memSyncQueue[index]['error_message'] = errorMessage;
+        unawaited(_saveWebFallbackToPrefs());
       }
     }
   }
@@ -276,6 +326,7 @@ class PosDatabase {
     final index = _memTransactions.indexWhere((t) => t['id'] == transactionId);
     if (index != -1) {
       _memTransactions[index]['status'] = 'voided';
+      unawaited(_saveWebFallbackToPrefs());
     }
   }
 
@@ -294,6 +345,83 @@ class PosDatabase {
           .where((item) => item['status'] == 'pending' || item['status'] == 'failed' || item['status'] == 'syncing')
           .length;
     }
+  }
+
+  /// Cache/upsert transactions directly into local storage without queueing a sync mutation.
+  /// Used for syncing historical transactions down from Supabase.
+  Future<void> upsertLocalTransactions(List<PosTransactionModel> txList) async {
+    if (!_isInitialized) await initialize();
+    if (txList.isEmpty) return;
+
+    final db = _db;
+    if (db != null) {
+      final batch = db.batch();
+      for (final tx in txList) {
+        final itemsJson = jsonEncode(tx.items.map((i) => i.toJson()).toList());
+        batch.insert(
+          'local_transactions',
+          {
+            'id': tx.id,
+            'invoice_number': tx.invoiceNumber,
+            'cashier_id': tx.cashierId,
+            'customer_name': tx.customerName,
+            'customer_tin': tx.customerTin,
+            'discount_type': tx.discountType,
+            'discount_id_number': tx.discountIdNumber,
+            'gross_amount': tx.grossAmount,
+            'discount_amount': tx.discountAmount,
+            'vatable_sales': tx.vatableSales,
+            'vat_amount': tx.vatAmount,
+            'vat_exempt_sales': tx.vatExemptSales,
+            'zero_rated_sales': tx.zeroRatedSales,
+            'total_amount': tx.totalAmount,
+            'payment_method': tx.paymentMethod,
+            'status': tx.status,
+            'created_at': tx.createdAt.toUtc().toIso8601String(),
+            'items_json': itemsJson,
+          },
+          conflictAlgorithm: sqflite.ConflictAlgorithm.replace,
+        );
+      }
+      await batch.commit(noResult: true);
+    } else {
+      for (final tx in txList) {
+        final itemsJson = jsonEncode(tx.items.map((i) => i.toJson()).toList());
+        _memTransactions.removeWhere((t) => t['id'] == tx.id);
+        _memTransactions.add({
+          'id': tx.id,
+          'invoice_number': tx.invoiceNumber,
+          'cashier_id': tx.cashierId,
+          'customer_name': tx.customerName,
+          'customer_tin': tx.customerTin,
+          'discount_type': tx.discountType,
+          'discount_id_number': tx.discountIdNumber,
+          'gross_amount': tx.grossAmount,
+          'discount_amount': tx.discountAmount,
+          'vatable_sales': tx.vatableSales,
+          'vat_amount': tx.vatAmount,
+          'vat_exempt_sales': tx.vatExemptSales,
+          'zero_rated_sales': tx.zeroRatedSales,
+          'total_amount': tx.totalAmount,
+          'payment_method': tx.paymentMethod,
+          'status': tx.status,
+          'created_at': tx.createdAt.toUtc().toIso8601String(),
+          'items_json': itemsJson,
+        });
+      }
+      unawaited(_saveWebFallbackToPrefs());
+    }
+  }
+
+  /// Total count of local stored transactions.
+  Future<int> getLocalTransactionCount() async {
+    if (!_isInitialized) await initialize();
+    final db = _db;
+    if (db != null) {
+      final res = await db.rawQuery('SELECT COUNT(*) as cnt FROM local_transactions');
+      return sqflite.Sqflite.firstIntValue(res) ?? 0;
+    }
+    return _memTransactions.length;
   }
 
   /// Retrieve locally stored transactions.
@@ -357,5 +485,10 @@ class PosDatabase {
     _memTransactions.clear();
     _memSyncQueue.clear();
     _memQueueSeq = 1;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefTransactionsKey);
+      await prefs.remove(_prefSyncQueueKey);
+    } catch (_) {}
   }
 }

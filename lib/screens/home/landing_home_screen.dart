@@ -52,7 +52,7 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
   void _resetHeroTimer() {
     _heroTimer?.cancel();
     _heroTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (!mounted || !_heroPageController.hasClients) return;
+      if (!mounted || !_heroPageController.hasClients || _heroPageController.positions.length != 1) return;
       final nextPage = (_currentHeroPage + 1) % 4;
       _heroPageController.animateToPage(
         nextPage,
@@ -71,7 +71,7 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
   }
 
   void _goToPreviousHeroPage() {
-    if (!_heroPageController.hasClients) return;
+    if (!_heroPageController.hasClients || _heroPageController.positions.length != 1) return;
     _resetHeroTimer();
     final prevPage = (_currentHeroPage - 1 + 4) % 4;
     _heroPageController.animateToPage(
@@ -82,7 +82,7 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
   }
 
   void _goToNextHeroPage() {
-    if (!_heroPageController.hasClients) return;
+    if (!_heroPageController.hasClients || _heroPageController.positions.length != 1) return;
     _resetHeroTimer();
     final nextPage = (_currentHeroPage + 1) % 4;
     _heroPageController.animateToPage(
@@ -125,25 +125,7 @@ class _LandingHomeScreenState extends State<LandingHomeScreen> {
       body: AdaptiveContainer(
         child: CustomScrollView(
           slivers: [
-          // 1. Utility Strip Top Bar
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: colors.surface,
-                border: Border(bottom: BorderSide(color: colors.border)),
-              ),
-              child: const Row(
-                children: [
-                  BrandLogoWidget(
-                    size: 32,
-                    showText: true,
-                    withSubtitle: true,
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // 1. Hero Action Banner (Auto-advancing 4-slide carousel every 5s)
 
           // 2. Hero Action Banner (Auto-advancing 4-slide carousel every 5s)
           SliverToBoxAdapter(
