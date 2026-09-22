@@ -111,8 +111,12 @@ class _PosPayMongoModalState extends State<PosPayMongoModal> {
   }
 
   Future<void> _launchCheckoutUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || (uri.scheme != 'https' && uri.scheme != 'http')) {
+      debugPrint('Security warning: Rejected invalid or unsafe checkout URL: $url');
+      return;
+    }
     try {
-      final uri = Uri.parse(url);
       bool launched = await launchUrl(uri);
       if (!launched) {
         launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -122,9 +126,6 @@ class _PosPayMongoModalState extends State<PosPayMongoModal> {
       }
     } catch (e) {
       debugPrint('Could not launch PayMongo URL: $e');
-      try {
-        await launchUrl(Uri.parse(url));
-      } catch (_) {}
     }
   }
 

@@ -656,7 +656,11 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
   }
 
   static Future<bool> launchPayMongoCheckout(String checkoutUrl) async {
-    final uri = Uri.parse(checkoutUrl);
+    final uri = Uri.tryParse(checkoutUrl);
+    if (uri == null || (uri.scheme != 'https' && uri.scheme != 'http')) {
+      debugPrint('Security warning: Rejected invalid or unsafe checkout URL: $checkoutUrl');
+      return false;
+    }
     try {
       if (kIsWeb) {
         bool launched = false;
