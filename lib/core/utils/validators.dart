@@ -21,9 +21,9 @@ class Validators {
     r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$",
   );
 
-  /// Pattern to detect forbidden ASCII/Unicode control characters and bidirectional control spoofing.
+  /// Pattern to detect forbidden ASCII/Unicode control characters, zero-width joiners, line/paragraph separators, and bidirectional control spoofing.
   static final RegExp _controlCharRegex = RegExp(
-    r"[\u0000-\u001F\u007F-\u009F\u200E\u200F\u202A-\u202E]",
+    r"[\u0000-\u001F\u007F-\u009F\u200C-\u200F\u2028-\u202E]",
   );
 
   /// Validates user full name with length boundaries and control character prevention.

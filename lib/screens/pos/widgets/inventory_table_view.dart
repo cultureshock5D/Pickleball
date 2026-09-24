@@ -386,7 +386,7 @@ class _InventoryTableViewState extends State<InventoryTableView> {
                 children: [
                   IconButton(
                     icon: Icon(Icons.menu_rounded, color: palette.textPrimary),
-                    tooltip: 'Toggle Navigation Menu',
+                    tooltip: 'Navigation Menu',
                     onPressed: widget.onToggleMenu,
                   ),
                   IconButton(
@@ -657,28 +657,50 @@ class _InventoryTableViewState extends State<InventoryTableView> {
                           itemBuilder: (context, idx) {
                             final cat = _categories[idx];
                             final isSelected = cat == _selectedCategory;
-                            return ChoiceChip(
-                              label: Text(
-                                cat,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                            return InkWell(
+                              onTap: () => setState(() => _selectedCategory = cat),
+                              borderRadius: BorderRadius.circular(16),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
                                   color: isSelected
-                                      ? Colors.black
-                                      : palette.textSecondary,
+                                      ? (palette.isDark
+                                          ? const Color(0xFF00E599).withValues(alpha: 0.16)
+                                          : const Color(0xFF059669).withValues(alpha: 0.12))
+                                      : palette.surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? (palette.isDark ? const Color(0xFF00E599) : const Color(0xFF059669))
+                                        : palette.borderSubtle,
+                                    width: isSelected ? 1.5 : 1.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (isSelected) ...[
+                                      Icon(
+                                        Icons.check_rounded,
+                                        size: 13,
+                                        color: palette.isDark ? const Color(0xFF00E599) : const Color(0xFF059669),
+                                      ),
+                                      const SizedBox(width: 4),
+                                    ],
+                                    Text(
+                                      cat,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                        color: isSelected
+                                            ? (palette.isDark ? const Color(0xFF00E599) : const Color(0xFF059669))
+                                            : palette.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              selected: isSelected,
-                              selectedColor: palette.neonGreen,
-                              backgroundColor: palette.background,
-                              visualDensity: VisualDensity.compact,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 4),
-                              onSelected: (_) {
-                                setState(() => _selectedCategory = cat);
-                              },
                             );
                           },
                         ),

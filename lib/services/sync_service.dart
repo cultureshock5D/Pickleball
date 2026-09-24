@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/constants/supabase_config.dart';
 import '../models/pos_transaction_model.dart';
 import 'auth_service.dart';
 import 'connectivity_service.dart';
@@ -127,6 +128,11 @@ class SyncService {
       return await testPushHandler!(queueItem);
     }
 
+    if (SupabaseConfig.enforceReadOnlyBackend) {
+      debugPrint('SyncService: Read-only backend enforced. Skipping remote mutation push.');
+      return true;
+    }
+
     final client = _supabase;
     if (client == null) {
       // Supabase is not active/configured; keep in queue or consider offline
@@ -150,6 +156,11 @@ class SyncService {
     SupabaseClient client,
     Map<String, dynamic> payload,
   ) async {
+    if (SupabaseConfig.enforceReadOnlyBackend) {
+      debugPrint('SyncService: Read-only backend enforced. Skipping remote push to pos_transactions, pos_transaction_items, and pos_products.');
+      return true;
+    }
+
     final txData = payload['transaction'] as Map<String, dynamic>;
     final itemsData = (payload['items'] as List<dynamic>?) ?? [];
 

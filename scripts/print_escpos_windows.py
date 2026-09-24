@@ -1,6 +1,6 @@
 """
 Direct ESC/POS stream utility for Windows POS.
-Streams raw bytes to COM4 / COM3 Bluetooth thermal printer.
+Streams raw bytes to any connected thermal receipt printer (all COM ports).
 """
 
 import sys
@@ -8,13 +8,25 @@ import os
 
 try:
     import serial
+    import serial.tools.list_ports
 except ImportError:
     print("ERROR: pyserial is required. Run: python -m pip install pyserial")
     sys.exit(1)
 
 
 def send_bytes_to_printer(payload: bytes, preferred_port: str = "COM4") -> bool:
-    ports_to_try = [preferred_port, "COM3" if preferred_port == "COM4" else "COM4"]
+    try:
+        detected_ports = [p.device for p in serial.tools.list_ports.comports()]
+    except Exception:
+        detected_ports = []
+
+    ports_to_try = []
+    for p in [preferred_port, "COM3", "COM1", "COM2", "COM5"]:
+        if p not in ports_to_try:
+            ports_to_try.append(p)
+    for p in detected_ports:
+        if p not in ports_to_try:
+            ports_to_try.append(p)
 
     for port in ports_to_try:
         try:
@@ -23,10 +35,10 @@ def send_bytes_to_printer(payload: bytes, preferred_port: str = "COM4") -> bool:
                 ser.flush()
                 print(f"SUCCESS: Sent {len(payload)} bytes to {port}")
                 return True
-        except Exception as e:
+        except Exception:
             continue
 
-    print("ERROR: Could not open COM4 or COM3 serial port.")
+    print(f"ERROR: Could not open any serial port (tried {', '.join(ports_to_try[:6])}).")
     return False
 
 
@@ -47,3 +59,4 @@ if __name__ == "__main__":
         sys.exit(0)
     else:
         sys.exit(1)
+

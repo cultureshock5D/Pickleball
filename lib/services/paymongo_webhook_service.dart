@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/constants/paymongo_config.dart';
+import '../core/constants/supabase_config.dart';
 import '../data/mock_data.dart';
 import '../models/booking_model.dart';
 import 'booking_service.dart';
@@ -572,7 +573,7 @@ class PayMongoWebhookService {
     BookingModel? updatedBooking;
 
     // Supabase update
-    if (_supabase != null && targetBookingId != null) {
+    if (_supabase != null && targetBookingId != null && !SupabaseConfig.enforceReadOnlyBackend) {
       try {
         // Attempt atomic RPC if available
         try {

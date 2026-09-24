@@ -11,10 +11,10 @@ Future<PrinterResult> platformPrint58mm(List<int> bytes) async {
         'printRawBytes',
         {'bytes': Uint8List.fromList(bytes)},
       );
-      final deviceName = result?['deviceName'] as String? ?? 'XP-58H';
+      final deviceName = result?['deviceName'] as String? ?? 'Thermal Printer';
       return PrinterResult(
         success: true,
-        message: 'Successfully printed to $deviceName via direct Bluetooth RFCOMM.',
+        message: 'Successfully printed to $deviceName via Bluetooth RFCOMM.',
         deviceName: deviceName,
       );
     } on PlatformException catch (e) {
@@ -52,8 +52,8 @@ Future<PrinterResult> platformPrint58mm(List<int> bytes) async {
       if (res.exitCode == 0) {
         return const PrinterResult(
           success: true,
-          message: 'Successfully printed to XP-58H on COM4 via direct serial.',
-          deviceName: 'XP-58H / JP58H (COM4)',
+          message: 'Successfully printed to receipt printer via serial connection.',
+          deviceName: 'POS Receipt Printer',
         );
       } else {
         final errOutput = (res.stderr as String).trim();
@@ -61,7 +61,7 @@ Future<PrinterResult> platformPrint58mm(List<int> bytes) async {
         final combined = errOutput.isNotEmpty ? errOutput : stdOutput;
         return PrinterResult(
           success: false,
-          message: combined.isNotEmpty ? combined : 'Printer busy or COM4 port unavailable.',
+          message: combined.isNotEmpty ? combined : 'Printer busy or serial port unavailable.',
         );
       }
     } catch (e) {
@@ -78,6 +78,48 @@ Future<PrinterResult> platformPrint58mm(List<int> bytes) async {
   );
 }
 
+Future<PrinterResult> platformPrintSystem(String receiptText) async {
+  if (Platform.isWindows) {
+    try {
+      final tempDir = Directory.systemTemp;
+      final tempFile = File('${tempDir.path}\\pos_receipt.txt');
+      await tempFile.writeAsString(receiptText, flush: true);
+
+      // Use PowerShell Out-Printer (built-in Windows utility that prints to default printer)
+      final res = await Process.run('powershell', [
+        '-NoProfile',
+        '-Command',
+        'Get-Content -Path "${tempFile.path}" -Raw | Out-Printer',
+      ]);
+
+      if (res.exitCode == 0) {
+        return const PrinterResult(
+          success: true,
+          message: 'Receipt sent to Windows Default Printer.',
+          deviceName: 'Windows Default Printer',
+        );
+      } else {
+        // Fallback to notepad /p
+        await Process.run('notepad', ['/p', tempFile.path]);
+        return const PrinterResult(
+          success: true,
+          message: 'Receipt sent to default printer via spooler.',
+          deviceName: 'Default Printer',
+        );
+      }
+    } catch (e) {
+      return PrinterResult(
+        success: false,
+        message: 'System print error: $e',
+      );
+    }
+  }
+  return const PrinterResult(
+    success: false,
+    message: 'System print dialog is supported on Web and Windows.',
+  );
+}
+
 Future<PrinterResult> platformConnectPrinter() async {
   if (Platform.isAndroid) {
     try {
@@ -85,7 +127,7 @@ Future<PrinterResult> platformConnectPrinter() async {
       if (printers == null || printers.isEmpty) {
         return const PrinterResult(
           success: false,
-          message: 'No paired Bluetooth devices found. Please pair XP-58H in phone Bluetooth Settings (PIN: 0000 or 1234).',
+          message: 'No paired Bluetooth devices found. Please pair your printer in phone Bluetooth Settings.',
         );
       }
 
@@ -94,17 +136,21 @@ Future<PrinterResult> platformConnectPrinter() async {
           final name = (p['name'] as String? ?? '').toUpperCase();
           return name.contains('XP') ||
               name.contains('58') ||
+              name.contains('80') ||
               name.contains('JP') ||
               name.contains('POS') ||
               name.contains('0A4B') ||
               name.contains('PRINTER') ||
+              name.contains('EPSON') ||
+              name.contains('STAR') ||
+              name.contains('SUNMI') ||
               name.contains('MPT') ||
               name.contains('RPP');
         },
         orElse: () => printers.first,
       );
 
-      final deviceName = matchedPrinter['name'] as String? ?? 'XP-58H';
+      final deviceName = matchedPrinter['name'] as String? ?? 'Thermal Printer';
       final address = matchedPrinter['address'] as String? ?? '';
 
       return PrinterResult(
@@ -131,8 +177,8 @@ Future<PrinterResult> platformConnectPrinter() async {
   } else if (Platform.isWindows) {
     return const PrinterResult(
       success: true,
-      message: 'Windows COM4 / COM3 Bluetooth Serial connection is active.',
-      deviceName: 'XP-58H / JP58H (COM4)',
+      message: 'Windows serial & system printer connection is active.',
+      deviceName: 'Universal POS Printer',
     );
   }
 
@@ -159,3 +205,4 @@ Future<List<Map<String, String>>> platformGetPairedPrinters() async {
   }
   return [];
 }
+

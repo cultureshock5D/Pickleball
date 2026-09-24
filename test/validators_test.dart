@@ -57,10 +57,14 @@ void main() {
         expect(Validators.validateFullName('Alex\u0000Morgan'), isNotNull);
         expect(Validators.validateFullName('Alex\nLine2'), isNotNull);
         expect(Validators.validateFullName('Alex\u202EReverse'), isNotNull);
+        expect(Validators.validateFullName('Alex\u200CMorgan'), isNotNull);
+        expect(Validators.validateFullName('Alex\u200DMorgan'), isNotNull);
+        expect(Validators.validateFullName('Alex\u2028Morgan'), isNotNull);
+        expect(Validators.validateFullName('Alex\u2029Morgan'), isNotNull);
       });
 
-      test('sanitizeText strips control characters and clamps maximum length', () {
-        const raw = 'Hello\u0000\u001F World\n';
+      test('sanitizeText strips control characters, zero-width joiners, line separators and clamps maximum length', () {
+        const raw = 'Hello\u0000\u001F\u200C\u200D\u2028\u2029 World\n';
         final sanitized = Validators.sanitizeText(raw);
         expect(sanitized, equals('Hello World'));
 

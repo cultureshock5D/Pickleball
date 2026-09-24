@@ -291,8 +291,8 @@ class _DailyExpensesMarginsViewState extends State<DailyExpensesMarginsView> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: palette.neonGreen,
-                  foregroundColor: Colors.black,
+                  backgroundColor: palette.isDark ? const Color(0xFF00E599) : const Color(0xFF059669),
+                  foregroundColor: palette.isDark ? Colors.black : Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                   padding:
@@ -379,7 +379,7 @@ class _DailyExpensesMarginsViewState extends State<DailyExpensesMarginsView> {
                 children: [
                   IconButton(
                     icon: Icon(Icons.menu_rounded, color: palette.textPrimary),
-                    tooltip: 'Toggle Navigation Menu',
+                    tooltip: 'Navigation Menu',
                     onPressed: widget.onToggleMenu,
                   ),
                   IconButton(
@@ -588,8 +588,8 @@ class _DailyExpensesMarginsViewState extends State<DailyExpensesMarginsView> {
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: palette.neonGreen,
-                          foregroundColor: Colors.black,
+                          backgroundColor: palette.isDark ? const Color(0xFF00E599) : const Color(0xFF059669),
+                          foregroundColor: palette.isDark ? Colors.black : Colors.white,
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(

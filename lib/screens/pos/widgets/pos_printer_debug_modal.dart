@@ -45,15 +45,15 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
 
   void _detectEnvironment() {
     if (kIsWeb) {
-      _addLog('Platform: Web Browser (Microsoft Edge / Chromium).');
-      _addLog('Mechanism: Web Serial API (navigator.serial) + Local COM4 Bridge (http://127.0.0.1:5858).');
+      _addLog('Platform: Web Browser (Microsoft Edge / Google Chrome).');
+      _addLog('Mechanism: Web Serial API (Any Serial/USB Printer) + System Print Dialog + Local Bridge.');
     } else if (defaultTargetPlatform == TargetPlatform.android) {
       _addLog('Platform: Android Mobile / Tablet (Native Bluetooth SPP).');
       _addLog('UUID: 00001101-0000-1000-8000-00805F9B34FB (100% Driverless).');
-      _addLog('Target Printers: XP-58H, JP58H-0A4B, POS-58.');
+      _addLog('Target Printers: Any paired Bluetooth or ESC/POS thermal printer.');
     } else if (defaultTargetPlatform == TargetPlatform.windows) {
       _addLog('Platform: Windows Desktop.');
-      _addLog('Target: Direct Bluetooth Virtual Serial Port (COM4 / COM3).');
+      _addLog('Target: Any Virtual Serial Port (COM1-COM20) or Windows Default Printer.');
     }
   }
 
@@ -61,9 +61,9 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
     if (_isConnecting) return;
     setState(() {
       _isConnecting = true;
-      _statusText = 'Searching for paired XP-58H / JP58H...';
+      _statusText = 'Searching for connected/paired printer...';
     });
-    _addLog('Searching for XP-58H / JP58H Bluetooth thermal printer...');
+    _addLog('Searching for POS receipt printer...');
 
     try {
       final result = await ThermalPrinterService.connectPrinter();
@@ -97,9 +97,9 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
     if (_isPrintingTest) return;
     setState(() {
       _isPrintingTest = true;
-      _statusText = 'Sending ESC/POS test payload (555 bytes)...';
+      _statusText = 'Sending ESC/POS test payload...';
     });
-    _addLog('Triggering test print (C&J Arena 58mm test receipt)...');
+    _addLog('Triggering test print (Universal ESC/POS test receipt)...');
 
     try {
       final result = await ThermalPrinterService.printTestReceipt();
@@ -123,6 +123,19 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
         _statusText = 'Print exception: $e';
       });
       _addLog('EXCEPTION: $e');
+    }
+  }
+
+  Future<void> _handleSystemPrintTest() async {
+    _addLog('Triggering System Print Dialog test...');
+    const testText = 'C&J SPORTS ARENA POS\\n*** SYSTEM PRINT TEST ***\\nCompatible with ANY printer.\\n';
+    final result = await ThermalPrinterService.printSystemReceipt(testText);
+    if (!mounted) return;
+    _addLog(result.success ? 'SYSTEM PRINT: ${result.message}' : 'SYSTEM PRINT ERROR: ${result.message}');
+    if (result.success) {
+      AppSnackBar.success(context, result.message);
+    } else {
+      AppSnackBar.info(context, result.message);
     }
   }
 
@@ -176,7 +189,7 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Thermal Printer Diagnostics',
+                            'Thermal & POS Printer Diagnostics',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -184,7 +197,7 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
                             ),
                           ),
                           Text(
-                            'XP-58H / JP58H • 58mm Driverless ESC/POS',
+                            'Universal POS • Thermal & System Printer',
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               color: colors.textSecondary,
@@ -241,8 +254,8 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
                                     _connectedDeviceName != null
                                         ? 'Target: $_connectedDeviceName'
                                         : kIsWeb
-                                            ? 'Target: XP-58H / JP58H (COM4)'
-                                            : 'Target: XP-58H / JP58H (Bluetooth)',
+                                            ? 'Target: Any Serial, USB, or System Printer'
+                                            : 'Target: Any Bluetooth or System Printer',
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
@@ -307,10 +320,10 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
                             const SizedBox(height: 6),
                             Text(
                               kIsWeb
-                                  ? '• On Edge/Web: Click "Connect / Select Port" below to pair with COM4 using Edge Web Serial, OR run "python scripts/printer_bridge_server.py".\n• No Windows printer driver required.'
+                                  ? '• On Edge/Chrome: Click "Connect Port" below to pair with any serial or USB thermal printer via Web Serial, OR use System Print.\n• Compatible with ANY printer.'
                                   : defaultTargetPlatform == TargetPlatform.android
-                                      ? '• On Android: Connects directly via Bluetooth RFCOMM socket (SPP UUID 00001101).\n• Ensure XP-58H is paired in phone Settings > Bluetooth (PIN: 0000 or 1234).\n• When prompted, tap "Allow" for Nearby Devices permission.'
-                                      : '• On Windows Desktop: Streams raw ESC/POS commands directly to COM4 / COM3 without print spooler.',
+                                      ? '• On Android: Connects directly via Bluetooth RFCOMM socket (SPP UUID 00001101).\n• Compatible with any paired Bluetooth printer (Epson, Star, Sunmi, POS-58, etc.).'
+                                      : '• On Windows Desktop: Streams raw ESC/POS commands directly to any detected COM port, or sends to Windows Default Printer.',
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 height: 1.5,
@@ -335,7 +348,7 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
                                     )
                                   : const Icon(Icons.bluetooth_searching, size: 18),
                               label: Text(
-                                _isConnecting ? 'Connecting...' : 'Connect / Select Port',
+                                _isConnecting ? 'Connecting...' : 'Connect Port',
                                 style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
                               ),
                               style: OutlinedButton.styleFrom(
@@ -347,7 +360,7 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
                               onPressed: _isConnecting ? null : _handleConnect,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: ElevatedButton.icon(
                               icon: _isPrintingTest
@@ -361,7 +374,7 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
                                     )
                                   : const Icon(Icons.print, size: 18),
                               label: Text(
-                                _isPrintingTest ? 'Printing...' : 'Print Test',
+                                _isPrintingTest ? 'Printing...' : 'ESC/POS Test',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -376,6 +389,23 @@ class _PosPrinterDebugModalState extends State<PosPrinterDebugModal> {
                                 ),
                               ),
                               onPressed: _isPrintingTest ? null : _handleTestPrint,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.print_rounded, size: 18),
+                              label: Text(
+                                'System Print',
+                                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: colors.textPrimary,
+                                side: BorderSide(color: colors.border),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              onPressed: _handleSystemPrintTest,
                             ),
                           ),
                         ],

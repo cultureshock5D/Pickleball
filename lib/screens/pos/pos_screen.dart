@@ -46,7 +46,6 @@ class _PosScreenState extends State<PosScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   int _invoiceCount = 0;
-  bool _isCartCollapsed = false;
   bool _isSidebarOpen = true;
   PosViewMode _currentViewMode = PosViewMode.register;
   StreamSubscription<void>? _posUpdatesSub;
@@ -343,8 +342,8 @@ class _PosScreenState extends State<PosScreen> {
     }
 
     final showPermanentSidebar = screenWidth >= 1100 && screenHeight >= 550;
-    final isDualPaneDevice = screenWidth >= 960 && screenHeight >= 550;
-    final isDualPane = isDualPaneDevice && !_isCartCollapsed;
+    final isLandscape = screenWidth > screenHeight;
+    final isDualPane = isLandscape || screenWidth >= 900;
     final isShortHeight = screenHeight < 550;
 
     return Scaffold(
@@ -397,7 +396,6 @@ class _PosScreenState extends State<PosScreen> {
                 showPermanentSidebar,
                 isShortHeight,
                 isDualPane,
-                isDualPaneDevice,
               ),
             ),
           ],
@@ -412,7 +410,6 @@ class _PosScreenState extends State<PosScreen> {
     bool showPermanentSidebar,
     bool isShortHeight,
     bool isDualPane,
-    bool isDualPaneDevice,
   ) {
     switch (_currentViewMode) {
       case PosViewMode.inventory:
@@ -459,7 +456,7 @@ class _PosScreenState extends State<PosScreen> {
                         Expanded(
                           flex: 62,
                           child: _buildCatalogAndDiscountsPane(colors, isDark,
-                              isShortHeight, isDualPaneDevice),
+                              isShortHeight),
                         ),
 
                         VerticalDivider(
@@ -479,7 +476,7 @@ class _PosScreenState extends State<PosScreen> {
                       ],
                     )
                   : _buildMobileLayout(
-                      colors, isDark, isShortHeight, isDualPaneDevice),
+                      colors, isDark, isShortHeight),
             ),
           ],
         );
@@ -491,7 +488,6 @@ class _PosScreenState extends State<PosScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 1100 || isShortHeight;
-        final isVeryCompact = constraints.maxWidth < 450;
 
         return Container(
           height: isShortHeight ? 44 : 60,
@@ -499,138 +495,42 @@ class _PosScreenState extends State<PosScreen> {
           color: isDark ? const Color(0xFF0F172A) : Colors.white,
           child: Row(
             children: [
-              // Navigation Menu Toggle Button (Available for both Vertical & Horizontal views)
-              IconButton(
-                visualDensity: VisualDensity.compact,
-                icon: Icon(
-                  (hasSidebar && _isSidebarOpen)
-                      ? Icons.menu_open_rounded
-                      : Icons.menu_rounded,
+              // Navigation Menu Toggle Button (Only visible when sidebar not open)
+              if (!hasSidebar || !_isSidebarOpen) ...[
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.menu_rounded),
                   color: colors.textPrimary,
+                  tooltip: 'Navigation Menu',
+                  onPressed: () => _toggleNavigationMenu(hasSidebar),
                 ),
-                tooltip: 'Navigation Menu',
-                onPressed: () => _toggleNavigationMenu(hasSidebar),
-              ),
-              const SizedBox(width: 4),
+                const SizedBox(width: 4),
 
-              // C&J Brand logo & Active Pill
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (!hasSidebar || !_isSidebarOpen) ...[
-                    Container(
-                      height: isShortHeight ? 24 : 30,
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 3,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: Image.asset(
-                          'cashier_pos/cj-logo.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
+                // C&J Brand logo
+                Container(
+                  height: isShortHeight ? 24 : 30,
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                     ),
-                    const SizedBox(width: 8),
-                  ],
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 3,
+                        offset: const Offset(0, 1),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (!isVeryCompact) ...[
-                          Text(
-                            (hasSidebar && _isSidebarOpen) ? 'C&J ARENA' : 'ARENA',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textPrimary,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                        ],
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF10B981),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        if (!isCompact) ...[
-                          const SizedBox(width: 5),
-                          Text(
-                            'Cashier Console Active',
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF10B981),
-                            ),
-                          ),
-                        ],
-                      ],
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: Image.asset(
+                      'cashier_pos/cj-logo.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
-                ],
-              ),
-
-              // Operations Quick Switch Tabs in Header (for Horizontal/Desktop views)
-              if (constraints.maxWidth >= 960) ...[
-                const SizedBox(width: 12),
-                _buildHeaderViewPill(
-                  title: 'Register',
-                  icon: Icons.point_of_sale_rounded,
-                  isActive: _currentViewMode == PosViewMode.register,
-                  onTap: () => setState(() => _currentViewMode = PosViewMode.register),
-                  colors: colors,
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                _buildHeaderViewPill(
-                  title: 'Inventory',
-                  icon: Icons.inventory_2_outlined,
-                  isActive: _currentViewMode == PosViewMode.inventory,
-                  onTap: () => setState(() => _currentViewMode = PosViewMode.inventory),
-                  colors: colors,
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                _buildHeaderViewPill(
-                  title: 'Expenses',
-                  icon: Icons.show_chart_rounded,
-                  isActive: _currentViewMode == PosViewMode.expenses,
-                  onTap: () => setState(() => _currentViewMode = PosViewMode.expenses),
-                  colors: colors,
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 6),
-                _buildHeaderViewPill(
-                  title: 'Reports',
-                  icon: Icons.assessment_outlined,
-                  isActive: _currentViewMode == PosViewMode.shiftReports,
-                  onTap: () => setState(() => _currentViewMode = PosViewMode.shiftReports),
-                  colors: colors,
-                  isDark: isDark,
                 ),
               ],
 
@@ -644,7 +544,7 @@ class _PosScreenState extends State<PosScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'JP58H Printer',
+                        'Receipt Printer',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -672,7 +572,7 @@ class _PosScreenState extends State<PosScreen> {
               else
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  tooltip: 'JP58H Thermal Printer',
+                  tooltip: 'Receipt & POS Printer',
                   icon: const Icon(Icons.print_outlined, size: 20, color: Color(0xFF00E599)),
                   onPressed: () => PosPrinterDebugModal.show(context),
                 ),
@@ -742,90 +642,10 @@ class _PosScreenState extends State<PosScreen> {
                 ),
                 const SizedBox(width: 8),
               ],
-
-              // Sign Out Button (Compact icon on mobile, outlined button on wide screens)
-              if (isCompact)
-                IconButton(
-                  visualDensity: VisualDensity.compact,
-                  tooltip: 'Sign Out / Close Register',
-                  icon: const Icon(Icons.logout_rounded, size: 20, color: Colors.redAccent),
-                  onPressed: _handleLogout,
-                )
-              else
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.logout_rounded, size: 15, color: Colors.redAccent),
-                  label: Text(
-                    'Sign Out',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.redAccent,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 34),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    side: BorderSide(
-                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                    ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  onPressed: _handleLogout,
-                ),
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _buildHeaderViewPill({
-    required String title,
-    required IconData icon,
-    required bool isActive,
-    required VoidCallback onTap,
-    required dynamic colors,
-    required bool isDark,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: isActive
-              ? (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0))
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isActive
-                ? (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1))
-                : Colors.transparent,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: isActive
-                  ? (isDark ? const Color(0xFFCCFF00) : const Color(0xFF0F172A))
-                  : colors.textSecondary,
-            ),
-            const SizedBox(width: 5),
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive ? colors.textPrimary : colors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -868,7 +688,7 @@ class _PosScreenState extends State<PosScreen> {
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                tooltip: isDrawer ? 'Close Menu' : 'Collapse Menu',
+                tooltip: isDrawer ? 'Close Menu' : (_isSidebarOpen ? 'Navigation Menu' : null),
                 icon: Icon(
                   isDrawer ? Icons.close_rounded : Icons.chevron_left_rounded,
                   size: 20,
@@ -1151,14 +971,16 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   // --- CATALOG & DISCOUNTS PANE (CENTER) ---
-  Widget _buildCatalogAndDiscountsPane(dynamic colors, bool isDark, [bool isShortHeight = false, bool isDualPaneDevice = false]) {
+  // --- CATALOG & DISCOUNTS PANE (CENTER) ---
+  Widget _buildCatalogAndDiscountsPane(dynamic colors, bool isDark, [bool isShortHeight = false]) {
     return ListenableBuilder(
       listenable: _catalogController,
       builder: (context, _) {
         return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Cockpit Terminal Header & Actions
-            _buildCockpitHeader(colors, isDark, isShortHeight, isDualPaneDevice),
+            _buildCockpitHeader(colors, isDark, isShortHeight),
 
             // Department Navigation Pills Bar
             _buildDepartmentPills(colors, isDark, isShortHeight),
@@ -1166,7 +988,7 @@ class _PosScreenState extends State<PosScreen> {
             // Subcategory Filter Chips Bar
             _buildSubcategoryChips(colors, isDark, isShortHeight),
 
-            // Products Catalog Table or Cards
+            // Products Catalog Cards
             Expanded(
               child: _catalogController.isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -1177,9 +999,7 @@ class _PosScreenState extends State<PosScreen> {
                             style: GoogleFonts.inter(fontSize: 13, color: colors.textSecondary),
                           ),
                         )
-                      : _catalogController.isGridView
-                          ? _buildProductCardsView(colors, isDark, isShortHeight)
-                          : _buildProductTableView(colors, isDark, isShortHeight),
+                      : _buildProductCardsView(colors, isDark, isShortHeight),
             ),
           ],
         );
@@ -1188,7 +1008,7 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   // Cockpit Terminal Header & Actions
-  Widget _buildCockpitHeader(dynamic colors, bool isDark, [bool isShortHeight = false, bool isDualPaneDevice = false]) {
+  Widget _buildCockpitHeader(dynamic colors, bool isDark, [bool isShortHeight = false]) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 680;
@@ -1199,173 +1019,42 @@ class _PosScreenState extends State<PosScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Left: Invoices & Void + View Toggle
-              Flexible(
-                child: Row(
+              // Left: Invoices & Void trigger
+              OutlinedButton.icon(
+                icon: const Icon(Icons.history_rounded, size: 14),
+                label: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Recent Invoices & Void trigger
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.history_rounded, size: 14),
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(isNarrow ? 'Invoices' : 'Invoices & Void'),
-                          const SizedBox(width: 5),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFF0F172A),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '$_invoiceCount',
-                              style: GoogleFonts.inter(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: Size(0, isShortHeight ? 30 : 34),
-                        foregroundColor: colors.textPrimary,
-                        side: BorderSide(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                        ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      ),
-                      onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-                    ),
-                    if (isDualPaneDevice) ...[
-                      const SizedBox(width: 8),
-                      OutlinedButton.icon(
-                        icon: Icon(
-                          _isCartCollapsed ? Icons.shopping_cart_outlined : Icons.chevron_right_rounded,
-                          size: 14,
-                        ),
-                        label: Text(_isCartCollapsed ? 'Show Cart' : 'Hide Cart'),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: Size(0, isShortHeight ? 30 : 34),
-                          foregroundColor: colors.textPrimary,
-                          side: BorderSide(
-                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                          ),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isCartCollapsed = !_isCartCollapsed;
-                          });
-                        },
-                      ),
-                    ],
-                    const SizedBox(width: 8),
-
-                    // View Toggle [Table] [Cards]
+                    Text(isNarrow ? 'Invoices' : 'Invoices & Void'),
+                    const SizedBox(width: 5),
                     Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                        ),
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFF0F172A),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      padding: const EdgeInsets.all(2),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          InkWell(
-                            onTap: () => _catalogController.setGridView(false),
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: !_catalogController.isGridView
-                                    ? (isDark ? const Color(0xFF0F172A) : Colors.white)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(6),
-                                boxShadow: !_catalogController.isGridView
-                                    ? [const BoxShadow(color: Colors.black12, blurRadius: 3)]
-                                    : null,
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.table_rows_outlined,
-                                    size: 13,
-                                    color: !_catalogController.isGridView
-                                        ? colors.textPrimary
-                                        : colors.textSecondary,
-                                  ),
-                                  if (!isNarrow) ...[
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Table',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: !_catalogController.isGridView
-                                            ? colors.textPrimary
-                                            : colors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () => _catalogController.setGridView(true),
-                            borderRadius: BorderRadius.circular(6),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: _catalogController.isGridView
-                                    ? (isDark ? const Color(0xFF0F172A) : Colors.white)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(6),
-                                boxShadow: _catalogController.isGridView
-                                    ? [const BoxShadow(color: Colors.black12, blurRadius: 3)]
-                                    : null,
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.grid_view_rounded,
-                                    size: 13,
-                                    color: _catalogController.isGridView
-                                        ? colors.textPrimary
-                                        : colors.textSecondary,
-                                  ),
-                                  if (!isNarrow) ...[
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Cards',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: _catalogController.isGridView
-                                            ? colors.textPrimary
-                                            : colors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        '$_invoiceCount',
+                        style: GoogleFonts.inter(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
                 ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: Size(0, isShortHeight ? 30 : 34),
+                  foregroundColor: colors.textPrimary,
+                  side: BorderSide(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                ),
+                onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
               ),
-              const SizedBox(width: 8),
 
               // Right: Search Box
               SizedBox(
@@ -1417,17 +1106,20 @@ class _PosScreenState extends State<PosScreen> {
   // Department Filter Navigation Pills
   Widget _buildDepartmentPills(dynamic colors, bool isDark, [bool isShortHeight = false]) {
     final depts = [
+      {'key': 'All', 'name': 'All Menu', 'icon': '🌐', 'tint': const Color(0xFFF1F5F9), 'text': const Color(0xFF0F172A)},
       {'key': 'Coffee', 'name': 'Coffee', 'icon': '☕', 'tint': const Color(0xFFFEF3C7), 'text': const Color(0xFF92400E)},
       {'key': 'Drinks', 'name': 'Drinks', 'icon': '🥤', 'tint': const Color(0xFFE0F2FE), 'text': const Color(0xFF0369A1)},
       {'key': 'Food', 'name': 'Food', 'icon': '🍳', 'tint': const Color(0xFFFFEDD5), 'text': const Color(0xFFC2410C)},
       {'key': 'Supplies', 'name': 'Supplies', 'icon': '📦', 'tint': const Color(0xFFF1F5F9), 'text': const Color(0xFF475569)},
-      {'key': 'All', 'name': 'All Menu', 'icon': '🌐', 'tint': const Color(0xFF0F172A), 'text': Colors.white},
     ];
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: isShortHeight ? 2 : 4),
-      child: Row(
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: isShortHeight ? 2 : 4),
+        child: Row(
         children: depts.map((d) {
           final deptKey = d['key'] as String;
           final isSelected = _catalogController.selectedDepartment == deptKey;
@@ -1492,6 +1184,7 @@ class _PosScreenState extends State<PosScreen> {
             ),
           );
         }).toList(),
+        ),
       ),
     );
   }
@@ -1500,10 +1193,13 @@ class _PosScreenState extends State<PosScreen> {
   Widget _buildSubcategoryChips(dynamic colors, bool isDark, [bool isShortHeight = false]) {
     final categories = _catalogController.availableCategories;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: isShortHeight ? 2 : 4),
-      child: Row(
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: isShortHeight ? 2 : 4),
+        child: Row(
         children: categories.map((cat) {
           final isSelected = _catalogController.selectedCategory == cat;
           final count = _catalogController.getCategoryCount(cat);
@@ -1562,383 +1258,8 @@ class _PosScreenState extends State<PosScreen> {
             ),
           );
         }).toList(),
+        ),
       ),
-    );
-  }
-
-  // --- PRODUCT TABLE VIEW (Responsive POS Data Table) ---
-  Widget _buildProductTableView(dynamic colors, bool isDark, [bool isShortHeight = false]) {
-    return ListenableBuilder(
-      listenable: _cartController,
-      builder: (context, _) {
-        final products = _catalogController.filteredProducts;
-
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            const double tableMinWidth = 620.0;
-            final bool isScrollable = constraints.maxWidth < tableMinWidth;
-            final double actualWidth = isScrollable ? tableMinWidth : constraints.maxWidth;
-
-            Widget tableContent = SizedBox(
-              width: actualWidth,
-              child: Column(
-                children: [
-                  // Clean Table Header
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 28, vertical: isShortHeight ? 4 : 8),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            'SKU',
-                            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: colors.textSecondary),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(width: isShortHeight ? 28 : 36), // thumbnail space
-                        const SizedBox(width: 10),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            'ITEM',
-                            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: colors.textSecondary),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          width: 85,
-                          child: Text(
-                            'CATEGORY',
-                            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: colors.textSecondary),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          width: 85,
-                          child: Text(
-                            'STOCK',
-                            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: colors.textSecondary),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          width: 75,
-                          child: Text(
-                            'PRICE',
-                            textAlign: TextAlign.right,
-                            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: colors.textSecondary),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 76,
-                          child: Text(
-                            'ACTION',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: colors.textSecondary),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Table Rows List
-                  Expanded(
-                    child: ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: isShortHeight ? 3 : 6),
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        final cartQty = _cartController.quantityForProduct(product.id);
-                        final isOos = product.isOutOfStock;
-                        final isLowStock = product.stockLevel > 0 && product.stockLevel <= 5;
-
-                        return Container(
-                          margin: EdgeInsets.only(bottom: isShortHeight ? 3 : 6),
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: isShortHeight ? 4 : 8),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                            borderRadius: BorderRadius.circular(isShortHeight ? 8 : 10),
-                            border: Border.all(
-                              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              // SKU Badge
-                              SizedBox(
-                                width: 60,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    product.sku ?? 'SKU-${index + 1}',
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.robotoMono(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: colors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              // Product Image Thumbnail
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Container(
-                                  width: isShortHeight ? 28 : 36,
-                                  height: isShortHeight ? 28 : 36,
-                                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                  child: Image.asset(
-                                    product.effectiveImagePath,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Image.asset(
-                                      'cashier_pos/cj-logo.png',
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-
-                              // Name (Ample width, never vertically squished!)
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  product.name,
-                                  maxLines: isShortHeight ? 1 : 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(
-                                    fontSize: isShortHeight ? 12 : 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: isOos ? colors.textSecondary : colors.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-
-                              // Category Pill
-                              SizedBox(
-                                width: 85,
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE0F2FE),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      product.category.toUpperCase(),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w800,
-                                        color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0369A1),
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-
-                              // Stock indicator
-                              SizedBox(
-                                width: 85,
-                                child: isOos
-                                    ? Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: Colors.redAccent.withValues(alpha: 0.15),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          'OUT OF STOCK',
-                                          maxLines: 1,
-                                          style: GoogleFonts.inter(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w800,
-                                            color: Colors.redAccent,
-                                          ),
-                                        ),
-                                      )
-                                    : isLowStock
-                                        ? Row(
-                                            children: [
-                                              Container(
-                                                width: 6,
-                                                height: 6,
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xFFC2410C),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                'Low (${product.stockLevel})',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: const Color(0xFFC2410C),
-                                                ),
-                                              ),
-                                            ],
-                                          )
-                                        : Row(
-                                            children: [
-                                              Container(
-                                                width: 6,
-                                                height: 6,
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xFF10B981),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                'In Stock (${product.stockLevel})',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isDark ? const Color(0xFF10B981) : const Color(0xFF059669),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                              ),
-                              const SizedBox(width: 10),
-
-                              // Price
-                              SizedBox(
-                                width: 75,
-                                child: Text(
-                                  '₱${product.price.toStringAsFixed(2)}',
-                                  textAlign: TextAlign.right,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: isShortHeight ? 12 : 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: isOos ? colors.textSecondary : colors.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-
-                              // Add button or Qty Stepper
-                              SizedBox(
-                                width: 76,
-                                child: isOos
-                                    ? const Center(
-                                        child: Text(
-                                          'UNAVAILABLE',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w800,
-                                            color: Colors.redAccent,
-                                          ),
-                                        ),
-                                      )
-                                    : cartQty > 0
-                                        ? Container(
-                                            height: isShortHeight ? 26 : 32,
-                                            padding: const EdgeInsets.symmetric(horizontal: 2),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF0F172A),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Row(
-                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                              children: [
-                                                InkWell(
-                                                  onTap: () {
-                                                    final cartItem = _cartController.items.firstWhere(
-                                                      (item) => item.productId == product.id,
-                                                    );
-                                                    _handleDecrementItem(cartItem);
-                                                  },
-                                                  child: const Padding(
-                                                    padding: EdgeInsets.symmetric(horizontal: 4),
-                                                    child: Icon(Icons.remove, size: 13, color: Colors.white),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '$cartQty',
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w800,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                                InkWell(
-                                                  onTap: () => _handleAddToCart(product),
-                                                  child: const Padding(
-                                                    padding: EdgeInsets.symmetric(horizontal: 4),
-                                                    child: Icon(Icons.add, size: 13, color: Colors.white),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          )
-                                        : SizedBox(
-                                            height: isShortHeight ? 26 : 32,
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF0F172A),
-                                                foregroundColor: Colors.white,
-                                                minimumSize: Size(64, isShortHeight ? 26 : 32),
-                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                                elevation: 0,
-                                              ),
-                                              onPressed: () => _handleAddToCart(product),
-                                              child: Text(
-                                                '+ Add',
-                                                style: GoogleFonts.inter(fontSize: isShortHeight ? 10 : 11, fontWeight: FontWeight.w700),
-                                              ),
-                                            ),
-                                          ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-
-            if (isScrollable) {
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: tableContent,
-              );
-            }
-
-            return tableContent;
-          },
-        );
-      },
     );
   }
 
@@ -1952,10 +1273,10 @@ class _PosScreenState extends State<PosScreen> {
         return GridView.builder(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: isShortHeight ? 4 : 6),
           gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: isShortHeight ? 150 : 220,
-            mainAxisSpacing: isShortHeight ? 6 : 10,
-            crossAxisSpacing: isShortHeight ? 6 : 10,
-            childAspectRatio: isShortHeight ? 0.88 : 0.68,
+            maxCrossAxisExtent: isShortHeight ? 140 : 175,
+            mainAxisExtent: isShortHeight ? 145 : 168,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
           ),
           itemCount: products.length,
           itemBuilder: (context, index) {
@@ -1966,12 +1287,12 @@ class _PosScreenState extends State<PosScreen> {
 
             return InkWell(
               onTap: isOos ? null : () => _handleAddToCart(product),
-              borderRadius: BorderRadius.circular(isShortHeight ? 8 : 12),
+              borderRadius: BorderRadius.circular(isShortHeight ? 8 : 10),
               child: Container(
-                padding: EdgeInsets.all(isShortHeight ? 6 : 10),
+                padding: EdgeInsets.all(isShortHeight ? 5 : 6),
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                  borderRadius: BorderRadius.circular(isShortHeight ? 8 : 12),
+                  borderRadius: BorderRadius.circular(isShortHeight ? 8 : 10),
                   border: Border.all(
                     color: cartQty > 0
                         ? const Color(0xFF0F172A)
@@ -1981,12 +1302,13 @@ class _PosScreenState extends State<PosScreen> {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Product Image Banner
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(isShortHeight ? 5 : 8),
+                      borderRadius: BorderRadius.circular(isShortHeight ? 4 : 6),
                       child: Container(
-                        height: isShortHeight ? 46 : 82,
+                        height: isShortHeight ? 36 : 42,
                         width: double.infinity,
                         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                         child: Image.asset(
@@ -1999,14 +1321,14 @@ class _PosScreenState extends State<PosScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(height: isShortHeight ? 3 : 6),
+                    SizedBox(height: isShortHeight ? 3 : 4),
 
                     // SKU & Cart Badge
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
                             color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(4),
@@ -2014,7 +1336,7 @@ class _PosScreenState extends State<PosScreen> {
                           child: Text(
                             product.sku ?? 'SKU-${index + 1}',
                             style: GoogleFonts.robotoMono(
-                              fontSize: isShortHeight ? 8 : 9,
+                              fontSize: isShortHeight ? 8 : 8.5,
                               fontWeight: FontWeight.w700,
                               color: colors.textSecondary,
                             ),
@@ -2022,15 +1344,15 @@ class _PosScreenState extends State<PosScreen> {
                         ),
                         if (cartQty > 0)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
                               color: const Color(0xFF0F172A),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               isShortHeight ? '$cartQty' : '$cartQty in cart',
                               style: GoogleFonts.inter(
-                                fontSize: isShortHeight ? 8 : 9,
+                                fontSize: isShortHeight ? 8 : 8.5,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
                               ),
@@ -2038,7 +1360,7 @@ class _PosScreenState extends State<PosScreen> {
                           ),
                       ],
                     ),
-                    SizedBox(height: isShortHeight ? 2 : 4),
+                    SizedBox(height: isShortHeight ? 2 : 3),
 
                     // Name
                     Text(
@@ -2046,22 +1368,22 @@ class _PosScreenState extends State<PosScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: isShortHeight ? 11 : 12,
+                        fontSize: isShortHeight ? 10.5 : 11.5,
                         fontWeight: FontWeight.w700,
                         color: isOos ? colors.textSecondary : colors.textPrimary,
                       ),
                     ),
                     if (!isShortHeight) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       // Category
                       Text(
                         product.category,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(fontSize: 10, color: colors.textSecondary),
+                        style: GoogleFonts.inter(fontSize: 9, color: colors.textSecondary),
                       ),
                     ],
-                    const Spacer(),
+                    SizedBox(height: isShortHeight ? 3 : 5),
 
                     // Stock & Price Row
                     Row(
@@ -2072,7 +1394,7 @@ class _PosScreenState extends State<PosScreen> {
                               ? Text(
                                   'OUT OF STOCK',
                                   style: GoogleFonts.inter(
-                                    fontSize: isShortHeight ? 8 : 9,
+                                    fontSize: isShortHeight ? 8 : 8.5,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.redAccent,
                                   ),
@@ -2081,7 +1403,7 @@ class _PosScreenState extends State<PosScreen> {
                                   ? Text(
                                       'Low (${product.stockLevel})',
                                       style: GoogleFonts.inter(
-                                        fontSize: isShortHeight ? 9 : 10,
+                                        fontSize: isShortHeight ? 8.5 : 9.5,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFFC2410C),
                                       ),
@@ -2089,7 +1411,7 @@ class _PosScreenState extends State<PosScreen> {
                                   : Text(
                                       'Stock: ${product.stockLevel}',
                                       style: GoogleFonts.inter(
-                                        fontSize: isShortHeight ? 9 : 10,
+                                        fontSize: isShortHeight ? 8.5 : 9.5,
                                         color: colors.textSecondary,
                                       ),
                                     ),
@@ -2102,7 +1424,7 @@ class _PosScreenState extends State<PosScreen> {
                             child: Text(
                               '₱${product.price.toStringAsFixed(2)}',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: isShortHeight ? 11 : 13,
+                                fontSize: isShortHeight ? 11 : 12.5,
                                 fontWeight: FontWeight.w800,
                                 color: colors.textPrimary,
                               ),
@@ -2574,11 +1896,11 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   // --- MOBILE / SINGLE-PANE LAYOUT (Adaptive for Phones & Horizontal) ---
-  Widget _buildMobileLayout(dynamic colors, bool isDark, [bool isShortHeight = false, bool isDualPaneDevice = false]) {
+  Widget _buildMobileLayout(dynamic colors, bool isDark, [bool isShortHeight = false]) {
     return Column(
       children: [
         // Catalog takes the full body
-        Expanded(child: _buildCatalogAndDiscountsPane(colors, isDark, isShortHeight, isDualPaneDevice)),
+        Expanded(child: _buildCatalogAndDiscountsPane(colors, isDark, isShortHeight)),
 
         // Bottom floating order summary & cart bar
         ListenableBuilder(

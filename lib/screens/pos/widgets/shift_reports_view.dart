@@ -368,6 +368,8 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
 
     final openingFloat = session?.openingFloat ?? 1000.00;
     final expectedCash = openingFloat + cashSales;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompact = screenWidth < 650;
 
     return Scaffold(
       backgroundColor: palette.background,
@@ -380,7 +382,7 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
                 children: [
                   IconButton(
                     icon: Icon(Icons.menu_rounded, color: palette.textPrimary),
-                    tooltip: 'Toggle Navigation Menu',
+                    tooltip: 'Navigation Menu',
                     onPressed: widget.onToggleMenu,
                   ),
                   IconButton(
@@ -398,39 +400,43 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
         leadingWidth: widget.onToggleMenu != null ? 96 : null,
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: palette.neonGreen.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                    color: palette.neonGreen.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.assessment_rounded,
-                      size: 14, color: palette.neonGreen),
-                  const SizedBox(width: 6),
-                  Text(
-                    'REPORTS',
-                    style: TextStyle(
-                      color: palette.neonGreen,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
+            if (!isCompact) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: palette.neonGreen.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                      color: palette.neonGreen.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.assessment_rounded,
+                        size: 14, color: palette.neonGreen),
+                    const SizedBox(width: 6),
+                    Text(
+                      'REPORTS',
+                      style: TextStyle(
+                        color: palette.neonGreen,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               child: Text(
-                'Shift & Drawer Reports (Z-Reading)',
+                isCompact
+                    ? 'Shift Reports'
+                    : 'Shift & Drawer Reports (Z-Reading)',
                 style: TextStyle(
                   color: palette.textPrimary,
-                  fontSize: 16,
+                  fontSize: isCompact ? 14 : 16,
                   fontWeight: FontWeight.w700,
                 ),
                 maxLines: 1,
@@ -446,13 +452,18 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
               child: DropdownButton<CashierDutySessionModel>(
                 value: session,
                 dropdownColor: palette.surfaceElevated,
+                isDense: true,
                 items: _sessions.map((s) {
                   return DropdownMenuItem(
                     value: s,
                     child: Text(
-                      s.isOnDuty
-                          ? 'Active Shift (On Duty)'
-                          : 'Shift on ${DateFormat('MM/dd hh:mm a').format(s.startedAt)}',
+                      isCompact
+                          ? (s.isOnDuty
+                              ? 'Active Shift'
+                              : 'Shift ${DateFormat('MM/dd').format(s.startedAt)}')
+                          : (s.isOnDuty
+                              ? 'Active Shift (On Duty)'
+                              : 'Shift on ${DateFormat('MM/dd hh:mm a').format(s.startedAt)}'),
                       style: TextStyle(
                         color: s.isOnDuty
                             ? palette.neonGreen
@@ -460,6 +471,7 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   );
                 }).toList(),
@@ -468,7 +480,7 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
                 },
               ),
             ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           IconButton(
             icon: Icon(Icons.print_rounded, color: palette.neonGreen),
             tooltip: 'Print Z-Reading to Thermal Printer',
@@ -479,7 +491,7 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
             tooltip: 'Reload Shift Data',
             onPressed: () => _loadShiftData(),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
         ],
       ),
       body: _isLoading
@@ -503,100 +515,156 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
                             : palette.borderSubtle,
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: session?.isOnDuty == true
-                                ? palette.neonGreen.withValues(alpha: 0.15)
-                                : palette.surface,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            Icons.badge_rounded,
-                            color: session?.isOnDuty == true
-                                ? palette.neonGreen
-                                : palette.textSecondary,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
+                    child: LayoutBuilder(
+                      builder: (context, bannerConstraints) {
+                        final isBannerCompact =
+                            bannerConstraints.maxWidth < 650;
+                        final sessionDetails = Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
                                     'Cashier Session: ${session?.cashierId ?? "Terminal 1"}',
                                     style: TextStyle(
                                       color: palette.textPrimary,
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(width: 10),
+                                ),
+                                const SizedBox(width: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: session?.isOnDuty == true
+                                        ? palette.neonGreen
+                                            .withValues(alpha: 0.15)
+                                        : Colors.grey.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: session?.isOnDuty == true
+                                          ? palette.neonGreen
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    session?.isOnDuty == true
+                                        ? 'ON DUTY'
+                                        : 'CLOSED',
+                                    style: TextStyle(
+                                      color: session?.isOnDuty == true
+                                          ? palette.neonGreen
+                                          : Colors.grey,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Started: ${session != null ? dateTimeFmt.format(session.startedAt) : "N/A"} • Shift Duration: ${session != null ? "${session.sessionDuration.inHours}h ${session.sessionDuration.inMinutes % 60}m" : ""}',
+                              style: TextStyle(
+                                color: palette.textSecondary,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        );
+
+                        final endShiftButton = session?.isOnDuty == true
+                            ? ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      palette.errorRed.withValues(alpha: 0.15),
+                                  foregroundColor: palette.errorRed,
+                                  side: BorderSide(
+                                      color: palette.errorRed
+                                          .withValues(alpha: 0.4)),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
+                                ),
+                                icon: const Icon(Icons.lock_clock_rounded,
+                                    size: 16),
+                                label: const Text('End Shift & Reconcile',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                onPressed: _showCloseDrawerDialog,
+                              )
+                            : null;
+
+                        if (isBannerCompact) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
+                                    padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       color: session?.isOnDuty == true
                                           ? palette.neonGreen
                                               .withValues(alpha: 0.15)
-                                          : Colors.grey.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: session?.isOnDuty == true
-                                            ? palette.neonGreen
-                                            : Colors.grey,
-                                      ),
+                                          : palette.surface,
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: Text(
-                                      session?.isOnDuty == true
-                                          ? 'ON DUTY'
-                                          : 'CLOSED',
-                                      style: TextStyle(
-                                        color: session?.isOnDuty == true
-                                            ? palette.neonGreen
-                                            : Colors.grey,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                      ),
+                                    child: Icon(
+                                      Icons.badge_rounded,
+                                      color: session?.isOnDuty == true
+                                          ? palette.neonGreen
+                                          : palette.textSecondary,
+                                      size: 28,
                                     ),
                                   ),
+                                  const SizedBox(width: 14),
+                                  Expanded(child: sessionDetails),
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Started: ${session != null ? dateTimeFmt.format(session.startedAt) : "N/A"} • Shift Duration: ${session != null ? "${session.sessionDuration.inHours}h ${session.sessionDuration.inMinutes % 60}m" : ""}',
-                                style: TextStyle(
-                                  color: palette.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
+                              if (endShiftButton != null) ...[
+                                const SizedBox(height: 12),
+                                endShiftButton,
+                              ],
                             ],
-                          ),
-                        ),
-                        if (session?.isOnDuty == true)
-                          ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  palette.errorRed.withValues(alpha: 0.15),
-                              foregroundColor: palette.errorRed,
-                              side: BorderSide(
-                                  color: palette.errorRed.withValues(alpha: 0.4)),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 10),
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: session?.isOnDuty == true
+                                    ? palette.neonGreen.withValues(alpha: 0.15)
+                                    : palette.surface,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.badge_rounded,
+                                color: session?.isOnDuty == true
+                                    ? palette.neonGreen
+                                    : palette.textSecondary,
+                                size: 28,
+                              ),
                             ),
-                            icon: const Icon(Icons.lock_clock_rounded, size: 16),
-                            label: const Text('End Shift & Reconcile',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            onPressed: _showCloseDrawerDialog,
-                          ),
-                      ],
+                            const SizedBox(width: 16),
+                            Expanded(child: sessionDetails),
+                            if (endShiftButton != null) ...[
+                              const SizedBox(width: 16),
+                              endShiftButton,
+                            ],
+                          ],
+                        );
+                      },
                     ),
                   ),
 
@@ -606,223 +674,245 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final isWide = constraints.maxWidth > 750;
+
+                      final drawerContainer = Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: palette.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              Border.all(color: palette.borderSubtle),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.account_balance_wallet_rounded,
+                                    color: palette.neonGreen, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'CASH DRAWER & TENDER BREAKDOWN',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: palette.textPrimary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Divider(
+                                color: palette.borderSubtle, height: 20),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'Beginning Drawer Cash (Float)',
+                              value: currencyFmt.format(openingFloat),
+                            ),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'Cash Tendered ($cashCount orders)',
+                              value: currencyFmt.format(cashSales),
+                              isAccent: true,
+                            ),
+                            Container(
+                              margin:
+                                  const EdgeInsets.symmetric(vertical: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: palette.surfaceElevated,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: palette.neonGreen
+                                        .withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'EXPECTED DRAWER CASH',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: palette.neonGreen,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    currencyFmt.format(expectedCash),
+                                    style: TextStyle(
+                                      color: palette.neonGreen,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'GCash / Maya / QR Ph ($gcashCount orders)',
+                              value: currencyFmt.format(gcashSales),
+                            ),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'Credit / Debit Card ($cardCount orders)',
+                              value: currencyFmt.format(cardSales),
+                            ),
+                            Divider(
+                                color: palette.borderSubtle, height: 16),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'TOTAL GROSS TENDERED',
+                              value: currencyFmt.format(grossTendered),
+                              isBold: true,
+                            ),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'Completed Transactions Count',
+                              value: '$totalTransactionsCount',
+                            ),
+                          ],
+                        ),
+                      );
+
+                      final birContainer = Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: palette.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              Border.all(color: palette.borderSubtle),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.receipt_long_rounded,
+                                    color: palette.neonLime, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'BIR STATUTORY TAX & VOID AUDIT',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: palette.textPrimary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Divider(
+                                color: palette.borderSubtle, height: 20),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'VATable Sales (Net of 12% VAT)',
+                              value: currencyFmt.format(vatableSales),
+                            ),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'VAT Amount (12%)',
+                              value: currencyFmt.format(vatAmount),
+                            ),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'VAT-Exempt Sales (Senior/PWD)',
+                              value: currencyFmt.format(vatExemptSales),
+                            ),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'Discounts Total (20% Statutory)',
+                              value:
+                                  '-${currencyFmt.format(discountTotal)}',
+                              isMuted: discountTotal <= 0,
+                            ),
+                            Divider(
+                                color: palette.borderSubtle, height: 16),
+                            _buildLineItem(
+                              palette: palette,
+                              label: 'NET PAYABLE / SALES COLLECTED',
+                              value: currencyFmt.format(grossTendered),
+                              isBold: true,
+                            ),
+                            Divider(
+                                color: palette.borderSubtle, height: 20),
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.cancel_outlined,
+                                          size: 15,
+                                          color: palette.errorRed),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          'Voided Transactions Audit',
+                                          style: TextStyle(
+                                            color: palette.textSecondary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${voidedTxs.length} voids (${currencyFmt.format(voidAmount)})',
+                                  style: TextStyle(
+                                    color: voidedTxs.isNotEmpty
+                                        ? palette.errorRed
+                                        : palette.textMuted,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (!isWide) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            drawerContainer,
+                            const SizedBox(height: 16),
+                            birContainer,
+                          ],
+                        );
+                      }
+
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Left Column: Drawer Reconciliation & Tender Breakdown
                           Expanded(
-                            flex: isWide ? 6 : 1,
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: palette.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border:
-                                    Border.all(color: palette.borderSubtle),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.account_balance_wallet_rounded,
-                                          color: palette.neonGreen, size: 18),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'CASH DRAWER & TENDER BREAKDOWN',
-                                        style: TextStyle(
-                                          color: palette.textPrimary,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(
-                                      color: palette.borderSubtle, height: 20),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'Beginning Drawer Cash (Float)',
-                                    value: currencyFmt.format(openingFloat),
-                                  ),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'Cash Tendered ($cashCount orders)',
-                                    value: currencyFmt.format(cashSales),
-                                    isAccent: true,
-                                  ),
-                                  Container(
-                                    margin:
-                                        const EdgeInsets.symmetric(vertical: 8),
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: palette.surfaceElevated,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: palette.neonGreen
-                                              .withValues(alpha: 0.3)),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'EXPECTED DRAWER CASH',
-                                          style: TextStyle(
-                                            color: palette.neonGreen,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        Text(
-                                          currencyFmt.format(expectedCash),
-                                          style: TextStyle(
-                                            color: palette.neonGreen,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'GCash / Maya / QR Ph ($gcashCount orders)',
-                                    value: currencyFmt.format(gcashSales),
-                                  ),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'Credit / Debit Card ($cardCount orders)',
-                                    value: currencyFmt.format(cardSales),
-                                  ),
-                                  Divider(
-                                      color: palette.borderSubtle, height: 16),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'TOTAL GROSS TENDERED',
-                                    value: currencyFmt.format(grossTendered),
-                                    isBold: true,
-                                  ),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'Completed Transactions Count',
-                                    value: '$totalTransactionsCount',
-                                  ),
-                                ],
-                              ),
-                            ),
+                            flex: 6,
+                            child: drawerContainer,
                           ),
-
                           const SizedBox(width: 16),
-
-                          // Right Column: Statutory BIR Tax Breakdown & Void Audit
                           Expanded(
-                            flex: isWide ? 6 : 1,
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: palette.surface,
-                                borderRadius: BorderRadius.circular(12),
-                                border:
-                                    Border.all(color: palette.borderSubtle),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.receipt_long_rounded,
-                                          color: palette.neonLime, size: 18),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'BIR STATUTORY TAX & VOID AUDIT',
-                                        style: TextStyle(
-                                          color: palette.textPrimary,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(
-                                      color: palette.borderSubtle, height: 20),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'VATable Sales (Net of 12% VAT)',
-                                    value: currencyFmt.format(vatableSales),
-                                  ),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'VAT Amount (12%)',
-                                    value: currencyFmt.format(vatAmount),
-                                  ),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'VAT-Exempt Sales (Senior/PWD)',
-                                    value: currencyFmt.format(vatExemptSales),
-                                  ),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'Discounts Total (20% Statutory)',
-                                    value:
-                                        '-${currencyFmt.format(discountTotal)}',
-                                    isMuted: discountTotal <= 0,
-                                  ),
-                                  Divider(
-                                      color: palette.borderSubtle, height: 16),
-                                  _buildLineItem(
-                                    palette: palette,
-                                    label: 'NET PAYABLE / SALES COLLECTED',
-                                    value: currencyFmt.format(grossTendered),
-                                    isBold: true,
-                                  ),
-                                  Divider(
-                                      color: palette.borderSubtle, height: 20),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Row(
-                                          children: [
-                                            Icon(Icons.cancel_outlined,
-                                                size: 15,
-                                                color: palette.errorRed),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: Text(
-                                                'Voided Transactions Audit',
-                                                style: TextStyle(
-                                                  color: palette.textSecondary,
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '${voidedTxs.length} voids (${currencyFmt.format(voidAmount)})',
-                                        style: TextStyle(
-                                          color: voidedTxs.isNotEmpty
-                                              ? palette.errorRed
-                                              : palette.textMuted,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
+                            flex: 6,
+                            child: birContainer,
                           ),
                         ],
                       );
@@ -847,14 +937,18 @@ class _ShiftReportsViewState extends State<ShiftReportsView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isMuted ? palette.textMuted : palette.textSecondary,
-              fontSize: 12,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isMuted ? palette.textMuted : palette.textSecondary,
+                fontSize: 12,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ),
+          const SizedBox(width: 8),
           Text(
             value,
             style: TextStyle(

@@ -20,11 +20,13 @@ import '../../core/utils/responsive_layout.dart';
 class CourtReservationScreen extends StatefulWidget {
   final int initialSubTab; // 0 = Pickleball, 1 = Basketball, 2 = Events Place
   final VoidCallback? onViewBookings;
+  final DateTime? initialDate;
 
   const CourtReservationScreen({
     super.key,
     this.initialSubTab = 0,
     this.onViewBookings,
+    this.initialDate,
   });
 
   @override
@@ -68,7 +70,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   }
 
   // Booking details state
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   Set<int> _selectedSlotIndices = {2}; // Default 8:00 AM (index 2: 0=6am, 1=7am, 2=8am)
   bool _paddleRental = false; // +₱150 flat
   bool _ballThrowerRental = false; // +₱150/hr
@@ -100,6 +102,7 @@ class _CourtReservationScreenState extends State<CourtReservationScreen>
   void initState() {
     super.initState();
     _activeModeIndex = widget.initialSubTab.clamp(0, 2);
+    _selectedDate = widget.initialDate ?? DateTime.now();
     _initializeData();
     _initRealtimeSubscription();
   }

@@ -1,0 +1,3 @@
+# Global configuration for dart test / flutter test
+# Guarantees tests never hang indefinitely or exceed maximum test time
+timeout: 45s

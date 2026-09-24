@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/constants/paymongo_config.dart';
+import '../core/constants/supabase_config.dart';
 import '../core/utils/bir_tax_breakdown.dart';
 import '../data/mock_pos_data.dart';
 import '../models/daily_expense_model.dart';
@@ -156,7 +157,7 @@ class PosService {
   Future<bool> updateProductStock(String productId, int newStock) async {
     MockPosData.updateProductStock(productId, newStock);
     final client = _supabase;
-    if (client == null) {
+    if (client == null || SupabaseConfig.enforceReadOnlyBackend) {
       notifyPosUpdates();
       return true;
     }
@@ -211,7 +212,7 @@ class PosService {
   Future<DailyExpenseModel?> createDailyExpense(DailyExpenseModel expense) async {
     MockPosData.addDailyExpense(expense);
     final client = _supabase;
-    if (client == null) {
+    if (client == null || SupabaseConfig.enforceReadOnlyBackend) {
       notifyPosUpdates();
       return expense;
     }
@@ -391,7 +392,7 @@ class PosService {
     required List<Map<String, dynamic>> items,
   }) async {
     final client = _supabase;
-    if (client == null) {
+    if (client == null || SupabaseConfig.enforceReadOnlyBackend) {
       final tx = MockPosData.recordTransaction(
         cashierId: cashierId,
         cashierName: cashierName,
@@ -514,6 +515,29 @@ class PosService {
     }
   }
 
+  /// Alias for createTransaction
+  Future<PosTransactionModel> recordTransaction({
+    required String cashierId,
+    required String? cashierName,
+    required String? customerName,
+    required String? customerTin,
+    required String discountType,
+    required String? discountIdNumber,
+    required BirTaxBreakdown taxBreakdown,
+    required String paymentMethod,
+    required List<Map<String, dynamic>> items,
+  }) => createTransaction(
+    cashierId: cashierId,
+    cashierName: cashierName,
+    customerName: customerName,
+    customerTin: customerTin,
+    discountType: discountType,
+    discountIdNumber: discountIdNumber,
+    taxBreakdown: taxBreakdown,
+    paymentMethod: paymentMethod,
+    items: items,
+  );
+
   /// Repository method: atomically records order to local SQLite + sync queue, then triggers push
   Future<PosTransactionModel> saveOrderAndPush(PosTransactionModel tx) async {
     return await SyncService.instance.saveOrderAndPush(tx);
@@ -579,7 +603,7 @@ class PosService {
     notifyPosUpdates();
 
     final client = _supabase;
-    if (client == null) {
+    if (client == null || SupabaseConfig.enforceReadOnlyBackend) {
       return true;
     }
 
@@ -654,7 +678,7 @@ class PosService {
     String? customerPhone,
   }) async {
     final secretKey = PayMongoConfig.secretKey;
-    if (secretKey.isEmpty) {
+    if (secretKey.isEmpty || SupabaseConfig.enforceReadOnlyBackend) {
       // Offline / unconfigured fallback: generate simulated checkout session
       final mockId = 'pos_cs_${DateTime.now().millisecondsSinceEpoch}';
       return {

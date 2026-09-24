@@ -165,11 +165,12 @@ class AuthService {
       );
       return response;
     } catch (e) {
-      if (cleanEmail == 'player@pickleball.com' ||
-          cleanEmail == 'player@pickleball.dev' ||
-          cleanEmail == 'alex.morgan@pickleball.dev' ||
-          cleanEmail == 'alex@pickleball.com') {
-        debugPrint('Fallback to demo player session for sample account: $cleanEmail');
+      if (kDebugMode &&
+          (cleanEmail == 'player@pickleball.com' ||
+              cleanEmail == 'player@pickleball.dev' ||
+              cleanEmail == 'alex.morgan@pickleball.dev' ||
+              cleanEmail == 'alex@pickleball.com')) {
+        debugPrint('Debug mode: fallback to demo player session for sample account: $cleanEmail');
         return signInAsGuest(email: cleanEmail, fullName: 'Alex Morgan');
       }
       _handleAuthError(e);
@@ -412,8 +413,11 @@ class AuthService {
     final uid = userId ?? currentUser?.id;
 
     if (isSupabaseReady && _supabase != null) {
+      final isValidUuid = uid != null &&
+          RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+              .hasMatch(uid);
       try {
-        if (uid != null) {
+        if (uid != null && isValidUuid) {
           final data = await _supabase!
               .from('profiles')
               .select()

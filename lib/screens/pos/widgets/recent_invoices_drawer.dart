@@ -176,31 +176,38 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.accentColor.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentColor.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.history,
+                            color: AppTheme.accentColor,
+                            size: 20,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.history,
-                          color: AppTheme.accentColor,
-                          size: 20,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Recent Invoices & Void Audit',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Recent Invoices & Void Audit',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   IconButton(
                     icon: Icon(Icons.close, color: colors.textSecondary),
                     onPressed: () => Navigator.of(context).pop(),
@@ -240,85 +247,82 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _buildFilterChip('All', 'all', colors),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Completed', 'completed', colors),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Voided', 'voided', colors),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.refresh, size: 18),
-                        color: colors.textSecondary,
-                        tooltip: 'Refresh Invoices',
-                        onPressed: _loadTransactions,
-                      ),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterChip('All', 'all', colors),
+                        const SizedBox(width: 8),
+                        _buildFilterChip('Completed', 'completed', colors),
+                        const SizedBox(width: 8),
+                        _buildFilterChip('Voided', 'voided', colors),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.refresh, size: 18),
+                          color: colors.textSecondary,
+                          tooltip: 'Refresh Invoices',
+                          onPressed: _loadTransactions,
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 10),
                   // Sort Options & Asc/Desc Toggle Bar
-                  Row(
-                    children: [
-                      Text(
-                        'SORT:',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _buildSortChip('Time Added', 'time_added', colors),
-                              const SizedBox(width: 6),
-                              _buildSortChip('Invoice #', 'invoice_no', colors),
-                              const SizedBox(width: 6),
-                              _buildSortChip('Recently Voided', 'recently_voided', colors),
-                              const SizedBox(width: 6),
-                              _buildSortChip('Amount', 'amount', colors),
-                            ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        Text(
+                          'SORT:',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                            color: colors.textSecondary,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      InkWell(
-                        onTap: () => setState(() => _isAscending = !_isAscending),
-                        borderRadius: BorderRadius.circular(6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: colors.surface,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: colors.border),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                                size: 13,
-                                color: AppTheme.accentColor,
-                              ),
-                              const SizedBox(width: 3),
-                              Text(
-                                _isAscending ? 'ASC' : 'DESC',
-                                style: GoogleFonts.inter(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
+                        const SizedBox(width: 8),
+                        _buildSortChip('Time Added', 'time_added', colors),
+                        const SizedBox(width: 6),
+                        _buildSortChip('Invoice #', 'invoice_no', colors),
+                        const SizedBox(width: 6),
+                        _buildSortChip('Recently Voided', 'recently_voided', colors),
+                        const SizedBox(width: 6),
+                        _buildSortChip('Amount', 'amount', colors),
+                        const SizedBox(width: 6),
+                        InkWell(
+                          onTap: () => setState(() => _isAscending = !_isAscending),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: colors.surface,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: colors.border),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                  size: 13,
                                   color: AppTheme.accentColor,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 3),
+                                Text(
+                                  _isAscending ? 'ASC' : 'DESC',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppTheme.accentColor,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -456,28 +460,37 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                tx.invoiceNumber,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
+              Expanded(
+                child: Text(
+                  tx.invoiceNumber,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: tx.isVoided
-                      ? Colors.redAccent.withValues(alpha: 0.15)
-                      : AppTheme.accentColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  tx.status.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: tx.isVoided ? Colors.redAccent : AppTheme.accentColor,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: tx.isVoided
+                        ? Colors.redAccent.withValues(alpha: 0.15)
+                        : AppTheme.accentColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    tx.status.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: tx.isVoided ? Colors.redAccent : AppTheme.accentColor,
+                    ),
                   ),
                 ),
               ),
@@ -487,16 +500,25 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                dateFormat.format(tx.createdAt),
-                style: GoogleFonts.inter(fontSize: 11, color: colors.textSecondary),
+              Expanded(
+                child: Text(
+                  dateFormat.format(tx.createdAt),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(fontSize: 11, color: colors.textSecondary),
+                ),
               ),
-              Text(
-                '₱${tx.totalAmount.toStringAsFixed(2)}',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: tx.isVoided ? colors.textSecondary : AppTheme.accentColor,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '₱${tx.totalAmount.toStringAsFixed(2)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: tx.isVoided ? colors.textSecondary : AppTheme.accentColor,
+                  ),
                 ),
               ),
             ],
@@ -505,23 +527,33 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Payment: ${tx.paymentMethod}',
-                style: GoogleFonts.inter(fontSize: 11, color: colors.textSecondary),
+              Expanded(
+                child: Text(
+                  'Payment: ${tx.paymentMethod}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(fontSize: 11, color: colors.textSecondary),
+                ),
               ),
-              if (tx.hasDiscount)
-                Text(
-                  tx.discountType == 'senior_citizen'
-                      ? 'Senior (20%)'
-                      : tx.discountType == 'pwd'
-                          ? 'PWD (20%)'
-                          : 'Discounted',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.amberAccent,
+              if (tx.hasDiscount) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    tx.discountType == 'senior_citizen'
+                        ? 'Senior (20%)'
+                        : tx.discountType == 'pwd'
+                            ? 'PWD (20%)'
+                            : 'Discounted',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.amberAccent,
+                    ),
                   ),
                 ),
+              ],
             ],
           ),
           if (tx.isVoided && tx.voidReason != null) ...[
@@ -544,8 +576,10 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
             ),
           ],
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 8,
+            runSpacing: 4,
             children: [
               TextButton.icon(
                 icon: const Icon(Icons.receipt_outlined, size: 16),
@@ -556,8 +590,7 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
                 ),
                 onPressed: () => ThermalReceiptModal.show(context, transaction: tx, autoPrint: false),
               ),
-              if (!tx.isVoided) ...[
-                const SizedBox(width: 8),
+              if (!tx.isVoided)
                 TextButton.icon(
                   icon: const Icon(Icons.cancel_outlined, size: 16),
                   label: const Text('Void Sale'),
@@ -567,7 +600,6 @@ class _RecentInvoicesDrawerState extends State<RecentInvoicesDrawer> {
                   ),
                   onPressed: () => _handleVoidTransaction(tx),
                 ),
-              ],
             ],
           ),
         ],

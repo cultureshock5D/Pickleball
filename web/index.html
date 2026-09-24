@@ -23,7 +23,6 @@
 
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' http://127.0.0.1:5858 https://*.supabase.co wss://*.supabase.co https://api.paymongo.com https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; object-src 'none'; base-uri 'self'; form-action 'self';">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -39,7 +38,7 @@
 </head>
 <body>
   <script>
-    // Direct Driverless Web Serial and Local Bridge for Thermal Receipt Printers (JP58H-0A4B)
+    // Universal Driverless Web Serial, Local Bridge, and System Printing for POS Printers
     window.posThermalPrinter = {
       port: null,
       async isSupported() {
@@ -54,7 +53,7 @@
               supported: true,
               connected: true,
               mode: 'local_bridge',
-              message: 'Local Python COM4 Bridge Active'
+              message: 'Local Python Serial Bridge Active'
             };
           }
         } catch (e) {}
@@ -82,12 +81,12 @@
         try {
           const resp = await fetch('http://127.0.0.1:5858/', { method: 'GET', signal: AbortSignal.timeout(1000) });
           if (resp.ok) {
-            return { success: true, message: 'Connected to Local Python COM4 Bridge!' };
+            return { success: true, message: 'Connected to Local Serial Bridge!' };
           }
         } catch (e) {}
 
         if (!('serial' in navigator)) {
-          throw new Error('Web Serial is only supported in Microsoft Edge or Google Chrome.');
+          throw new Error('Web Serial is supported in Microsoft Edge or Google Chrome.');
         }
 
         if (this.port) {
@@ -95,7 +94,7 @@
         }
         this.port = await navigator.serial.requestPort();
         await this.port.open({ baudRate: 9600 });
-        return { success: true, message: 'Web Serial port opened at 9600 baud.' };
+        return { success: true, message: 'Web Serial port opened successfully at 9600 baud.' };
       },
       async printRawBytes(base64Data) {
         // 1. Try local bridge server first
@@ -108,7 +107,7 @@
           });
           if (resp.ok) {
             const json = await resp.json();
-            return { success: true, message: 'Printed ' + (json.bytesPrinted || '') + ' bytes via Local COM4 Bridge!' };
+            return { success: true, message: 'Printed ' + (json.bytesPrinted || '') + ' bytes via Local Serial Bridge!' };
           }
         } catch (e) {}
 
@@ -145,7 +144,31 @@
         } finally {
           try { writer.releaseLock(); } catch (_) {}
         }
-        return { success: true, message: 'Printed ' + bytes.length + ' bytes via Edge Web Serial to JP58H-0A4B!' };
+        return { success: true, message: 'Printed ' + bytes.length + ' bytes via Web Serial!' };
+      },
+      async printSystemReceipt(htmlOrText) {
+        try {
+          const iframe = document.createElement('iframe');
+          iframe.style.position = 'fixed';
+          iframe.style.right = '0';
+          iframe.style.bottom = '0';
+          iframe.style.width = '0';
+          iframe.style.height = '0';
+          iframe.style.border = '0';
+          document.body.appendChild(iframe);
+          const doc = iframe.contentWindow.document;
+          doc.open();
+          doc.write('<!DOCTYPE html><html><head><title>Receipt</title><style>@media print { @page { margin: 3mm; size: auto; } body { margin: 0; } } body { font-family: Courier, monospace; font-size: 12px; line-height: 1.4; color: #000; white-space: pre-wrap; padding: 8px; max-width: 320px; margin: 0 auto; }</style></head><body>' + htmlOrText + '</body></html>');
+          doc.close();
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+          setTimeout(() => {
+            if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+          }, 2000);
+          return { success: true, message: 'Receipt sent to System Print dialog.' };
+        } catch (e) {
+          return { success: false, message: 'System print error: ' + e };
+        }
       }
     };
   </script>

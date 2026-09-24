@@ -99,7 +99,7 @@ void main() {
       expect(find.text('Cashier & Pro Shop Staff register only.'), findsOneWidget);
     });
 
-    testWidgets('PosScreen renders mobile logout button in header bar and sidebar drawer', (tester) async {
+    testWidgets('PosScreen renders logout button in navigation drawer only, not in header bar', (tester) async {
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -117,12 +117,22 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Verify compact header contains direct Sign Out icon button
+      // Verify compact header does NOT contain direct Sign Out icon button
       final headerLogoutBtn = find.byTooltip('Sign Out / Close Register');
-      expect(headerLogoutBtn, findsOneWidget);
+      expect(headerLogoutBtn, findsNothing);
 
-      // Tap header logout button and verify confirmation dialog appears
-      await tester.tap(headerLogoutBtn);
+      // Open mobile drawer
+      final menuBtn = find.byTooltip('Navigation Menu');
+      expect(menuBtn, findsOneWidget);
+      await tester.tap(menuBtn);
+      await tester.pumpAndSettle();
+
+      // Drawer contains "Sign Out / Close Register"
+      final drawerLogoutBtn = find.text('Sign Out / Close Register');
+      expect(drawerLogoutBtn, findsOneWidget);
+
+      // Tap drawer logout button and verify confirmation dialog appears
+      await tester.tap(drawerLogoutBtn);
       await tester.pumpAndSettle();
 
       expect(find.text('Close Cashier Register?'), findsOneWidget);
@@ -132,19 +142,10 @@ void main() {
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(find.text('Close Cashier Register?'), findsNothing);
-
-      // Open mobile drawer
-      final menuBtn = find.byTooltip('Navigation Menu');
-      expect(menuBtn, findsOneWidget);
-      await tester.tap(menuBtn);
-      await tester.pumpAndSettle();
-
-      // Drawer contains "Sign Out / Close Register"
-      expect(find.text('Sign Out / Close Register'), findsOneWidget);
     });
 
-    testWidgets('PosScreen horizontal phone layout hides active orders and allows opening operations drawer', (tester) async {
-      tester.view.physicalSize = const Size(844, 390);
+    testWidgets('PosScreen vertical layout shows View Cart bottom bar and modal sheet', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
         tester.view.resetPhysicalSize();
@@ -161,11 +162,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Active orders pane is hidden while ordering on horizontal phone
+      // In vertical orientation, cart is collapsed to bottom View Cart bar
       expect(find.text('Active Order (0 items)'), findsNothing);
       expect(find.text('View Cart'), findsOneWidget);
 
-      // Operations menu button is available on horizontal
+      // Operations menu button is available
       final menuBtn = find.byTooltip('Navigation Menu');
       expect(menuBtn, findsOneWidget);
 
@@ -200,7 +201,7 @@ void main() {
       expect(find.text('Active Order (0 items)'), findsNothing);
     });
 
-    testWidgets('PosScreen tablet dual-pane layout supports toggling cart pane', (tester) async {
+    testWidgets('PosScreen horizontal layout auto-pops cart dual-pane and shows single navigation menu', (tester) async {
       tester.view.physicalSize = const Size(1024, 768);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -218,24 +219,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Dual pane layout initially visible
+      // Dual pane layout auto-pops cart side-by-side
       expect(find.text('Active Order (0 items)'), findsOneWidget);
-      expect(find.text('Hide Cart'), findsOneWidget);
+      // Hide Cart button and Table view toggle were removed
+      expect(find.text('Hide Cart'), findsNothing);
+      expect(find.text('Table'), findsNothing);
 
-      // Tap Hide Cart to collapse order pane
-      await tester.tap(find.text('Hide Cart'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Active Order (0 items)'), findsNothing);
-      expect(find.text('Show Cart'), findsOneWidget);
-      expect(find.text('View Cart'), findsOneWidget);
-
-      // Tap Show Cart to restore dual pane
-      await tester.tap(find.text('Show Cart'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Active Order (0 items)'), findsOneWidget);
-      expect(find.text('Hide Cart'), findsOneWidget);
+      // Navigation menu shows exactly one button
+      expect(find.byTooltip('Navigation Menu'), findsOneWidget);
     });
   });
 }

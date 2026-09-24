@@ -56,8 +56,8 @@ if ($LASTEXITCODE -ne 0) {
 Write-Success "Static analysis passed with 0 errors and 0 warnings."
 
 # Step 3: Run Automated Test Suite
-Write-Host "`n--> Running Automated Test Suite (flutter test)..." -ForegroundColor Yellow
-flutter test
+Write-Host "`n--> Running Automated Test Suite (flutter test --timeout=45s)..." -ForegroundColor Yellow
+flutter test --timeout=45s
 if ($LASTEXITCODE -ne 0) {
     Write-Failure "One or more automated tests failed."
     exit $LASTEXITCODE

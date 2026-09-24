@@ -20,7 +20,7 @@ void main() {
       // Verify receipt contains brand name and test markers
       final text = String.fromCharCodes(bytes);
       expect(text.contains('C&J SPORTS ARENA POS'), isTrue);
-      expect(text.contains('JP58H-0A4B (58mm)'), isTrue);
+      expect(text.contains('Universal ESC/POS (58mm)'), isTrue);
       expect(text.contains('TEST PRINT SUCCESSFUL'), isTrue);
       expect(text.endsWith('\n\n\n\n'), isTrue);
     });
@@ -28,13 +28,13 @@ void main() {
     test('PrinterResult model constructor holds correct state', () {
       const successResult = PrinterResult(
         success: true,
-        message: 'Printed to JP58H-0A4B',
-        deviceName: 'JP58H-0A4B',
+        message: 'Printed to Receipt Printer',
+        deviceName: 'POS Printer',
       );
 
       expect(successResult.success, isTrue);
-      expect(successResult.message, 'Printed to JP58H-0A4B');
-      expect(successResult.deviceName, 'JP58H-0A4B');
+      expect(successResult.message, 'Printed to Receipt Printer');
+      expect(successResult.deviceName, 'POS Printer');
 
       const errorResult = PrinterResult(
         success: false,
@@ -170,11 +170,12 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Thermal Printer Diagnostics'), findsOneWidget);
-      expect(find.text('XP-58H / JP58H • 58mm Driverless ESC/POS'), findsOneWidget);
+      expect(find.text('Thermal & POS Printer Diagnostics'), findsOneWidget);
+      expect(find.text('Universal POS • Thermal & System Printer'), findsOneWidget);
       expect(find.text('100% DRIVERLESS'), findsOneWidget);
-      expect(find.text('Connect / Select Port'), findsOneWidget);
-      expect(find.text('Print Test'), findsOneWidget);
+      expect(find.text('Connect Port'), findsOneWidget);
+      expect(find.text('ESC/POS Test'), findsOneWidget);
+      expect(find.text('System Print'), findsOneWidget);
       expect(find.text('Realtime Diagnostic Log:'), findsOneWidget);
     });
   });
@@ -184,8 +185,8 @@ void main() {
       ThermalPrinterService.testPrintHandler = (bytes) async {
         return const PrinterResult(
           success: true,
-          message: 'Printed to JP58H-0A4B (Test Mock)',
-          deviceName: 'JP58H-0A4B',
+          message: 'Printed to Receipt Printer (Test Mock)',
+          deviceName: 'POS Printer',
         );
       };
     });
@@ -238,7 +239,7 @@ void main() {
       expect(find.text('Print Again'), findsOneWidget);
       expect(find.text('Done'), findsOneWidget);
       expect(find.text('Copy ESC/POS'), findsOneWidget);
-      expect(find.text('Print 80mm'), findsOneWidget);
+      expect(find.text('System Print'), findsOneWidget);
       expect(find.text('Long Black'), findsWidgets);
     });
 

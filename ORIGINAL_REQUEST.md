@@ -123,3 +123,50 @@ Integrity mode: development
 - [ ] `dart analyze --fatal-infos` passes with 0 warnings/errors.
 - [ ] 100% of automated tests in `test/` pass.
 
+## Follow-up — 2026-09-22T09:31:08Z
+
+<USER_REQUEST>
+Requested team: Full multi-agent team (parallel workstreams across UI, logic, audit, and tests)
+
+Enhance and harden the features of the Pickleball Flutter mobile application with production-grade improvements across the POS Cashier system, Court Reservation flow, and Arena UI/UX, while strictly maintaining external backends as read-only.
+
+Working directory: c:\Users\koi\Documents\repositories\Pickleball
+Integrity mode: development
+
+## Requirements
+
+### R1. POS Cashier & Shift Management
+Provide an intuitive and responsive point-of-sale experience for venue cashiers, including order assembling, cart management, itemized receipt display, and shift session tracking. Ensure multi-orientation responsiveness across both portrait and landscape views.
+
+### R2. Court Reservation & Multi-Sport Scheduling
+Streamline court booking and scheduling workflows across available sports courts, supporting interactive slot selection, equipment/service add-ons, calendar sync export links, and immediate reservation confirmation with QR pass generation.
+
+### R3. Arena Home & High-Contrast Luxury UI
+Deliver a polished luxury sports-tech interface following the dark slate palette and high-contrast Electric Lime accents. Maintain accessible touch targets (minimum 48x48dp), smooth view transitions, and responsive behavior across compact and expanded screens.
+
+### R4. Read-Only Backend & Offline Resilience (Controlled Infrastructure)
+Strictly enforce read-only interaction with Supabase and PayMongo services. All mutations, order placements, and test checkouts must operate purely in local client state or fall back cleanly to mock data structures without writing to remote databases or triggering live payment charges.
+
+### R5. Verification & Test Suite Integrity
+Maintain full test suite health and static analysis compliance. Any added or modified features must be accompanied by relevant unit or widget tests.
+
+## Acceptance Criteria
+
+### Automated Verification
+- [ ] Static analysis passes with zero errors and zero warnings (`dart analyze --fatal-infos` exits with code 0).
+- [ ] 100% of the automated test suite passes (`flutter test` passes all tests without failures).
+- [ ] Full quality gate verification passes cleanly via `.\scripts\verify.ps1`.
+
+### Backend & Network Safety
+- [ ] Supabase and PayMongo remote services are treated as strictly read-only; no remote write operations or live checkout API calls are executed.
+- [ ] Application functions reliably offline using local state and mock fallback data when credentials are absent or network is unavailable.
+</USER_REQUEST>
+
+## Follow-up — 2026-09-22T12:50:19Z
+
+User directive registered & codified in AGENTS.md:
+"when the token runs out, always make the jobs continuable"
+
+Orchestrator and Sentinel must ensure that granular checkpoints (`progress.md`, `GATE_STATUS.md`, `handoff.md`, `PROJECT.md`) are saved continuously so that upon any quota exhaustion (HTTP 429), restart, or interruption, execution can seamlessly continue from the exact stopping point without repeating work.
+
+

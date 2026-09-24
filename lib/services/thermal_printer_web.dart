@@ -6,6 +6,9 @@ import 'printer_result.dart';
 @JS('posThermalPrinter.printRawBytes')
 external JSPromise<JSObject> _jsPrintRawBytes(JSString base64Data);
 
+@JS('posThermalPrinter.printSystemReceipt')
+external JSPromise<JSObject> _jsPrintSystemReceipt(JSString htmlOrText);
+
 @JS('posThermalPrinter.connect')
 external JSPromise<JSObject> _jsConnect();
 
@@ -25,8 +28,8 @@ Future<PrinterResult> platformPrint58mm(List<int> bytes) async {
     if (response.statusCode == 200) {
       return const PrinterResult(
         success: true,
-        message: 'Successfully printed to JP58H-0A4B via Local COM4 Bridge!',
-        deviceName: 'JP58H-0A4B (Local Bridge / COM4)',
+        message: 'Successfully printed via Local Serial Bridge!',
+        deviceName: 'Receipt Printer (Local Bridge)',
       );
     }
   } catch (_) {
@@ -39,13 +42,30 @@ Future<PrinterResult> platformPrint58mm(List<int> bytes) async {
     await promise.toDart;
     return const PrinterResult(
       success: true,
-      message: 'Successfully printed via Edge Web Serial directly to JP58H-0A4B!',
-      deviceName: 'JP58H-0A4B (Edge Web Serial)',
+      message: 'Successfully printed via Web Serial!',
+      deviceName: 'Receipt Printer (Web Serial)',
     );
   } catch (e) {
     return PrinterResult(
       success: false,
-      message: 'Edge Web Serial: $e. You can also run "python scripts/printer_bridge_server.py".',
+      message: 'Web Serial print error: $e',
+    );
+  }
+}
+
+Future<PrinterResult> platformPrintSystem(String receiptText) async {
+  try {
+    final promise = _jsPrintSystemReceipt(receiptText.toJS);
+    await promise.toDart;
+    return const PrinterResult(
+      success: true,
+      message: 'Receipt sent to System Print dialog.',
+      deviceName: 'System / Default Printer',
+    );
+  } catch (e) {
+    return PrinterResult(
+      success: false,
+      message: 'System print error: $e',
     );
   }
 }
@@ -59,20 +79,20 @@ Future<PrinterResult> platformConnectPrinter() async {
     if (resp.statusCode == 200) {
       return const PrinterResult(
         success: true,
-        message: 'Local Python COM4 Bridge is active & ready!',
-        deviceName: 'JP58H-0A4B (COM4)',
+        message: 'Local Serial Bridge is active & ready!',
+        deviceName: 'Receipt Printer (Local Bridge)',
       );
     }
   } catch (_) {}
 
-  // 2. Web Serial API in Edge
+  // 2. Web Serial API in Edge / Chrome
   try {
     final promise = _jsConnect();
     await promise.toDart;
     return const PrinterResult(
       success: true,
-      message: 'Web Serial port connected at 9600 baud!',
-      deviceName: 'JP58H-0A4B (COM4 / Bluetooth)',
+      message: 'Web Serial port connected!',
+      deviceName: 'Receipt Printer (Web Serial)',
     );
   } catch (e) {
     return PrinterResult(

@@ -91,4 +91,8 @@ class SupabaseConfig {
         currentKey.isNotEmpty &&
         !currentKey.contains('your-anon-key');
   }
+
+  /// Whether backend write mutations are strictly blocked to enforce read-only safety.
+  static const bool enforceReadOnlyBackend = true;
 }
+

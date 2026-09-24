@@ -11,6 +11,7 @@ import '../models/court_model.dart';
 import '../models/venue_model.dart';
 import '../data/mock_data.dart';
 import '../core/constants/paymongo_config.dart';
+import '../core/constants/supabase_config.dart';
 import 'auth_service.dart';
 
 export '../models/venue_model.dart' show KeysetCursor, PaginatedChunk, PageChunk;
@@ -347,9 +348,11 @@ class BookingService {
           if (b.status == 'cancelled' ||
               b.status == 'cancelled_refund_pending' ||
               b.status == 'expired' ||
-              b.status == 'void' ||
-              b.status == 'pending_payment' ||
-              b.status == 'pending') {
+              b.status == 'void') {
+            return false;
+          }
+          if ((b.status == 'pending_payment' || b.status == 'pending') &&
+              b.isHoldExpired) {
             return false;
           }
           return true;
@@ -410,9 +413,11 @@ class BookingService {
       if (b.status == 'cancelled' ||
           b.status == 'cancelled_refund_pending' ||
           b.status == 'expired' ||
-          b.status == 'void' ||
-          b.status == 'pending_payment' ||
-          b.status == 'pending') {
+          b.status == 'void') {
+        continue;
+      }
+      if ((b.status == 'pending_payment' || b.status == 'pending') &&
+          b.isHoldExpired) {
         continue;
       }
       final s = b.startTime;
@@ -503,11 +508,11 @@ class BookingService {
     double? totalAmount,
   }) async {
     final secretKey = PayMongoConfig.secretKey;
-    if (secretKey.isEmpty) {
-      final mockId = DateTime.now().millisecondsSinceEpoch.toString();
+    if (secretKey.isEmpty || SupabaseConfig.enforceReadOnlyBackend) {
+      final mockTimestamp = DateTime.now().millisecondsSinceEpoch;
       return {
-        'sessionId': 'mock_session_$mockId',
-        'checkoutUrl': 'https://checkout.paymongo.com/mock_checkout_$mockId',
+        'sessionId': 'mock_session_$mockTimestamp',
+        'checkoutUrl': 'https://checkout.paymongo.com/mock_session_$mockTimestamp',
         'status': 'active',
       };
     }
@@ -852,7 +857,7 @@ class BookingService {
       throw Exception('Slot No Longer Available: Time interval already booked.');
     }
 
-    if (!isSupabaseReady || _supabase == null) {
+    if (!isSupabaseReady || _supabase == null || SupabaseConfig.enforceReadOnlyBackend) {
       final user = _authService.currentUser;
       final now = DateTime.now();
       final expiresAt = now.add(const Duration(minutes: 5));
@@ -958,7 +963,7 @@ class BookingService {
       throw ArgumentError.value(totalAmount, 'totalAmount', 'Total amount must be non-negative');
     }
 
-    if (!isSupabaseReady || _supabase == null) {
+    if (!isSupabaseReady || _supabase == null || SupabaseConfig.enforceReadOnlyBackend) {
       final user = _authService.currentUser;
       final holdBooking = MockData.createMockBookingHold(
         courtId: courtId,
@@ -1262,7 +1267,7 @@ class BookingService {
       );
     }
 
-    if (!isSupabaseReady || _supabase == null) {
+    if (!isSupabaseReady || _supabase == null || SupabaseConfig.enforceReadOnlyBackend) {
       final cancelled = MockData.cancelMockBooking(booking.id);
       invalidateAvailabilityCache(
         courtId: booking.courtId,
@@ -1320,7 +1325,7 @@ class BookingService {
     required String accountNumber,
     String? reason,
   }) async {
-    if (!isSupabaseReady || _supabase == null) {
+    if (!isSupabaseReady || _supabase == null || SupabaseConfig.enforceReadOnlyBackend) {
       final refund = BookingRefundModel(
         id: 'mock-ref-${DateTime.now().millisecondsSinceEpoch}',
         bookingId: bookingId,
@@ -1414,7 +1419,7 @@ class BookingService {
     String bookingId, {
     String? paymongoSessionId,
   }) async {
-    if (_supabase != null) {
+    if (_supabase != null && !SupabaseConfig.enforceReadOnlyBackend) {
       try {
         // 1. Fetch current booking to check court & time
         final currentRes = await _supabase!
@@ -1542,4 +1547,11 @@ class BookingService {
     );
     return fallbackBooking;
   }
+
+  /// Alias for markBookingAsPaid
+  Future<BookingModel> markBookingPaid(
+    String bookingId, {
+    String? paymongoSessionId,
+  }) => markBookingAsPaid(bookingId, paymongoSessionId: paymongoSessionId);
 }
+

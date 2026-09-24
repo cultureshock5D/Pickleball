@@ -44,18 +44,97 @@ class ThermalReceiptModal extends StatefulWidget {
     return 'P${amount.toStringAsFixed(2)}';
   }
 
-  /// Converts text to 7-bit ASCII byte list safe for thermal printers
-  static List<int> asciiBytes(String text) {
-    final sanitized = text
+  /// Comprehensive ASCII normalizer and transliterator for thermal receipt printers.
+  /// Translates accented characters, currency symbols, smart quotes, strips emojis,
+  /// and guarantees that character length is 1:1 with byte length without drops.
+  static String sanitizeToPrintableAscii(String text) {
+    if (text.isEmpty) return '';
+
+    // 1. Replace specific non-ASCII characters & symbols
+    var s = text
         .replaceAll('₱', 'P')
+        .replaceAll('€', 'EUR')
+        .replaceAll('£', 'GBP')
+        .replaceAll('¥', 'JPY')
         .replaceAll('’', "'")
         .replaceAll('‘', "'")
         .replaceAll('“', '"')
         .replaceAll('”', '"')
         .replaceAll('•', '-')
+        .replaceAll('·', '-')
         .replaceAll('—', '-')
-        .replaceAll('–', '-');
-    return sanitized.codeUnits.map((c) => (c < 0 || c > 127) ? 63 : c).toList();
+        .replaceAll('–', '-')
+        .replaceAll('…', '...')
+        .replaceAll('©', '(C)')
+        .replaceAll('®', '(R)')
+        .replaceAll('™', 'TM')
+        .replaceAll('°', ' deg')
+        .replaceAll('ñ', 'n')
+        .replaceAll('Ñ', 'N')
+        .replaceAll('á', 'a')
+        .replaceAll('à', 'a')
+        .replaceAll('â', 'a')
+        .replaceAll('ä', 'a')
+        .replaceAll('Á', 'A')
+        .replaceAll('À', 'A')
+        .replaceAll('Â', 'A')
+        .replaceAll('Ä', 'A')
+        .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ê', 'e')
+        .replaceAll('ë', 'e')
+        .replaceAll('É', 'E')
+        .replaceAll('È', 'E')
+        .replaceAll('Ê', 'E')
+        .replaceAll('Ë', 'E')
+        .replaceAll('í', 'i')
+        .replaceAll('ì', 'i')
+        .replaceAll('î', 'i')
+        .replaceAll('ï', 'i')
+        .replaceAll('Í', 'I')
+        .replaceAll('Ì', 'I')
+        .replaceAll('Î', 'I')
+        .replaceAll('Ï', 'I')
+        .replaceAll('ó', 'o')
+        .replaceAll('ò', 'o')
+        .replaceAll('ô', 'o')
+        .replaceAll('ö', 'o')
+        .replaceAll('Ó', 'O')
+        .replaceAll('Ò', 'O')
+        .replaceAll('Ô', 'O')
+        .replaceAll('Ö', 'O')
+        .replaceAll('ú', 'u')
+        .replaceAll('ù', 'u')
+        .replaceAll('û', 'u')
+        .replaceAll('ü', 'u')
+        .replaceAll('Ú', 'U')
+        .replaceAll('Ù', 'U')
+        .replaceAll('Û', 'U')
+        .replaceAll('Ü', 'U')
+        .replaceAll('ç', 'c')
+        .replaceAll('Ç', 'C');
+
+    // 2. Filter out non-ASCII characters, emojis, and unprintable control chars
+    final buffer = StringBuffer();
+    for (final char in s.characters) {
+      final codeUnits = char.codeUnits;
+      if (codeUnits.length == 1) {
+        final c = codeUnits.first;
+        // Keep printable ASCII (32..126) and standard newlines (10, 13)
+        if ((c >= 32 && c <= 126) || c == 10 || c == 13) {
+          buffer.writeCharCode(c);
+        }
+      }
+      // Multibyte code units (emojis, surrogate pairs) are discarded safely
+    }
+
+    return buffer.toString().trim();
+  }
+
+  /// Converts text to 7-bit ASCII byte list safe for thermal printers
+  static List<int> asciiBytes(String text) {
+    final sanitized = sanitizeToPrintableAscii(text);
+    return sanitized.codeUnits;
   }
 
   /// Generates 80mm plain text receipt
@@ -84,8 +163,24 @@ class ThermalReceiptModal extends StatefulWidget {
     }
     sb.writeln('------------------------------------------');
     sb.writeln('ITEM                     QTY         TOTAL');
-    for (final item in transaction.items) {
-      final rawName = item.productName.trim();
+
+    final itemsToPrint = transaction.items.isNotEmpty
+        ? transaction.items
+        : (transaction.totalAmount > 0
+            ? [
+                PosTransactionItemModel(
+                  id: '',
+                  transactionId: transaction.id,
+                  productId: '',
+                  productName: 'POS Order Items',
+                  quantity: 1,
+                  priceAtTime: transaction.totalAmount,
+                ),
+              ]
+            : <PosTransactionItemModel>[]);
+
+    for (final item in itemsToPrint) {
+      final rawName = sanitizeToPrintableAscii(item.productName);
       final displayName = rawName.isEmpty ? 'Item' : rawName;
       final qty = item.quantity.toString().padLeft(4);
       final total = formatCurrency(item.subtotal).padLeft(14);
@@ -153,8 +248,24 @@ class ThermalReceiptModal extends StatefulWidget {
 
     bytes.addAll(asciiBytes("--------------------------------\n"));
     bytes.addAll(asciiBytes("ITEM              QTY     AMOUNT\n")); // 32 chars
-    for (final item in transaction.items) {
-      final rawName = item.productName.trim();
+
+    final itemsToPrint = transaction.items.isNotEmpty
+        ? transaction.items
+        : (transaction.totalAmount > 0
+            ? [
+                PosTransactionItemModel(
+                  id: '',
+                  transactionId: transaction.id,
+                  productId: '',
+                  productName: 'POS Order Items',
+                  quantity: 1,
+                  priceAtTime: transaction.totalAmount,
+                ),
+              ]
+            : <PosTransactionItemModel>[]);
+
+    for (final item in itemsToPrint) {
+      final rawName = sanitizeToPrintableAscii(item.productName);
       final displayName = rawName.isEmpty ? 'Item' : rawName;
       final qty = item.quantity.toString().padLeft(3);
       final total = formatEscPosCurrency(item.subtotal).padLeft(11);
@@ -286,6 +397,18 @@ class _ThermalReceiptModalState extends State<ThermalReceiptModal> {
     }
   }
 
+  Future<void> _triggerSystemPrint() async {
+    final plainText = _generatePlainTextReceipt();
+    final result = await ThermalPrinterService.printSystemReceipt(plainText);
+    if (!mounted) return;
+    if (result.success) {
+      AppSnackBar.success(context, result.message);
+    } else {
+      _copyReceipt(context);
+      AppSnackBar.info(context, '${result.message} Receipt text copied to clipboard.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -342,6 +465,37 @@ class _ThermalReceiptModalState extends State<ThermalReceiptModal> {
                         ],
                       ),
                     ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00E599).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFF00E599).withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.print_outlined, size: 12, color: Color(0xFF00E599)),
+                          const SizedBox(width: 4),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 130),
+                            child: Text(
+                              ThermalPrinterService.activeTargetPrinterName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF00E599),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 4),
                     IconButton(
                       icon: Icon(Icons.close, color: colors.textSecondary),
                       onPressed: () => Navigator.of(context).pop(),
@@ -718,7 +872,7 @@ class _ThermalReceiptModalState extends State<ThermalReceiptModal> {
                               ? 'Printing Receipt...'
                               : _hasPrinted
                                   ? 'Print Again'
-                                  : 'Print Receipt (JP58H 58mm)',
+                                  : 'Print Receipt',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
@@ -759,8 +913,8 @@ class _ThermalReceiptModalState extends State<ThermalReceiptModal> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: OutlinedButton.icon(
-                            icon: const Icon(Icons.print_outlined, size: 16),
-                            label: const Text('Print 80mm'),
+                            icon: const Icon(Icons.print_rounded, size: 16),
+                            label: const Text('System Print'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: colors.textPrimary,
                               side: BorderSide(color: colors.border),
@@ -769,10 +923,7 @@ class _ThermalReceiptModalState extends State<ThermalReceiptModal> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            onPressed: () {
-                              _copyReceipt(context);
-                              AppSnackBar.success(context, 'Receipt copied for 80mm printer spooler.');
-                            },
+                            onPressed: _triggerSystemPrint,
                           ),
                         ),
                         const SizedBox(width: 8),

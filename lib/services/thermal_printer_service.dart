@@ -10,9 +10,27 @@ class ThermalPrinterService {
   @visibleForTesting
   static Future<PrinterResult> Function(List<int> bytes)? testPrintHandler;
 
-  /// Check and connect to XP-58H / JP58H thermal printer.
+  /// Currently connected or targeted printer device name
+  static String activeTargetPrinterName = _defaultTargetPrinterName;
+
+  static String get _defaultTargetPrinterName {
+    if (kIsWeb) {
+      return 'Receipt Printer (Web Serial / System)';
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'POS-58 (Bluetooth SPP)';
+    } else if (defaultTargetPlatform == TargetPlatform.windows) {
+      return 'POS-58 (COM Port / System)';
+    }
+    return 'POS-58 Thermal / System';
+  }
+
+  /// Check and connect to available thermal / POS printer.
   static Future<PrinterResult> connectPrinter() async {
-    return await platformConnectPrinter();
+    final result = await platformConnectPrinter();
+    if (result.success && result.deviceName != null && result.deviceName!.isNotEmpty) {
+      activeTargetPrinterName = result.deviceName!;
+    }
+    return result;
   }
 
   /// Retrieve list of paired Bluetooth devices on the system.
@@ -20,20 +38,33 @@ class ThermalPrinterService {
     return await platformGetPairedPrinters();
   }
 
-  /// Send raw ESC/POS binary payload to JP58H-0A4B / POS-58 thermal printer.
+  /// Send raw ESC/POS binary payload to POS / thermal printer.
   /// On Android: streams directly via native RFCOMM Bluetooth SPP socket (Driverless).
-  /// On Windows: streams directly to COM4 / COM3 virtual serial port.
-  /// On Web (Edge): streams via Web Serial API or local COM4 Python bridge.
+  /// On Windows: streams directly to detected COM serial port.
+  /// On Web (Edge / Chrome): streams via Web Serial API or local serial Python bridge.
   static Future<PrinterResult> print58mmReceipt(List<int> bytes) async {
     if (testPrintHandler != null) {
       return await testPrintHandler!(bytes);
     }
     // Defense-in-depth: Ensure all byte elements are strictly in the range 0..255
     final safeBytes = bytes.map((b) => (b < 0 || b > 255) ? 0x20 : b).toList();
-    return await platformPrint58mm(safeBytes);
+    final result = await platformPrint58mm(safeBytes);
+    if (result.success && result.deviceName != null && result.deviceName!.isNotEmpty) {
+      activeTargetPrinterName = result.deviceName!;
+    }
+    return result;
   }
 
-  /// Generate the exact 58mm 32-column test receipt payload matching test_jp58h_print.py
+  /// Print receipt to ANY printer via standard OS / Browser System Print Dialog.
+  static Future<PrinterResult> printSystemReceipt(String plainTextReceipt) async {
+    final result = await platformPrintSystem(plainTextReceipt);
+    if (result.success && result.deviceName != null && result.deviceName!.isNotEmpty) {
+      activeTargetPrinterName = result.deviceName!;
+    }
+    return result;
+  }
+
+  /// Generate 32-column test receipt payload matching universal ESC/POS standards
   static List<int> generateTestReceiptBytes() {
     final now = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
     final bytes = <int>[];
@@ -46,7 +77,7 @@ class ThermalPrinterService {
     bytes.addAll('** BLUETOOTH PRINT TEST **\n'.codeUnits);
     // BOLD OFF
     bytes.addAll([0x1B, 0x45, 0x00]);
-    bytes.addAll('Printer: JP58H-0A4B (58mm)\n'.codeUnits);
+    bytes.addAll('Printer: Universal ESC/POS (58mm)\n'.codeUnits);
     bytes.addAll('Date: $now\n'.codeUnits);
     // LEFT
     bytes.addAll([0x1B, 0x61, 0x00]);
@@ -69,7 +100,7 @@ class ThermalPrinterService {
     bytes.addAll([0x1B, 0x61, 0x01, 0x1B, 0x45, 0x01]);
     bytes.addAll('*** TEST PRINT SUCCESSFUL ***\n'.codeUnits);
     bytes.addAll([0x1B, 0x45, 0x00]);
-    bytes.addAll('Direct Bluetooth ESC/POS OK\n'.codeUnits);
+    bytes.addAll('Universal ESC/POS OK\n'.codeUnits);
     bytes.addAll('\n\n\n\n'.codeUnits);
 
     return bytes;
@@ -81,3 +112,4 @@ class ThermalPrinterService {
     return await print58mmReceipt(testBytes);
   }
 }
+
