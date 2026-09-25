@@ -52,6 +52,36 @@ class BirTaxBreakdown {
         discountAmount: discount,
         netPayable: net,
       );
+    } else if (discountType == 'student') {
+      // 10% student discount without VAT exemption (Philippine EOPT)
+      final discount = round2(gross * 0.10);
+      final net = round2(gross - discount);
+      final vatable = round2(net / 1.12);
+      final vat = round2(net - vatable);
+
+      return BirTaxBreakdown(
+        grossSubtotal: round2(gross),
+        vatableSales: vatable,
+        vatAmount: vat,
+        vatExemptSales: 0.0,
+        discountAmount: discount,
+        netPayable: net,
+      );
+    } else if (discountType == 'staff') {
+      // 15% staff discount without VAT exemption
+      final discount = round2(gross * 0.15);
+      final net = round2(gross - discount);
+      final vatable = round2(net / 1.12);
+      final vat = round2(net - vatable);
+
+      return BirTaxBreakdown(
+        grossSubtotal: round2(gross),
+        vatableSales: vatable,
+        vatAmount: vat,
+        vatExemptSales: 0.0,
+        discountAmount: discount,
+        netPayable: net,
+      );
     } else {
       // Regular 12% VAT Registered Sale
       final vatable = round2(gross / 1.12);

@@ -11,6 +11,8 @@ import '../models/daily_expense_model.dart';
 import '../models/cashier_duty_session_model.dart';
 import '../models/pos_product_model.dart';
 import '../models/pos_transaction_model.dart';
+import '../models/booking_model.dart';
+import '../data/mock_data.dart';
 import 'auth_service.dart';
 import 'booking_service.dart';
 import 'pos_database.dart';
@@ -79,6 +81,15 @@ class PosService {
           table: 'cashier_duty_sessions',
           callback: (payload) {
             debugPrint('Realtime: cashier_duty_sessions changed (${payload.eventType})');
+            _controller.add(null);
+          },
+        )
+        ..onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'bookings',
+          callback: (payload) {
+            debugPrint('Realtime: bookings changed (${payload.eventType})');
             _controller.add(null);
           },
         )
@@ -786,5 +797,204 @@ class PosService {
       debugPrint('PosService checkPayMongoPaymentStatus notice: $e');
       return false;
     }
+  }
+
+  /// Fetch all court bookings for a specific calendar date (Manila UTC+8)
+  Future<List<BookingModel>> fetchScheduleBookings({DateTime? date}) async {
+    final targetDate = date ?? DateTime.now();
+    final client = _supabase;
+    if (client == null || SupabaseConfig.enforceReadOnlyBackend) {
+      final allMock = MockData.mockBookings;
+      return allMock.where((b) {
+        return b.startTime.year == targetDate.year &&
+            b.startTime.month == targetDate.month &&
+            b.startTime.day == targetDate.day;
+      }).toList();
+    }
+
+    try {
+      final startOfDay = DateTime(targetDate.year, targetDate.month, targetDate.day).toUtc().toIso8601String();
+      final endOfDay = DateTime(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59).toUtc().toIso8601String();
+
+      final response = await client
+          .from('bookings')
+          .select('*, courts(name, type, hourly_rate)')
+          .gte('start_time', startOfDay)
+          .lte('start_time', endOfDay)
+          .order('start_time', ascending: true);
+
+      final list = (response as List<dynamic>)
+          .map((item) => BookingModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+      return list;
+    } catch (e) {
+      debugPrint('PosService.fetchScheduleBookings fallback notice: $e');
+      final allMock = MockData.mockBookings;
+      return allMock.where((b) {
+        return b.startTime.year == targetDate.year &&
+            b.startTime.month == targetDate.month &&
+            b.startTime.day == targetDate.day;
+      }).toList();
+    }
+  }
+
+  /// Create Walk-in Booking on the spot from the Cashier Terminal
+  Future<BookingModel> createWalkInBooking({
+    required String courtId,
+    required DateTime startTime,
+    required int durationHours,
+    required double totalPrice,
+    required String guestName,
+    String? guestPhone,
+    required String paymentMethod,
+    required String cashierId,
+    double downPaymentAmount = 0.0,
+    String? notes,
+  }) async {
+    final endTime = startTime.add(Duration(hours: durationHours));
+    final client = _supabase;
+
+    if (client == null || SupabaseConfig.enforceReadOnlyBackend) {
+      final mockBooking = MockData.createMockBooking(
+        courtId: courtId,
+        startTime: startTime,
+        endTime: endTime,
+        totalAmount: totalPrice,
+        guestName: guestName,
+        guestPhone: guestPhone ?? '',
+        notes: notes,
+      ).copyWith(
+        status: 'walk_in',
+        paymentMethod: paymentMethod,
+        cashierId: cashierId,
+        downPaymentAmount: downPaymentAmount > 0 ? downPaymentAmount : totalPrice,
+      );
+      if (!MockData.mockBookings.any((b) => b.id == mockBooking.id)) {
+        MockData.mockBookings.add(mockBooking);
+      }
+      notifyPosUpdates();
+      BookingService.instance.broadcastMockBookingEvent(
+        BookingRealtimeEvent(
+          type: BookingRealtimeEventType.inserted,
+          booking: mockBooking,
+        ),
+      );
+      return mockBooking;
+    }
+
+    try {
+      final payload = {
+        'court_id': courtId,
+        'guest_name': guestName.trim().isNotEmpty ? guestName.trim() : 'Walk-in Guest',
+        'guest_phone': guestPhone?.trim() ?? '',
+        'start_time': startTime.toUtc().toIso8601String(),
+        'end_time': endTime.toUtc().toIso8601String(),
+        'duration_hours': durationHours,
+        'total_price': totalPrice,
+        'down_payment_amount': downPaymentAmount > 0 ? downPaymentAmount : totalPrice,
+        'currency': 'PHP',
+        'status': 'walk_in',
+        'payment_method': paymentMethod,
+        'cashier_id': cashierId,
+        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      };
+
+      final response = await client
+          .from('bookings')
+          .insert(payload)
+          .select('*, courts(name, type, hourly_rate)')
+          .single();
+
+      final created = BookingModel.fromJson(response);
+      notifyPosUpdates();
+      return created;
+    } catch (e) {
+      debugPrint('PosService.createWalkInBooking fallback notice: $e');
+      final mockBooking = MockData.createMockBooking(
+        courtId: courtId,
+        startTime: startTime,
+        endTime: endTime,
+        totalAmount: totalPrice,
+        guestName: guestName,
+        guestPhone: guestPhone ?? '',
+        notes: notes,
+      ).copyWith(
+        status: 'walk_in',
+        paymentMethod: paymentMethod,
+        cashierId: cashierId,
+        downPaymentAmount: downPaymentAmount > 0 ? downPaymentAmount : totalPrice,
+      );
+      if (!MockData.mockBookings.any((b) => b.id == mockBooking.id)) {
+        MockData.mockBookings.add(mockBooking);
+      }
+      notifyPosUpdates();
+      return mockBooking;
+    }
+  }
+
+  /// Check-in court player
+  Future<bool> checkInBooking(String bookingId) async {
+    final mockIdx = MockData.mockBookings.indexWhere((b) => b.id == bookingId);
+    if (mockIdx != -1) {
+      MockData.mockBookings[mockIdx] =
+          MockData.mockBookings[mockIdx].copyWith(status: 'checked_in');
+    }
+
+    final client = _supabase;
+    if (client != null && !SupabaseConfig.enforceReadOnlyBackend) {
+      try {
+        await client
+            .from('bookings')
+            .update({'status': 'checked_in'})
+            .eq('id', bookingId);
+      } catch (e) {
+        debugPrint('PosService.checkInBooking notice: $e');
+      }
+    }
+
+    notifyPosUpdates();
+    BookingService.instance.broadcastMockBookingEvent(
+      BookingRealtimeEvent(
+        type: BookingRealtimeEventType.updated,
+      ),
+    );
+    return true;
+  }
+
+  /// Collect remaining balance for bookings with down payment
+  Future<bool> collectBookingBalance({
+    required String bookingId,
+    required double amountPaid,
+    required String paymentMethod,
+  }) async {
+    final mockIdx = MockData.mockBookings.indexWhere((b) => b.id == bookingId);
+    if (mockIdx != -1) {
+      final current = MockData.mockBookings[mockIdx];
+      final newDown = current.downPaymentAmount + amountPaid;
+      MockData.mockBookings[mockIdx] = current.copyWith(
+        downPaymentAmount: newDown,
+        status: newDown >= current.totalPrice ? 'paid' : current.status,
+      );
+    }
+
+    final client = _supabase;
+    if (client != null && !SupabaseConfig.enforceReadOnlyBackend) {
+      try {
+        final bRes = await client.from('bookings').select('total_price, down_payment_amount').eq('id', bookingId).single();
+        final total = (bRes['total_price'] as num?)?.toDouble() ?? 0.0;
+        final currentDown = (bRes['down_payment_amount'] as num?)?.toDouble() ?? 0.0;
+        final newDown = currentDown + amountPaid;
+        await client.from('bookings').update({
+          'down_payment_amount': newDown,
+          if (newDown >= total) 'status': 'paid',
+        }).eq('id', bookingId);
+      } catch (e) {
+        debugPrint('PosService.collectBookingBalance notice: $e');
+      }
+    }
+
+    notifyPosUpdates();
+    return true;
   }
 }

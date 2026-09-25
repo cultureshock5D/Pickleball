@@ -51,6 +51,42 @@ void main() {
       expect(tax.vatAmount, 0.0);
     });
 
+    test('Student 10% discount computes accurately without VAT exemption', () {
+      final tax = BirTaxBreakdown.compute(
+        gross: 200.00,
+        discountType: 'student',
+      );
+
+      // 10% discount on 200 = 20.00
+      expect(tax.discountAmount, 20.00);
+      // Net = 180.00
+      expect(tax.netPayable, 180.00);
+      // Vatable = 180 / 1.12 = 160.71
+      expect(tax.vatableSales, 160.71);
+      // VAT = 180 - 160.71 = 19.29
+      expect(tax.vatAmount, 19.29);
+      expect(tax.vatExemptSales, 0.0);
+      expect(tax.grossSubtotal, 200.00);
+    });
+
+    test('Staff 15% discount computes accurately without VAT exemption', () {
+      final tax = BirTaxBreakdown.compute(
+        gross: 200.00,
+        discountType: 'staff',
+      );
+
+      // 15% discount on 200 = 30.00
+      expect(tax.discountAmount, 30.00);
+      // Net = 170.00
+      expect(tax.netPayable, 170.00);
+      // Vatable = 170 / 1.12 = 151.79
+      expect(tax.vatableSales, 151.79);
+      // VAT = 170 - 151.79 = 18.21
+      expect(tax.vatAmount, 18.21);
+      expect(tax.vatExemptSales, 0.0);
+      expect(tax.grossSubtotal, 200.00);
+    });
+
     test('Zero or negative gross returns zero tax breakdown', () {
       final taxZero = BirTaxBreakdown.compute(
         gross: 0.0,

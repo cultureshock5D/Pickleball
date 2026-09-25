@@ -14,6 +14,7 @@ import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
 import '../home/main_navigation_screen.dart';
 import 'widgets/cash_tender_modal.dart';
+import 'widgets/daily_court_schedule_view.dart';
 import 'widgets/daily_expenses_margins_view.dart';
 import 'widgets/inventory_table_view.dart';
 import 'widgets/pos_printer_debug_modal.dart';
@@ -21,7 +22,7 @@ import 'widgets/recent_invoices_drawer.dart';
 import 'widgets/shift_reports_view.dart';
 import 'widgets/thermal_receipt_modal.dart';
 
-enum PosViewMode { register, inventory, expenses, shiftReports }
+enum PosViewMode { register, schedule, inventory, expenses, shiftReports }
 
 class PosScreen extends StatefulWidget {
   final String cashierId;
@@ -412,6 +413,14 @@ class _PosScreenState extends State<PosScreen> {
     bool isDualPane,
   ) {
     switch (_currentViewMode) {
+      case PosViewMode.schedule:
+        return DailyCourtScheduleView(
+          cashierId: widget.cashierId,
+          cashierName: widget.cashierName,
+          onBackToRegister: () =>
+              setState(() => _currentViewMode = PosViewMode.register),
+          onToggleMenu: () => _toggleNavigationMenu(showPermanentSidebar),
+        );
       case PosViewMode.inventory:
         return InventoryTableView(
           onBackToRegister: () =>
@@ -853,6 +862,17 @@ class _PosScreenState extends State<PosScreen> {
             isDrawer: isDrawer,
             onTap: () {
               setState(() => _currentViewMode = PosViewMode.register);
+            },
+          ),
+          _buildSidebarNavItem(
+            icon: Icons.calendar_month_outlined,
+            label: 'Court Schedule',
+            isActive: _currentViewMode == PosViewMode.schedule,
+            isDark: isDark,
+            colors: colors,
+            isDrawer: isDrawer,
+            onTap: () {
+              setState(() => _currentViewMode = PosViewMode.schedule);
             },
           ),
           _buildSidebarNavItem(
@@ -1632,7 +1652,11 @@ class _PosScreenState extends State<PosScreen> {
                     _buildSummaryLine('Gross Subtotal:', '₱${tax.grossSubtotal.toStringAsFixed(2)}', colors, isShort: isShortHeight),
                     if (tax.discountAmount > 0)
                       _buildSummaryLine(
-                        'Statutory 20% Discount:',
+                        _cartController.discountType == 'student'
+                            ? 'Student 10% Discount:'
+                            : (_cartController.discountType == 'staff'
+                                ? 'Staff 15% Discount:'
+                                : 'Statutory 20% Discount:'),
                         '-₱${tax.discountAmount.toStringAsFixed(2)}',
                         colors,
                         isHighlight: true,

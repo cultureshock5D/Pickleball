@@ -17,6 +17,8 @@ class BookingModel {
   final String status; // pending_payment | paid | checked_in | walk_in | cancelled | cancelled_refund_pending | expired
   final String paymentMethod; // paymongo | cash | counter_qr | other
   final String? paymongoCheckoutSessionId;
+  final String? cashierId;
+  final double downPaymentAmount;
   final DateTime? expiresAt;
   final String? notes;
   final DateTime? createdAt;
@@ -42,6 +44,8 @@ class BookingModel {
     this.status = 'pending_payment',
     this.paymentMethod = 'paymongo',
     this.paymongoCheckoutSessionId,
+    this.cashierId,
+    this.downPaymentAmount = 0.0,
     this.expiresAt,
     this.notes,
     this.createdAt,
@@ -56,6 +60,9 @@ class BookingModel {
 
   /// Alias for backward compatibility
   String get customerId => userId ?? '';
+
+  /// Remaining unpaid balance for bookings with down payment
+  double get remainingBalance => (totalPrice - downPaymentAmount).clamp(0.0, double.infinity);
 
   bool get isPaid =>
       status == 'paid' ||
@@ -151,6 +158,8 @@ class BookingModel {
       paymentMethod: json['payment_method'] as String? ?? 'paymongo',
       paymongoCheckoutSessionId:
           json['paymongo_checkout_session_id'] as String?,
+      cashierId: json['cashier_id'] as String?,
+      downPaymentAmount: (json['down_payment_amount'] as num?)?.toDouble() ?? 0.0,
       expiresAt: json['expires_at'] != null
           ? DateTime.tryParse(json['expires_at'] as String)?.toLocal()
           : null,
@@ -172,6 +181,7 @@ class BookingModel {
       'id': id,
       'court_id': courtId,
       if (userId != null) 'user_id': userId,
+      if (cashierId != null) 'cashier_id': cashierId,
       'guest_name': guestName,
       'guest_email': guestEmail,
       'guest_phone': guestPhone,
@@ -179,6 +189,7 @@ class BookingModel {
       'end_time': endTime.toUtc().toIso8601String(),
       'duration_hours': durationHours,
       'total_price': totalPrice,
+      'down_payment_amount': downPaymentAmount,
       'currency': currency,
       'status': status,
       'payment_method': paymentMethod,
@@ -202,10 +213,12 @@ class BookingModel {
     DateTime? endTime,
     int? durationHours,
     double? totalPrice,
+    double? downPaymentAmount,
     String? currency,
     String? status,
     String? paymentMethod,
     String? paymongoCheckoutSessionId,
+    String? cashierId,
     DateTime? expiresAt,
     String? notes,
     DateTime? createdAt,
@@ -225,11 +238,13 @@ class BookingModel {
       endTime: endTime ?? this.endTime,
       durationHours: durationHours ?? this.durationHours,
       totalPrice: totalPrice ?? this.totalPrice,
+      downPaymentAmount: downPaymentAmount ?? this.downPaymentAmount,
       currency: currency ?? this.currency,
       status: status ?? this.status,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       paymongoCheckoutSessionId:
           paymongoCheckoutSessionId ?? this.paymongoCheckoutSessionId,
+      cashierId: cashierId ?? this.cashierId,
       expiresAt: expiresAt ?? this.expiresAt,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,

@@ -165,11 +165,11 @@ class _CashTenderModalState extends State<CashTenderModal> {
   void _handleConfirm() {
     if (_discountType != 'none') {
       if (_nameController.text.trim().isEmpty) {
-        setState(() => _validationError = 'Cardholder Name is required.');
+        setState(() => _validationError = 'Customer / Cardholder Name is required.');
         return;
       }
       if (_idController.text.trim().isEmpty) {
-        setState(() => _validationError = 'OSCA / PWD ID is required.');
+        setState(() => _validationError = 'Discount ID is required.');
         return;
       }
     }
@@ -376,7 +376,11 @@ class _CashTenderModalState extends State<CashTenderModal> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    '20% OFF + VAT EXEMPT',
+                    _discountType == 'student'
+                        ? '10% OFF (VAT INCL)'
+                        : (_discountType == 'staff'
+                            ? '15% OFF (VAT INCL)'
+                            : '20% OFF + VAT EXEMPT'),
                     style: GoogleFonts.inter(
                       fontSize: 8,
                       fontWeight: FontWeight.w800,
@@ -388,18 +392,25 @@ class _CashTenderModalState extends State<CashTenderModal> {
           ),
           const SizedBox(height: 6),
 
-          // 3 Compact Discount Options
-          Row(
-            children: [
-              _buildDiscountOption('none', 'Regular', colors, isDark),
-              const SizedBox(width: 6),
-              _buildDiscountOption('senior_citizen', 'Senior Citizen (20%)', colors, isDark),
-              const SizedBox(width: 6),
-              _buildDiscountOption('pwd', 'PWD (20%)', colors, isDark),
-            ],
+          // 5 Responsive Discount Options (Scrollable for compact screens)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildDiscountOption('none', 'Regular', colors, isDark),
+                const SizedBox(width: 6),
+                _buildDiscountOption('senior_citizen', 'Senior (20%)', colors, isDark),
+                const SizedBox(width: 6),
+                _buildDiscountOption('pwd', 'PWD (20%)', colors, isDark),
+                const SizedBox(width: 6),
+                _buildDiscountOption('student', 'Student (10%)', colors, isDark),
+                const SizedBox(width: 6),
+                _buildDiscountOption('staff', 'Staff (15%)', colors, isDark),
+              ],
+            ),
           ),
 
-          // Conditional Input Fields for Senior / PWD
+          // Conditional Input Fields for Discounts
           if (_discountType != 'none') ...[
             const SizedBox(height: 6),
             Row(
@@ -411,7 +422,7 @@ class _CashTenderModalState extends State<CashTenderModal> {
                       controller: _nameController,
                       style: GoogleFonts.inter(fontSize: 11, color: colors.textPrimary),
                       decoration: InputDecoration(
-                        hintText: 'Cardholder Name *',
+                        hintText: 'Customer Name *',
                         hintStyle: GoogleFonts.inter(fontSize: 10, color: colors.textSecondary),
                         filled: true,
                         fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -435,7 +446,11 @@ class _CashTenderModalState extends State<CashTenderModal> {
                       controller: _idController,
                       style: GoogleFonts.inter(fontSize: 11, color: colors.textPrimary),
                       decoration: InputDecoration(
-                        hintText: 'OSCA / PWD ID # *',
+                        hintText: _discountType == 'student'
+                            ? 'Student ID # *'
+                            : (_discountType == 'staff'
+                                ? 'Staff ID # *'
+                                : 'OSCA / PWD ID # *'),
                         hintStyle: GoogleFonts.inter(fontSize: 10, color: colors.textSecondary),
                         filled: true,
                         fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -474,33 +489,30 @@ class _CashTenderModalState extends State<CashTenderModal> {
   Widget _buildDiscountOption(String key, String label, dynamic colors, bool isDark) {
     final isSelected = _discountType == key;
 
-    return Expanded(
-      child: InkWell(
-        onTap: () => _onDiscountSelected(key),
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          decoration: BoxDecoration(
+    return InkWell(
+      onTap: () => _onDiscountSelected(key),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF0F172A)
+              : (isDark ? const Color(0xFF1E293B) : Colors.white),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
             color: isSelected
                 ? const Color(0xFF0F172A)
-                : (isDark ? const Color(0xFF1E293B) : Colors.white),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: isSelected
-                  ? const Color(0xFF0F172A)
-                  : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
-            ),
+                : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
           ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? Colors.white : colors.textPrimary,
-            ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected ? Colors.white : colors.textPrimary,
           ),
         ),
       ),

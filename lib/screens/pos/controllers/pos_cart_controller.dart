@@ -184,12 +184,15 @@ class PosCartController extends ChangeNotifier {
       return 'Cart is empty. Please add items to proceed.';
     }
 
-    if (_discountType == 'senior_citizen' || _discountType == 'pwd') {
+    if (_discountType == 'senior_citizen' ||
+        _discountType == 'pwd' ||
+        _discountType == 'student' ||
+        _discountType == 'staff') {
       if (_customerName.trim().isEmpty) {
-        return 'Cardholder Name is mandatory for statutory discounts.';
+        return 'Customer / Cardholder Name is mandatory for discounts.';
       }
       if (_discountIdNumber.trim().isEmpty) {
-        return 'Discount ID Number (OSCA / PWD ID) is mandatory.';
+        return 'Discount ID Number is mandatory.';
       }
     }
 
